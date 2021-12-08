@@ -1,0 +1,34 @@
+{
+  "name": "@solendprotocol/solend-sdk",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "coverage": "jest --coverage",
+    "lint": "prettier --write .; prettier --check .;eslint ."
+  },
+  "dependencies": {
+    "@solana/buffer-layout": "^3.0.0",
+    "@solana/spl-token": "^0.1.8",
+    "@solana/web3.js": "^1.31.0",
+    "bn.js": "^5.2.0",
+    "buffer-layout": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.3",
+    "@typescript-eslint/eslint-plugin": "^5.5.0",
+    "@typescript-eslint/parser": "^5.5.0",
+    "eslint": "^8.4.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^16.1.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-react": "^7.27.1",
+    "jest": "^27.4.3",
+    "prettier": "^2.5.1",
+    "typescript": "^4.5.2",
+    "typescript-eslint": "^0.0.1-alpha.0"
+  }
+}

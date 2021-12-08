@@ -1,0 +1,252 @@
+{
+  "programID": "ALend7Ketfx5bxh6ghsCDXAoDrhvEmsXT3cynB6aPLgx",
+  "assets": [
+    {
+      "name": "Solana",
+      "symbol": "SOL",
+      "decimals": 9,
+      "mintAddress": "So11111111111111111111111111111111111111112"
+    },
+    {
+      "name": "USDC",
+      "symbol": "USDC",
+      "decimals": 6,
+      "mintAddress": "zVzi5VAf4qMEwzv7NXECVx5v2pQ7xnqVVjCXZwS9XzA"
+    },
+    {
+      "name": "Serum",
+      "symbol": "SRM",
+      "decimals": 6,
+      "mintAddress": "GLnwzTMdvETds6JrLoAVxTCZGaLNtJufp1QZ5HAiLb5q"
+    },
+    {
+      "name": "USDT",
+      "symbol": "USDT",
+      "decimals": 6,
+      "mintAddress": "Bp2nLuamFZndE7gztA1iPsNVhdJeg9xfKdq7KmvjpGoP"
+    },
+    {
+      "name": "Bitcoin",
+      "symbol": "BTC",
+      "decimals": 6,
+      "mintAddress": "6hiEcA2aTgudqdP2DzEYpk5d4knFS8dv9RdotbxaErgQ"
+    },
+    {
+      "name": "Ethereum",
+      "symbol": "ETH",
+      "decimals": 6,
+      "mintAddress": "ECReE2Qo48af56BwUkx876eNP2M54NYp8HFLugTPrVWo"
+    },
+    {
+      "name": "FTT",
+      "symbol": "FTT",
+      "decimals": 9,
+      "mintAddress": "DdpesN97RCHtLmdQtvv1MwuubkY2thuCUJAZ5W1AgZWt"
+    },
+    {
+      "name": "RAY",
+      "symbol": "RAY",
+      "decimals": 6,
+      "mintAddress": "DxHj7TMuG5R9mXdy6UYj6G5K5GWkFPEGKjpc67mEo4Wz"
+    },
+    {
+      "name": "Mercurial",
+      "symbol": "MER",
+      "decimals": 6,
+      "mintAddress": "Cj1qY2iPJNqJ1RJtMWZHya5jM53skKRVixPpvtthekPF"
+    },
+    {
+      "name": "Saber",
+      "symbol": "SBR",
+      "decimals": 6,
+      "mintAddress": "BS4TfsqZtH9FEGL3LmyFn56PXj8AzLKEga3zvpCTGRat"
+    },
+    {
+      "name": "Marinade staked SOL",
+      "symbol": "mSOL",
+      "decimals": 9,
+      "mintAddress": "B9FyrxFK8zFugDbrcyduwbVw2PTUN5ckUHZCTf3ogjn"
+    }
+  ],
+  "markets": [
+    {
+      "name": "main",
+      "address": "GvjoVKNjBvQcFaSKUW1gTE7DxhSpjHbE69umVR5nPuQp",
+      "authorityAddress": "EhJ4fwaXUp7aiwvZThSUaGWCaBQAJe3AEaJJJVCn3UCK",
+      "transferAuthorityAddress": "12UzZuy8YsGv8Dj4TfsKmBu3f6unLaU4kp4Zug2tPCe5",
+      "reserves": [
+        {
+          "asset": "SOL",
+          "address": "5VVLD7BQp8y3bTgyF5ezm1ResyMTR3PhYsT4iHFU8Sxz",
+          "collateralMintAddress": "FzwZWRMc3GCqjSrcpVX3ueJc6UpcV6iWWb7ZMsTXE3Gf",
+          "collateralSupplyAddress": "J5KGpESS8Zq2MvK4rtL6wKbeMRYZzb6TEzn8qPsZFgGd",
+          "liquidityAddress": "furd3XUtjXZ2gRvSsoUts9A5m8cMJNqdsyR2Rt8vY9s",
+          "liquidityFeeReceiverAddress": "5kFqzU2k1tEXtoeNayk1TVxLycoAH5k8WsaGnBnanYJH",
+          "userSupplyCap": 250
+        },
+        {
+          "asset": "USDC",
+          "address": "FNNkz4RCQezSSS71rW2tvqZH1LCkTzaiG7Nd1LeA5x5y",
+          "collateralMintAddress": "E2PSSXsXJGdpqhhaV3rYPpuy1inRCQAWxcdykA1DTmYr",
+          "collateralSupplyAddress": "FiUyeMAnZYkLCbrPGwjJWQwzYJ5AjD6p9N9fx6VxDPMt",
+          "liquidityAddress": "HixjFJoeD2ggqKgFHQxrcJFjVvE5nXKuUPYNijFg7Kc5",
+          "liquidityFeeReceiverAddress": "DiM1Lf3HiAVpmG3bFNVGXfGaxdUck8oZcTr3tTQfLL6P",
+          "userSupplyCap": 10000
+        },
+        {
+          "asset": "ETH",
+          "address": "CuQcLfN3iTWqyEEbAHNZp7awChbR4KQPFJsTUhsAxrcu",
+          "collateralMintAddress": "3kqx7NHrBWUD6LuWvvwzocpTVt7TDYbJ3ad7HNUPSBf6",
+          "collateralSupplyAddress": "9YgdDM7mYdk4Mw6UoJtUtVWiAdYMsBRq3DCvbG4t6yth",
+          "liquidityAddress": "4YQEgAzjFDmPBcmJYVLXdeGtKzC4Y5gy5Mo6PwiaASVd",
+          "liquidityFeeReceiverAddress": "HMPbxzhejGYXyUcPeKkJLL68SbT5o6r5kGJEr21haCg5",
+          "userSupplyCap": 5
+        },
+        {
+          "asset": "BTC",
+          "address": "FNXBRv3saDgVoaoDLV5ho28D4AvZikG9r7QpThTLak9f",
+          "collateralMintAddress": "7YaBJi5jnuadi5LZBB9NgRt1hPKhA7qQYWkzU11kgRcn",
+          "collateralSupplyAddress": "E7VrkNMts9jLQvyaEnkzeRrSKbyog5jgmNL17ddpRXw1",
+          "liquidityAddress": "EoUGEC2HxF6X6DJWbS3KCdtFnLaQgS6YiQjsdYc9Zs3d",
+          "liquidityFeeReceiverAddress": "97d6hUpWY4YMMmqyTLf73LBK57patB9YrU4updyhkwiG",
+          "userSupplyCap": 0.25
+        },
+        {
+          "asset": "SRM",
+          "address": "5YKmMZcuWEdF5NavNK4MgKPRhnhw6jq22zwcdh1dvxbd",
+          "collateralMintAddress": "GVje4h3Sy8mFZgEAdpacZLq7jRLczkU9HcuAZSr6f9YM",
+          "collateralSupplyAddress": "8ke4e75cXjss36J6B6d31GB6EH7rPmcJU7TNzYETDZvr",
+          "liquidityAddress": "7ZgqrvQ66xjqTptxQWwrjA9hADXn5CtCXzMxPxsHJpec",
+          "liquidityFeeReceiverAddress": "BKTTY5gibk5UQRMvPHwva7Y1qU5JySNQQddpTSPALunS",
+          "userSupplyCap": 2000
+        },
+        {
+          "asset": "USDT",
+          "address": "ERm3jhg8J94hxr7KmhkRvnuYbKZgNFEL4hXzBMeb1rQ8",
+          "collateralMintAddress": "ACo8zUxnXNaTvjvN5S56C7KLWzCH4pXjSMU7iAg6dHj8",
+          "collateralSupplyAddress": "8vC5UkqSAJkrZ5Srwbn243sCx7s8UC1nBZ5cbtNv1ui3",
+          "liquidityAddress": "45WeSuv9fwiG1Z1t9j4Mj8D3Rto4BXkGq8huTRupdbVt",
+          "liquidityFeeReceiverAddress": "D8LAgoRdeoMdoH3ShWQMPMPuKyu4Mt5ghJUmwBFNK3Bx",
+          "userSupplyCap": 10000
+        },
+        {
+          "asset": "FTT",
+          "address": "8eUYeEiGXRMN7V9Xx7CehwSRfJB9iQfJW249zX1z7Uue",
+          "collateralMintAddress": "6G9TFs48EkWQodGHAK1fjXC8umqZBdn8Mc8bX5iUvc2j",
+          "collateralSupplyAddress": "86JDgSSADv6yfnYNUf4TbivQcbtaSSUtMdmHVyVy3Grv",
+          "liquidityAddress": "J6zcVXn8MaLaHmF8MMiX3CRMWcCiVbnZsh46Ftrcy848",
+          "liquidityFeeReceiverAddress": "FRrLhjyonZH4zESzqdEW6RfNaV1krAR7UK8frijUd5cL",
+          "userSupplyCap": 16000
+        },
+        {
+          "asset": "RAY",
+          "address": "FpKhrtU6nDjEcAi3SsSevRRgPzirLkZpmXD6nfeb7k8c",
+          "collateralMintAddress": "C2JUrHN3Jj4CzL1behQ8mHmswBvYGy9UcjNvvCCmEdVT",
+          "collateralSupplyAddress": "C2hbitGdACQ9SA4D28hcTPqo2zJSQ3eiR7gHSdhgsFfJ",
+          "liquidityAddress": "FLAa7VtxEcwjZoqvewweBG2q1aEdMLfEn9XUC8vDdiy2",
+          "liquidityFeeReceiverAddress": "E5nGW6GrPgF1RUfi3Q1JAJ6QRzN2SXvEXs6smHeU6qUc",
+          "userSupplyCap": 100000
+        },
+        {
+          "asset": "MER",
+          "address": "HbXi7Gpe5GXzE7V1SjEEy3sDurmFi7RbTvCZ3Rd7Nv6b",
+          "collateralMintAddress": "66F7DZxwKB4KpPy3xFMzRRzh2pLHhJ7qegBM3ejFAwg4",
+          "collateralSupplyAddress": "3dC3WXMfjrr1VKtuUGiaY5rCgH7MgEMNcZz3avanVHg3",
+          "liquidityAddress": "Bf9C8miLK98QDprTYW21d7ekwiaPt9BUBv1GAwKAcU6V",
+          "liquidityFeeReceiverAddress": "9HayYeYcnpKw29Gb64EbDypsTLrTeU5ovNnBEVpLsKwd",
+          "userSupplyCap": 150000
+        },
+        {
+          "asset": "SBR",
+          "address": "5CXDzn4AygQwu59fGxo34T965BmYMHuGvAuoRMeRBKg4",
+          "collateralMintAddress": "4GAGuewTRMfBJukgu3HSzpT48iqP4bYVCq3tygnjqmxL",
+          "collateralSupplyAddress": "Db5uVF9TyReRFTg6xWmq95Let4QECFLiyWfB7jaT2UYz",
+          "liquidityAddress": "3WXNo8rCMJCmg5cMrdXRxGrK3NaCvTBrrSaBhKZxotN3",
+          "liquidityFeeReceiverAddress": "68NTVqTKtVkCCKNLn7qYAuwdyGnm6DQTjBrzc2RAh5vH",
+          "userSupplyCap": 2000000
+        },
+        {
+          "asset": "mSOL",
+          "address": "Ei2dC7hFxBhVq5pn4qNJLMxKBSojx7p7wnNoBz4HELKG",
+          "collateralMintAddress": "7tQWCtBuyrSbZR1Yxcjw35QtQPRp2zkNGirxP2Dbh8Zm",
+          "collateralSupplyAddress": "6pg9yFWVk6dRJ87ftxR8mrGV9JG9NyRMNbxoqMC8KkvU",
+          "liquidityAddress": "B3g1A7diypnBpc2Zet75UxQvH6a5RERAans8icRP4BEX",
+          "liquidityFeeReceiverAddress": "6L9e2iedgvHez7iSaDJLUnSUfJs45pzaJ5CKWnaD4HAc",
+          "userSupplyCap": 40000
+        }
+      ]
+    }
+  ],
+  "oracles": {
+    "pythProgramID": "gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s",
+    "switchboardProgramID": "7azgmy1pFXHikv36q1zZASvFq5vFa39TT9NweVugKKTU",
+    "assets": [
+      {
+        "asset": "SOL",
+        "oracleAddress": "3Mnn2fX6rQyUsyELYms1sBJyChWofzSNRoqYzvgMVz5E",
+        "priceAddress": "J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix",
+        "switchboardFeedAddress": "AdtRGGhmqvom3Jemp5YNrxd9q9unX36BZk1pujkkXijL"
+      },
+      {
+        "asset": "USDC",
+        "oracleAddress": "6NpdXrQEpmDZ3jZKmM2rhdmkd3H6QAk23j2x8bkXcHKA",
+        "priceAddress": "5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7",
+        "switchboardFeedAddress": "CZx29wKMUxaJDq6aLVQTdViPL754tTR64NAgQBUGxxHb"
+      },
+      {
+        "asset": "SRM",
+        "oracleAddress": "6MEwdxe4g1NeAF9u6KDG14anJpFsVEa2cvr5H6iriFZ8",
+        "priceAddress": "992moaMQKs32GKZ9dxi8keyM2bUmbrwBZpK4p2K6X5Vs",
+        "switchboardFeedAddress": "BAoygKcKN7wk8yKzLD6sxzUQUqLvhBV1rjMA4UJqfZuH"
+      },
+      {
+        "asset": "USDT",
+        "oracleAddress": "C5wDxND9E61RZ1wZhaSTWkoA8udumaHnoQY6BBsiaVpn",
+        "priceAddress": "38xoQ4oeJCBrcVvca2cGk7iV1dAfrmTR1kmhSCJQ8Jto",
+        "switchboardFeedAddress": "5mp8kbkTYwWWCsKSte8rURjTuyinsqBpJ9xAQsewPDD"
+      },
+      {
+        "asset": "BTC",
+        "oracleAddress": "3m1y5h2uv7EQL3KaJZehvAJa4yDNvgc5yAdL9KPMKwvk",
+        "priceAddress": "HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J",
+        "switchboardFeedAddress": "74YzQPGUT9VnjrBz8MuyDLKgKpbDqGot5xZJvTtMi6Ng"
+      },
+      {
+        "asset": "ETH",
+        "oracleAddress": "2ciUuGZiee5macAMeQ7bHGTJtwcYTgnt6jdmQnnKZrfu",
+        "priceAddress": "EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw",
+        "switchboardFeedAddress": "QJc2HgGhdtW4e7zjvLB1TGRuwEpTre2agU5Lap2UqYz"
+      },
+      {
+        "asset": "FTT",
+        "oracleAddress": "63VWd2FVbukVozZ1okHt8wVMq7enAYFXYnmp2DUQtBBJ",
+        "priceAddress": "6vivTRs5ZPeeXbjo7dfburfaYDWoXjBtdtuYgQRuGfu",
+        "switchboardFeedAddress": "6SqRewrr5f4ycWy7NvLmNgpXJbhwXrtTc1erL9aq2gP3"
+      },
+      {
+        "asset": "RAY",
+        "oracleAddress": "3BtxtRxitVDcsd7pPUWUnFm9KvmNDy9usS4gE6pUFhpH",
+        "priceAddress": "EhgAdTrgxi4ZoVZLQx1n93vULucPpiFi2BQtz9RJr1y6",
+        "switchboardFeedAddress": "CppyF6264uKZkGua1brTUa2fSVdMFSCszwzDs76HCuzU"
+      },
+      {
+        "asset": "MER",
+        "oracleAddress": "BzJGxCqttFdmu3J1MC7N8qAhPHgf6ZHHdoDcX91idXLK",
+        "priceAddress": "6Z3ejn8DCWQFBuAcw29d3A5jgahEpmycn7YDMX7yRNrn",
+        "switchboardFeedAddress": "5pHX3fd81SpGywzsw4R12L3Xu3qd418h1PcnHpQAiMWA"
+      },
+      {
+        "asset": "SBR",
+        "oracleAddress": "APY6HpicQTabn46sZPt2pAqunFpkws9ySdujj5BHcZAK",
+        "priceAddress": "4WSN3XDSTfBX9A1YXGg8HJ7n2GtWMDNbtz1ab6aGGXfG",
+        "switchboardFeedAddress": "Lp3VNoRQi699VZe6u59TV8J38ELEUzxkaisoWsDuJgB"
+      },
+      {
+        "asset": "mSOL",
+        "oracleAddress": "os3is9HtWPHW4EXpGAkdr2prdWVs2pS8qKtf2ZYJdBw",
+        "priceAddress": "9a6RNx3tCu1TSs6TBSfV2XRXEPEZXQ6WB7jRojZRvyeZ",
+        "switchboardFeedAddress": "CEPVH2t11KS4CaL3w4YxT9tRiijoGA4VEbnQ97cEpDmQ"
+      }
+    ]
+  }
+}
