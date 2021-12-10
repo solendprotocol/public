@@ -250,7 +250,8 @@ export const calculateMarinadeData = async (
           reserve.liquidity.borrowedAmountWads.toString(),
           18 + reserveInfo.decimals
         )
-      ).multiply(mSOLPrice)
+      )
+      .multiply(mSOLPrice)
       .toHuman(),
     totalApy: apy.add(rewardApy).add(externalApy).toHuman(),
     dailySlndEmission: new BNumber(

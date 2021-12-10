@@ -1,5 +1,5 @@
 import fetchMock from "jest-fetch-mock";
-import { calculateMarinadeData } from '../src';
+import { calculateMarinadeData } from "../src";
 
 const rewardResponse = {
   mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So: {

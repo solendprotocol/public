@@ -4,7 +4,8 @@ import * as productionConfig from "./production.json";
 
 type ConfigType = typeof productionConfig;
 
-export { devnetConfig, betaConfig, productionConfig, ConfigType };
+export { devnetConfig, betaConfig, productionConfig };
+export type { ConfigType };
 
 export default function (
   deployment = "production",
