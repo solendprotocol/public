@@ -1,10 +1,16 @@
 {
   "name": "@solendprotocol/solend-sdk",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "prepublish": "yarn build",
+    "build": "rm -rf dist/; tsc",
     "test": "jest",
     "coverage": "jest --coverage",
     "lint": "prettier --write .; prettier --check .;eslint ."
@@ -14,6 +20,7 @@
     "@solana/buffer-layout": "^3.0.0",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.31.0",
+    "@solendprotocol/solend-sdk": "file:.yalc/@solendprotocol/solend-sdk",
     "bn.js": "^5.2.0",
     "buffer-layout": "^1.2.0"
   },
