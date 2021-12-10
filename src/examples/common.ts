@@ -1,53 +1,63 @@
-import getConfig, { ConfigType } from '../configs';
-import BN from 'bn.js';
-import { find } from 'lodash';
+import getConfig from "../configs";
+import BN from "bn.js";
+import { find } from "lodash";
 
 export function getReserveInfo(symbol: string, environment?: string) {
   const solendInfo = getConfig(environment);
-  const tokenInfo = solendInfo.assets.find(ass => ass.symbol === symbol);
+  const tokenInfo = solendInfo.assets.find((ass) => ass.symbol === symbol);
   if (!tokenInfo) {
     throw new Error(`Could not find token info for ${symbol}.`);
   }
   const reserveInfo = solendInfo.markets
-    ?.find(mar => mar.name === 'main')?.reserves
-    .find(ass => ass.asset === symbol);
+    ?.find((mar) => mar.name === "main")
+    ?.reserves.find((ass) => ass.asset === symbol);
 
   if (!reserveInfo) {
     throw new Error(`Could not find ${symbol} in main market.`);
   }
 
+  const oracleInfo = solendInfo.oracles.assets.find(
+    (ass) => ass.asset === symbol
+  );
+  if (!oracleInfo) {
+    throw new Error(`Could not find oracle info for ${symbol}.`);
+  }
+
   return {
     ...tokenInfo,
-    ...reserveInfo
-  }
+    ...reserveInfo,
+    ...oracleInfo,
+  };
 }
 
-export const U64_MAX = '18446744073709551615';
+export const U64_MAX = "18446744073709551615";
+export const WAD = new BN(`1${"".padEnd(18, "0")}`);
 
 export class BNumber {
   significand: string;
 
   precision: number;
 
-  constructor(significand: string , precision?: number) {
-    const isNeg = significand[0] === '-';
-    const unsignedStringSig = significand.replace('-', '');
-    if (!precision || unsignedStringSig.indexOf('.') !== -1) {
-      this.significand = `${isNeg ? '-' : ''}${unsignedStringSig
-        .split('.')
-        .join('')}`;
+  constructor(significand: string | number, precision?: number) {
+    const stringSig = safeToString(significand);
+    const isNeg = stringSig[0] === "-";
+    const unsignedStringSig = stringSig.replace("-", "");
+    if (!precision || unsignedStringSig.indexOf(".") !== -1) {
+      this.significand = `${isNeg ? "-" : ""}${unsignedStringSig
+        .split(".")
+        .join("")}`;
       this.precision =
-        unsignedStringSig.indexOf('.') === -1
+        unsignedStringSig.indexOf(".") === -1
           ? 0
-          : unsignedStringSig.length - unsignedStringSig.indexOf('.') - 1;
+          : unsignedStringSig.length - unsignedStringSig.indexOf(".") - 1;
     } else {
-      this.significand = `${isNeg ? '-' : ''}${unsignedStringSig}`;
+      this.significand = `${isNeg ? "-" : ""}${unsignedStringSig}`;
       this.precision = precision;
     }
   }
 
   isZero() {
-    return new BN(this.significand).eq(new BN('0'));
+    return new BN(this.significand).eq(new BN("0"));
   }
 
   isNan() {
@@ -133,14 +143,14 @@ export class BNumber {
   }
 }
 
-export const BWAD = new BNumber('1'.concat(Array(18 + 1).join('0')));
-export const BRAY = new BNumber('1'.concat(Array(27 + 1).join('0')));
-export const BWANG = new BNumber('1'.concat(Array(36 + 1).join('0')));
-export const BNaN = new BNumber('0', -1);
-export const BZero = new BNumber('0', 0);
+export const BWAD = new BNumber("1".concat(Array(18 + 1).join("0")));
+export const BRAY = new BNumber("1".concat(Array(27 + 1).join("0")));
+export const BWANG = new BNumber("1".concat(Array(36 + 1).join("0")));
+export const BNaN = new BNumber("0", -1);
+export const BZero = new BNumber("0", 0);
 
 // Returns token info from ASSETS config
-export function getTokenInfo(symbol: string): Asset {
+export function getTokenInfo(symbol: string) {
   const solendInfo = getConfig();
   const tokenInfo = find(solendInfo.assets, { symbol });
   if (!tokenInfo) {
@@ -162,16 +172,16 @@ export function toBaseUnit(amount: string, symbol: string) {
 }
 
 function toHumanDec(amount: string, decimals: number) {
-  const isNeg = amount[0] === '-';
-  return `${isNeg ? '-' : ''}${toHumanDecUnsigned(
-    amount.replace('-', ''),
-    decimals,
+  const isNeg = amount[0] === "-";
+  return `${isNeg ? "-" : ""}${toHumanDecUnsigned(
+    amount.replace("-", ""),
+    decimals
   )}`;
 }
 
 function toHumanDecUnsigned(amount: string, decimals: number) {
   let amountStr = amount.slice(
-    amount.length - Math.min(decimals, amount.length),
+    amount.length - Math.min(decimals, amount.length)
   );
   if (decimals > amount.length) {
     for (let i = 0; i < decimals - amount.length; i += 1) {
@@ -183,20 +193,20 @@ function toHumanDecUnsigned(amount: string, decimals: number) {
     for (let i = amount.length - decimals - 1; i >= 0; i -= 1) {
       amountStr = amount[i] + amountStr;
     }
-    if (amountStr[0] === '.') {
+    if (amountStr[0] === ".") {
       amountStr = `0${amountStr}`;
     }
   }
-  amountStr = stripEnd(amountStr, '0');
-  amountStr = stripEnd(amountStr, '.');
+  amountStr = stripEnd(amountStr, "0");
+  amountStr = stripEnd(amountStr, ".");
   return amountStr;
 }
 
 function toBaseUnitDec(amount: string, decimals: number) {
-  const isNeg = amount[0] === '-';
-  return `${isNeg ? '-' : ''}${toBaseUnitDecUnsigned(
-    amount.replace('-', ''),
-    decimals,
+  const isNeg = amount[0] === "-";
+  return `${isNeg ? "-" : ""}${toBaseUnitDecUnsigned(
+    amount.replace("-", ""),
+    decimals
   )}`;
 }
 
@@ -207,9 +217,9 @@ function toBaseUnitDecUnsigned(amount: string, decimals: number) {
     throw new Error(`Invalid decimal ${decimals}`);
   }
   if ((amount.match(/\./g) || []).length > 1) {
-    throw new Error('Too many decimal points');
+    throw new Error("Too many decimal points");
   }
-  let decimalIndex = amount.indexOf('.');
+  let decimalIndex = amount.indexOf(".");
   let precision;
   if (decimalIndex === -1) {
     precision = 0;
@@ -225,7 +235,7 @@ function toBaseUnitDecUnsigned(amount: string, decimals: number) {
     return (
       amount.slice(0, decimalIndex) +
       amount.slice(decimalIndex + 1) +
-      ''.padEnd(numTrailingZeros, '0')
+      "".padEnd(numTrailingZeros, "0")
     );
   }
   return (
@@ -254,9 +264,9 @@ export function cTokenToToken(
   supplyAmount: string,
   totalLiquidityWads: string,
   mintSupplyWads: string,
-  decimals: number,
+  decimals: number
 ) {
-  if (new BN(mintSupplyWads) === new BN('0')) {
+  if (new BN(mintSupplyWads) === new BN("0")) {
     return supplyAmount;
   }
   return toHumanDec(
@@ -264,7 +274,7 @@ export function cTokenToToken(
       .mul(new BN(totalLiquidityWads))
       .divRound(new BN(mintSupplyWads))
       .toString(),
-    decimals,
+    decimals
   );
 }
 
@@ -272,9 +282,9 @@ export function tokenToCToken(
   supplyAmount: string,
   totalLiquidityWads: string,
   mintSupplyWads: string,
-  decimals: number,
+  decimals: number
 ) {
-  if (new BN(mintSupplyWads) === new BN('0')) {
+  if (new BN(mintSupplyWads) === new BN("0")) {
     return supplyAmount;
   }
   return toHumanDec(
@@ -282,7 +292,7 @@ export function tokenToCToken(
       .mul(new BN(mintSupplyWads))
       .divRound(new BN(totalLiquidityWads))
       .toString(),
-    decimals,
+    decimals
   );
 }
 
@@ -290,16 +300,16 @@ export function getBorrowedAmountWadsWithInterest(
   reserveCumulativeBorrowRateWads: string,
   obligationCumulativeBorrowRateWads: string,
   obligationBorrowAmount: string,
-  decimals: number,
+  decimals: number
 ) {
   const reserveCumulativeBorrowRate = new BN(reserveCumulativeBorrowRateWads);
   const obligationCumulativeBorrowRate = new BN(
-    obligationCumulativeBorrowRateWads,
+    obligationCumulativeBorrowRateWads
   );
 
   if (
     obligationCumulativeBorrowRate >= reserveCumulativeBorrowRate ||
-    obligationBorrowAmount === '0'
+    obligationBorrowAmount === "0"
   ) {
     return obligationBorrowAmount;
   }
@@ -309,12 +319,12 @@ export function getBorrowedAmountWadsWithInterest(
       .mul(reserveCumulativeBorrowRate)
       .div(obligationCumulativeBorrowRate)
       .toString(),
-    decimals,
+    decimals
   );
 }
 
 export function concatZeros(value: string, numZeroes: number) {
-  return value.concat(Array(numZeroes + 1).join('0'));
+  return value.concat(Array(numZeroes + 1).join("0"));
 }
 
 export function add(addend1: BNumber, addend2: BNumber) {
@@ -329,7 +339,7 @@ export function subtract(minuend1: BNumber, minuend2: BNumber) {
 
   return new BNumber(
     new BN(paddedMinuend1).sub(new BN(paddedMinuend2)).toString(),
-    Math.max(minuend1.precision, minuend2.precision),
+    Math.max(minuend1.precision, minuend2.precision)
   );
 }
 
@@ -338,13 +348,13 @@ export function multiply(multiplicand: BNumber, multiplier: BNumber) {
     new BN(multiplicand.toString())
       .mul(new BN(multiplier.toString()))
       .toString(),
-    multiplicand.precision + multiplier.precision,
+    multiplicand.precision + multiplier.precision
   );
 }
 
 // We represent a fraction as a single number, precise always exactly to 18 decimal places and truncated past there
 export function divide(dividend: BNumber, divisor: BNumber) {
-  if (new BN(divisor.significand).eq(new BN('0'))) {
+  if (new BN(divisor.significand).eq(new BN("0"))) {
     return BNaN;
   }
 
@@ -355,7 +365,7 @@ export function divide(dividend: BNumber, divisor: BNumber) {
 
   return new BNumber(
     new BN(precisionPaddedDividend).div(new BN(paddedDivisor)).toString(),
-    18,
+    18
   );
 }
 
@@ -365,7 +375,7 @@ export function min(...args: Array<BNumber>) {
 
   return new BNumber(
     paddedArgs.reduce((a, b) => BN.min(new BN(a), new BN(b)).toString()),
-    maxPrecision,
+    maxPrecision
   );
 }
 
@@ -375,7 +385,7 @@ export function max(...args: Array<BNumber>) {
 
   return new BNumber(
     paddedArgs.reduce((a, b) => BN.max(new BN(a), new BN(b)).toString()),
-    maxPrecision,
+    maxPrecision
   );
 }
 
@@ -386,6 +396,32 @@ export function neg(val: BNumber) {
 function equalPadding(...args: Array<BNumber>) {
   const maxPrecision = Math.max(...args.map((arg) => arg.precision));
   return args.map((arg) =>
-    concatZeros(arg.toString(), maxPrecision - arg.precision),
+    concatZeros(arg.toString(), maxPrecision - arg.precision)
   );
+}
+
+export function safeToString(arg: number | string): string {
+  if (typeof arg === "string") {
+    if (arg.length === 0) {
+      return "";
+    }
+
+    return arg;
+  }
+
+  if (Math.abs(arg) < 1.0) {
+    const e = parseInt(arg.toString().split("e-")[1]);
+    if (e) {
+      arg *= Math.pow(10, e - 1);
+      arg = "0." + new Array(e).join("0") + arg.toString().substring(2);
+    }
+  } else {
+    let e = parseInt(arg.toString().split("+")[1]);
+    if (e > 20) {
+      e -= 20;
+      arg /= Math.pow(10, e);
+      arg = arg + new Array(e + 1).join("0");
+    }
+  }
+  return arg.toString();
 }

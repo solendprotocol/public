@@ -1,9 +1,9 @@
 // import { wadToLamports } from '@oyster/common';
-import { AccountInfo, PublicKey } from '@solana/web3.js';
-import BN from 'bn.js';
-import * as BufferLayout from 'buffer-layout';
-import * as Layout from '../utils/layout';
-import { LastUpdate, LastUpdateLayout } from './lastUpdate';
+import { AccountInfo, PublicKey } from "@solana/web3.js";
+import BN from "bn.js";
+import * as BufferLayout from "buffer-layout";
+import * as Layout from "../utils/layout";
+import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
 
 export interface Reserve {
   version: number;
@@ -51,65 +51,65 @@ export interface ReserveConfig {
 
 export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
   [
-    BufferLayout.u8('version'),
+    BufferLayout.u8("version"),
 
     LastUpdateLayout,
 
-    Layout.publicKey('lendingMarket'),
+    Layout.publicKey("lendingMarket"),
 
     BufferLayout.struct(
       [
-        Layout.publicKey('mintPubkey'),
-        BufferLayout.u8('mintDecimals'),
-        Layout.publicKey('supplyPubkey'),
+        Layout.publicKey("mintPubkey"),
+        BufferLayout.u8("mintDecimals"),
+        Layout.publicKey("supplyPubkey"),
         // @FIXME: oracle option
         // TODO: replace u32 option with generic equivalent
         // BufferLayout.u32('oracleOption'),
-        Layout.publicKey('pythOracle'),
-        Layout.publicKey('switchboardOracle'),
-        Layout.uint64('availableAmount'),
-        Layout.uint128('borrowedAmountWads'),
-        Layout.uint128('cumulativeBorrowRateWads'),
-        Layout.uint128('marketPrice'),
+        Layout.publicKey("pythOracle"),
+        Layout.publicKey("switchboardOracle"),
+        Layout.uint64("availableAmount"),
+        Layout.uint128("borrowedAmountWads"),
+        Layout.uint128("cumulativeBorrowRateWads"),
+        Layout.uint128("marketPrice"),
       ],
-      'liquidity',
+      "liquidity"
     ),
 
     BufferLayout.struct(
       [
-        Layout.publicKey('mintPubkey'),
-        Layout.uint64('mintTotalSupply'),
-        Layout.publicKey('supplyPubkey'),
+        Layout.publicKey("mintPubkey"),
+        Layout.uint64("mintTotalSupply"),
+        Layout.publicKey("supplyPubkey"),
       ],
-      'collateral',
+      "collateral"
     ),
 
     BufferLayout.struct(
       [
-        BufferLayout.u8('optimalUtilizationRate'),
-        BufferLayout.u8('loanToValueRatio'),
-        BufferLayout.u8('liquidationBonus'),
-        BufferLayout.u8('liquidationThreshold'),
-        BufferLayout.u8('minBorrowRate'),
-        BufferLayout.u8('optimalBorrowRate'),
-        BufferLayout.u8('maxBorrowRate'),
+        BufferLayout.u8("optimalUtilizationRate"),
+        BufferLayout.u8("loanToValueRatio"),
+        BufferLayout.u8("liquidationBonus"),
+        BufferLayout.u8("liquidationThreshold"),
+        BufferLayout.u8("minBorrowRate"),
+        BufferLayout.u8("optimalBorrowRate"),
+        BufferLayout.u8("maxBorrowRate"),
         BufferLayout.struct(
           [
-            Layout.uint64('borrowFeeWad'),
-            Layout.uint64('flashLoanFeeWad'),
-            BufferLayout.u8('hostFeePercentage'),
+            Layout.uint64("borrowFeeWad"),
+            Layout.uint64("flashLoanFeeWad"),
+            BufferLayout.u8("hostFeePercentage"),
           ],
-          'fees',
+          "fees"
         ),
-        Layout.uint64('depositLimit'),
-        Layout.uint64('borrowLimit'),
-        Layout.publicKey('feeReceiver'),
+        Layout.uint64("depositLimit"),
+        Layout.uint64("borrowLimit"),
+        Layout.publicKey("feeReceiver"),
       ],
-      'config',
+      "config"
     ),
 
-    BufferLayout.blob(256, 'padding'),
-  ],
+    BufferLayout.blob(256, "padding"),
+  ]
 );
 
 export const RESERVE_SIZE = ReserveLayout.span;
@@ -142,18 +142,18 @@ export function reserveToString(reserve: Reserve) {
     reserve,
     (key, value) => {
       // Skip padding
-      if (key === 'padding') {
+      if (key === "padding") {
         return null;
       }
       switch (value.constructor.name) {
-        case 'PublicKey':
+        case "PublicKey":
           return value.toBase58();
-        case 'BN':
+        case "BN":
           return value.toString();
         default:
           return value;
       }
     },
-    2,
+    2
   );
 }

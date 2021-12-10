@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2015",
     "module": "commonjs",
-    "strict": true,
-    "esModuleInterop": true,
     "declaration": true,
-    "outDir": "./dist",
+    "allowJs": true,
     "resolveJsonModule": true,
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "strict": true,
     "skipLibCheck": true,
   },
-  "exclude": ["tests", "dist", "node_modules"]
+  "exclude": ["__tests__", "dist", "node_modules"]
 }
