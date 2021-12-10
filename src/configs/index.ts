@@ -4,15 +4,19 @@ import * as productionConfig from "./production.json";
 
 type ConfigType = typeof productionConfig;
 
-export { devnetConfig, betaConfig, productionConfig, ConfigType };
+export { devnetConfig, betaConfig, productionConfig };
+export type { ConfigType };
 
-export default function(deployment = 'production', customConfig?: typeof productionConfig): typeof productionConfig {
+export default function (
+  deployment = "production",
+  customConfig?: typeof productionConfig
+): typeof productionConfig {
   switch (deployment) {
-    case 'production':
+    case "production":
       return productionConfig;
-    case 'devnet':
+    case "devnet":
       return devnetConfig;
-    case 'local':
+    case "local":
       if (!customConfig) {
         throw new Error(`Invalid deployment ${deployment}`);
       }

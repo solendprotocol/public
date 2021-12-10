@@ -1,8 +1,8 @@
-import { AccountInfo, PublicKey } from '@solana/web3.js';
-import BN from 'bn.js';
-import * as BufferLayout from 'buffer-layout';
-import * as Layout from '../utils/layout';
-import { LastUpdate, LastUpdateLayout } from './lastUpdate';
+import { AccountInfo, PublicKey } from "@solana/web3.js";
+import BN from "bn.js";
+import * as BufferLayout from "buffer-layout";
+import * as Layout from "../utils/layout";
+import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
 
 export interface Obligation {
   version: number;
@@ -28,19 +28,19 @@ export function obligationToString(obligation: Obligation) {
     obligation,
     (key, value) => {
       // Skip padding
-      if (key === 'padding') {
+      if (key === "padding") {
         return null;
       }
       switch (value.constructor.name) {
-        case 'PublicKey':
+        case "PublicKey":
           return value.toBase58();
-        case 'BN':
+        case "BN":
           return value.toString();
         default:
           return value;
       }
     },
-    2,
+    2
   );
 }
 
@@ -59,38 +59,38 @@ export interface ObligationLiquidity {
 
 export const ObligationLayout: typeof BufferLayout.Structure =
   BufferLayout.struct([
-    BufferLayout.u8('version'),
+    BufferLayout.u8("version"),
 
     LastUpdateLayout,
 
-    Layout.publicKey('lendingMarket'),
-    Layout.publicKey('owner'),
-    Layout.uint128('depositedValue'),
-    Layout.uint128('borrowedValue'),
-    Layout.uint128('allowedBorrowValue'),
-    Layout.uint128('unhealthyBorrowValue'),
-    BufferLayout.blob(64, '_padding'),
+    Layout.publicKey("lendingMarket"),
+    Layout.publicKey("owner"),
+    Layout.uint128("depositedValue"),
+    Layout.uint128("borrowedValue"),
+    Layout.uint128("allowedBorrowValue"),
+    Layout.uint128("unhealthyBorrowValue"),
+    BufferLayout.blob(64, "_padding"),
 
-    BufferLayout.u8('depositsLen'),
-    BufferLayout.u8('borrowsLen'),
-    BufferLayout.blob(1096, 'dataFlat'),
+    BufferLayout.u8("depositsLen"),
+    BufferLayout.u8("borrowsLen"),
+    BufferLayout.blob(1096, "dataFlat"),
   ]);
 
 export const ObligationCollateralLayout: typeof BufferLayout.Structure =
   BufferLayout.struct([
-    Layout.publicKey('depositReserve'),
-    Layout.uint64('depositedAmount'),
-    Layout.uint128('marketValue'),
-    BufferLayout.blob(32, 'padding'),
+    Layout.publicKey("depositReserve"),
+    Layout.uint64("depositedAmount"),
+    Layout.uint128("marketValue"),
+    BufferLayout.blob(32, "padding"),
   ]);
 
 export const ObligationLiquidityLayout: typeof BufferLayout.Structure =
   BufferLayout.struct([
-    Layout.publicKey('borrowReserve'),
-    Layout.uint128('cumulativeBorrowRateWads'),
-    Layout.uint128('borrowedAmountWads'),
-    Layout.uint128('marketValue'),
-    BufferLayout.blob(32, 'padding'),
+    Layout.publicKey("borrowReserve"),
+    Layout.uint128("cumulativeBorrowRateWads"),
+    Layout.uint128("borrowedAmountWads"),
+    Layout.uint128("marketValue"),
+    BufferLayout.blob(32, "padding"),
   ]);
 
 export const OBLIGATION_SIZE = ObligationLayout.span;
@@ -114,7 +114,7 @@ export interface ProtoObligation {
 
 export const parseObligation = (
   pubkey: PublicKey,
-  info: AccountInfo<Buffer>,
+  info: AccountInfo<Buffer>
 ) => {
   const { data } = info;
   const buffer = Buffer.from(data);
@@ -138,21 +138,21 @@ export const parseObligation = (
 
   const depositsBuffer = dataFlat.slice(
     0,
-    depositsLen * ObligationCollateralLayout.span,
+    depositsLen * ObligationCollateralLayout.span
   );
   const deposits = BufferLayout.seq(
     ObligationCollateralLayout,
-    depositsLen,
+    depositsLen
   ).decode(depositsBuffer) as ObligationCollateral[];
 
   const borrowsBuffer = dataFlat.slice(
     depositsBuffer.length,
     depositsLen * ObligationCollateralLayout.span +
-      borrowsLen * ObligationLiquidityLayout.span,
+      borrowsLen * ObligationLiquidityLayout.span
   );
   const borrows = BufferLayout.seq(
     ObligationLiquidityLayout,
-    borrowsLen,
+    borrowsLen
   ).decode(borrowsBuffer) as ObligationLiquidity[];
 
   const obligation = {
