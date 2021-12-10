@@ -6,11 +6,11 @@ import { parseReserve, Reserve } from "../state/reserve";
 const SOLEND_API_HOST = "https://api.solend.fi";
 
 type RewardPoolStat = {
-  rewardsPerShare: "906745261174844852329818744";
-  totalBalance: "586697896062796";
-  lastSlot: 110712923;
-  side: "supply";
-  tokenMint: "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So";
+  rewardsPerShare: string;
+  totalBalance: string;
+  lastSlot: number;
+  side: string;
+  tokenMint: string;
   rewardRates: Array<{
     beginningSlot: number;
     rewardRate: string;
