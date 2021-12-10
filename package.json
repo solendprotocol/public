@@ -1,6 +1,6 @@
 {
   "name": "@solendprotocol/solend-sdk",
-  "version": "0.1.61",
+  "version": "0.1.62",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,7 +20,6 @@
     "@solana/buffer-layout": "^3.0.0",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.31.0",
-    "@solendprotocol/solend-sdk": "file:.yalc/@solendprotocol/solend-sdk",
     "bn.js": "^5.2.0",
     "buffer-layout": "^1.2.0"
   },
