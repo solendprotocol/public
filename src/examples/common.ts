@@ -1,4 +1,4 @@
-import getConfig, * as configs from "../configs";
+import getConfig from "../configs";
 import BN from "bn.js";
 import { find } from "lodash";
 
