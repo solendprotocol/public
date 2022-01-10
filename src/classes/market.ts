@@ -102,7 +102,7 @@ export class SolendMarket {
 
   static async initialize(
     connection: Connection,
-    environment: string = "production"
+    environment: "production" | "devnet" = "production"
   ) {
     const market = new SolendMarket(connection);
     const rawConfig = (await (
@@ -145,8 +145,8 @@ export class SolendMarket {
       throw Error("Could not parse obligation.");
     }
 
-    if (!reserves.every((reserve) => reserve.data)) {
-      await this.loadReservesData();
+    if (!reserves.every((reserve) => reserve.stats)) {
+      await this.loadReserves();
     }
 
     const obligationInfo = parsedObligation.info;
@@ -160,7 +160,7 @@ export class SolendMarket {
   }
 
   async loadAll() {
-    const promises = [this.loadReservesData(), this.loadRewardData()];
+    const promises = [this.loadReserves(), this.loadRewards()];
 
     await Promise.all(promises);
   }
@@ -221,7 +221,7 @@ export class SolendMarket {
       });
   }
 
-  async loadRewardData() {
+  async loadRewards() {
     const promises = [
       this.loadLMRewardData(),
       this.loadExternalRewardData(),
@@ -306,9 +306,15 @@ export class SolendMarket {
         },
       };
     }, {});
+
+    const refreshReserves = this.reserves.map((reserve) => {
+      return reserve.load();
+    });
+
+    await Promise.all(refreshReserves);
   }
 
-  async loadReservesData() {
+  async loadReserves() {
     const addresses = this.reserves.map(
       (reserve) => new PublicKey(reserve.config.address)
     );
@@ -327,10 +333,10 @@ export class SolendMarket {
 
   async refreshAll() {
     const promises = [
-      this.reserves.every((reserve) => reserve.data)
-        ? this.loadReservesData()
+      this.reserves.every((reserve) => reserve.stats)
+        ? this.loadReserves()
         : null,
-      this.rewardsData ? this.loadRewardData() : null,
+      this.rewardsData ? this.loadRewards() : null,
     ].filter((x) => x);
 
     await Promise.all(promises);
@@ -374,7 +380,7 @@ export class SolendReserve {
 
   private buffer: AccountInfo<Buffer> | null;
 
-  data: ReserveData | null;
+  stats: ReserveData | null;
 
   private connection: Connection;
 
@@ -386,7 +392,7 @@ export class SolendReserve {
     this.config = reserveConfig;
     this.market = market;
     this.buffer = null;
-    this.data = null;
+    this.stats = null;
     this.connection = connection;
   }
 
@@ -458,7 +464,7 @@ export class SolendReserve {
       throw Error(`Unable to parse data of reserve ${this.config.name}`);
     }
 
-    this.data = await this.formatReserveData(parsedData);
+    this.stats = await this.formatReserveData(parsedData);
   }
 
   calculateRewardAPY(
@@ -480,8 +486,8 @@ export class SolendReserve {
   }
 
   totalSupplyAPY() {
-    const { data } = this;
-    if (!this.market.rewardsData || !data) {
+    const { stats } = this;
+    if (!this.market.rewardsData || !stats) {
       throw Error(
         "SolendMarket must be initialized with the withRewardData flag as true and load must be called on the reserve."
       );
@@ -493,30 +499,30 @@ export class SolendReserve {
         rewardSymbol: reward.rewardSymbol,
         apy: this.calculateRewardAPY(
           reward.rewardRate,
-          data.totalDepositsWads.toString(),
+          stats.totalDepositsWads.toString(),
           reward.price,
-          data.assetPriceUSD,
+          stats.assetPriceUSD,
           this.config.decimals
         ).toNumber(),
         price: reward.price,
       })
     );
-    const totalAPY = new BigNumber(data.supplyInterestAPY)
+    const totalAPY = new BigNumber(stats.supplyInterestAPY)
       .plus(
         rewards.reduce((acc, reward) => acc.plus(reward.apy), new BigNumber(0))
       )
       .toNumber();
 
     return {
-      interestAPY: data.supplyInterestAPY,
+      interestAPY: stats.supplyInterestAPY,
       totalAPY,
       rewards,
     };
   }
 
   totalBorrowAPY() {
-    const { data } = this;
-    if (!this.market.rewardsData || !data) {
+    const { stats } = this;
+    if (!this.market.rewardsData || !stats) {
       throw Error(
         "SolendMarket must be initialized with the withRewardData flag as true and load must be called on the reserve."
       );
@@ -528,22 +534,22 @@ export class SolendReserve {
         rewardSymbol: reward.rewardSymbol,
         apy: this.calculateRewardAPY(
           reward.rewardRate,
-          data.totalBorrowsWads.toString(),
+          stats.totalBorrowsWads.toString(),
           reward.price,
-          data.assetPriceUSD,
+          stats.assetPriceUSD,
           this.config.decimals
         ).toNumber(),
         price: reward.price,
       })
     );
-    const totalAPY = new BigNumber(data.borrowInterestAPY)
+    const totalAPY = new BigNumber(stats.borrowInterestAPY)
       .minus(
         rewards.reduce((acc, reward) => acc.plus(reward.apy), new BigNumber(0))
       )
       .toNumber();
 
     return {
-      interestAPY: data.borrowInterestAPY,
+      interestAPY: stats.borrowInterestAPY,
       totalAPY,
       rewards,
     };
@@ -656,19 +662,19 @@ export class SolendObligation {
         (reserve) =>
           reserve.config.address === deposit.depositReserve.toBase58()
       );
-      const loanToValue = reserve!.data!.loanToValueRatio;
-      const liqThreshold = reserve!.data!.liquidationThreshold;
+      const loanToValue = reserve!.stats!.loanToValueRatio;
+      const liqThreshold = reserve!.stats!.liquidationThreshold;
 
       const supplyAmount = new BN(
         Math.floor(
           new BigNumber(deposit.depositedAmount.toString())
-            .multipliedBy(reserve!.data!.cTokenExchangeRate)
+            .multipliedBy(reserve!.stats!.cTokenExchangeRate)
             .toNumber()
         )
       );
       const supplyAmountUSD = new BigNumber(supplyAmount.toString())
-        .multipliedBy(reserve!.data!.assetPriceUSD)
-        .dividedBy("1".concat(Array(reserve!.data!.decimals + 1).join("0")));
+        .multipliedBy(reserve!.stats!.assetPriceUSD)
+        .dividedBy("1".concat(Array(reserve!.stats!.decimals + 1).join("0")));
 
       userTotalDeposit = userTotalDeposit.plus(supplyAmountUSD);
 
@@ -698,15 +704,15 @@ export class SolendObligation {
       const borrowAmount = new BN(
         Math.floor(
           new BigNumber(borrow.borrowedAmountWads.toString())
-            .multipliedBy(reserve!.data!.cumulativeBorrowRateWads.toString())
+            .multipliedBy(reserve!.stats!.cumulativeBorrowRateWads.toString())
             .dividedBy(borrow.cumulativeBorrowRateWads.toString())
             .dividedBy(WAD)
             .toNumber()
         ).toString()
       );
       const borrowAmountUSD = new BigNumber(borrowAmount.toString())
-        .multipliedBy(reserve!.data!.assetPriceUSD)
-        .dividedBy("1".concat(Array(reserve!.data!.decimals + 1).join("0")));
+        .multipliedBy(reserve!.stats!.assetPriceUSD)
+        .dividedBy("1".concat(Array(reserve!.stats!.decimals + 1).join("0")));
 
       if (!borrowAmount.eq(new BN("0"))) {
         positions += 1;
