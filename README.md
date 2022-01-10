@@ -80,4 +80,4 @@ Due to transaction size limits of Solana, a user with a high amount of positions
 
 #### Values are weird on devnet
 
-Partner rewards for liquidity mining have limited support and this SDK has limited support in devnet.
+Partner rewards and liquidity mining are not present on devnet.
