@@ -70,14 +70,14 @@ const solendAction = await SolendAction.buildDepositTxns(
 - React hook API
 
 ## FAQ
-**Interest rates do not match what's show on solend.fi** 
+#### Interest rates do not match what's show on solend.fi
 
 The Solend SDK pulls certain price data from cached sources from our backend api that's different from solend.fi's sources. Divergences should be very small and these price sources will soon be consolidated.
 
-**Multiple transactions being created for a lending action**
+#### Multiple transactions being created for a lending action
 
 Due to transaction size limits of Solana, a user with a high amount of positions might need their lending action to be broken into multiple transactions. Usually this involves creating or closing associated token accounts for up to 3 transactions.
 
-**Values are weird on devnet**
+#### Values are weird on devnet
 
 Partner rewards for liquidity mining have limited support and this SDK has limited support in devnet.
