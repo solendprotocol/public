@@ -26,8 +26,7 @@ type RewardPoolResponse = {
 
 const loadReserve = async (
   symbol: string,
-  rpcEndpoint: string = "https://api.mainnet-beta.solana.com",
-  environment: string = "production"
+  rpcEndpoint: string = "https://api.mainnet-beta.solana.com"
 ) => {
   const connection = new Connection(rpcEndpoint, {
     commitment: "finalized",
@@ -189,8 +188,7 @@ export const calculateRewardApy = (
 };
 
 export const calculateMarinadeData = async (
-  rpcEndpoint: string = "https://api.mainnet-beta.solana.com",
-  environment: string = "production"
+  rpcEndpoint: string = "https://api.mainnet-beta.solana.com"
 ) => {
   const connection = new Connection(rpcEndpoint, {
     commitment: "finalized",
