@@ -15,7 +15,7 @@ This is the Solend Typescript to interact with http://solend.fi.
 For the full set of developer tools, check out the brand new
 
 [
-<img width="200" alt="Screen Shot 2022-01-09 at 5 54 30 PM" src="https://user-images.githubusercontent.com/89805726/148710356-a6cdb798-934a-459d-b795-d4a1099168db.png">](https://dev.solend.fi/).
+<img width="200" alt="Screen Shot 2022-01-09 at 5 54 30 PM" src="https://user-images.githubusercontent.com/89805726/148710356-a6cdb798-934a-459d-b795-d4a1099168db.png">](https://dev.solend.fi/)
 
 [Latest API documentation](http://sdk.solend.fi/)
 
