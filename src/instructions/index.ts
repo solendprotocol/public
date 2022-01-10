@@ -9,3 +9,4 @@ export * from "./repayObligationLiquidity";
 export * from "./withdrawObligationCollateral";
 export * from "./depositReserveLiquidityAndObligationCollateral";
 export * from "./withdrawObligationCollateralAndRedeemReserveLiquidity";
+export * from "./syncNative";

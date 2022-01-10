@@ -1,9 +1,9 @@
-import getConfig from "../configs";
+import legacyConfig from "./production.json";
 import BN from "bn.js";
 import { find } from "lodash";
 
-export function getReserveInfo(symbol: string, environment?: string) {
-  const solendInfo = getConfig(environment);
+export function getReserveInfo(symbol: string) {
+  const solendInfo = legacyConfig;
   const tokenInfo = solendInfo.assets.find((ass) => ass.symbol === symbol);
   if (!tokenInfo) {
     throw new Error(`Could not find token info for ${symbol}.`);
@@ -151,7 +151,7 @@ export const BZero = new BNumber("0", 0);
 
 // Returns token info from ASSETS config
 export function getTokenInfo(symbol: string) {
-  const solendInfo = getConfig();
+  const solendInfo = legacyConfig;
   const tokenInfo = find(solendInfo.assets, { symbol });
   if (!tokenInfo) {
     throw new Error(`Could not find ${symbol} in ASSETS`);

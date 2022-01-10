@@ -47,6 +47,7 @@ export interface ReserveConfig {
     hostFeePercentage: number;
   };
   depositLimit: BN;
+  borrowLimit: BN;
 }
 
 export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
