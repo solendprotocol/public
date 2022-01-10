@@ -20,6 +20,10 @@ module.exports = {
       "error",
       { varsIgnorePattern: "^_", argsIgnorePattern: "^_" },
     ],
+    "no-unused-vars": [
+      "error",
+      { varsIgnorePattern: "^_", argsIgnorePattern: "^_" },
+    ],
   },
   settings: {
     "import/resolver": {
