@@ -56,7 +56,7 @@ const solendAction = await SolendAction.buildDepositTxns(
     amountBase,
     symbol,
     publicKey,
-    'mainnet'
+    'production'
   );
 
   await solendAction.sendTransactions(sendTransaction); // sendTransaction from wallet adapter or custom
