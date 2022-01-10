@@ -155,7 +155,7 @@ export class SolendAction {
     symbol: string,
     publicKey: PublicKey,
     connection: Connection,
-    environment: string = "production",
+    environment: "production" | "devnet" = "production",
     hostAta?: PublicKey
   ) {
     const solendInfo = (await (
@@ -267,7 +267,7 @@ export class SolendAction {
     amount: string,
     symbol: string,
     publicKey: PublicKey,
-    environment: string = "production"
+    environment: "production" | "devnet" = "production"
   ) {
     const axn = await SolendAction.initialize(
       amount,
@@ -288,7 +288,7 @@ export class SolendAction {
     amount: string,
     symbol: string,
     publicKey: PublicKey,
-    environment: string = "production",
+    environment: "production" | "devnet" = "production",
     hostAta?: PublicKey
   ) {
     const axn = await SolendAction.initialize(
@@ -311,7 +311,7 @@ export class SolendAction {
     amount: string,
     symbol: string,
     publicKey: PublicKey,
-    environment: string = "production"
+    environment: "production" | "devnet" = "production"
   ) {
     const axn = await SolendAction.initialize(
       amount,
@@ -332,7 +332,7 @@ export class SolendAction {
     amount: string,
     symbol: string,
     publicKey: PublicKey,
-    environment: string = "production"
+    environment: "production" | "devnet" = "production"
   ) {
     const axn = await SolendAction.initialize(
       amount,
