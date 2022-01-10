@@ -51,6 +51,7 @@ console.log(obligation.stats.borrowLimit)
 
 ### Perform lending action
 ```typescript
+// Create one or more (may contain setup accuont creation txns) to perform a Solend action.
 const solendAction = await SolendAction.buildDepositTxns(
     connection,
     amountBase,
