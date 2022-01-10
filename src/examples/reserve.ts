@@ -26,16 +26,13 @@ type RewardPoolResponse = {
 
 const loadReserve = async (
   symbol: string,
-  rpcEndpoint: string = "https://api.mainnet-beta.solana.com",
-  environment: string = "production"
+  rpcEndpoint: string = "https://api.mainnet-beta.solana.com"
 ) => {
   const connection = new Connection(rpcEndpoint, {
     commitment: "finalized",
   });
 
-  const reservePublickKey = new PublicKey(
-    getReserveInfo(symbol, environment).address
-  );
+  const reservePublickKey = new PublicKey(getReserveInfo(symbol).address);
   const reserveAccountInfo = await connection.getAccountInfo(reservePublickKey);
 
   if (!reserveAccountInfo) {
@@ -191,8 +188,7 @@ export const calculateRewardApy = (
 };
 
 export const calculateMarinadeData = async (
-  rpcEndpoint: string = "https://api.mainnet-beta.solana.com",
-  environment: string = "production"
+  rpcEndpoint: string = "https://api.mainnet-beta.solana.com"
 ) => {
   const connection = new Connection(rpcEndpoint, {
     commitment: "finalized",
@@ -204,7 +200,7 @@ export const calculateMarinadeData = async (
     )
   ).json()) as any;
 
-  const reserveInfo = getReserveInfo("mSOL", environment);
+  const reserveInfo = getReserveInfo("mSOL");
   const solendPrice = priceResponse.solend.usd;
   const marinadePrice = priceResponse.marinade.usd;
 

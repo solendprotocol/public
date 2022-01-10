@@ -39,8 +39,6 @@ export const repayObligationLiquidityInstruction = (
     Layout.uint64("liquidityAmount"),
   ]);
 
-  console.log(new BN(liquidityAmount).toString());
-
   const data = Buffer.alloc(dataLayout.span);
   dataLayout.encode(
     {

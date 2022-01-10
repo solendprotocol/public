@@ -21,8 +21,10 @@
     "@solana/buffer-layout": "^3.0.0",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.31.0",
+    "bignumber.js": "^9.0.2",
     "bn.js": "^5.2.0",
-    "buffer-layout": "^1.2.0"
+    "buffer-layout": "^1.2.0",
+    "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
     "@types/jest": "^27.0.3",
