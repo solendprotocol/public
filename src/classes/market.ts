@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
-import { Config } from "./types";
+import { ConfigType } from "./types";
 import BigNumber from "bignumber.js";
 import { parseReserve } from "../state/reserve";
 import { Obligation, parseObligation } from "../state/obligation";
@@ -9,7 +9,8 @@ import { WAD, WANG } from "./constants";
 
 type RewardInfo = {
   rewardRate: string;
-  rewardMint: string;
+  rewardMint?: string;
+  rewardSymbol: string;
   price: number;
 };
 
@@ -45,11 +46,11 @@ type ExternalRewardResponse = {
   borrow: ExternalRewardStatType;
 };
 
-export type FormattedMarketConfig = ReturnType<typeof formatReserveConfig>;
+type FormattedMarketConfig = ReturnType<typeof formatReserveConfig>;
 
 const API_ENDPOINT = "https://api.solend.fi";
 
-function formatReserveConfig(config: Config) {
+function formatReserveConfig(config: ConfigType) {
   const mainMarket = config.markets.find((mar) => mar.name === "main");
   if (!mainMarket) {
     throw Error("Main market not found.");
@@ -83,14 +84,14 @@ function formatReserveConfig(config: Config) {
   };
 }
 
-export default class SolendMarket {
+export class SolendMarket {
   reserves: Array<SolendReserve>;
 
   rewardsData: RewardsData | null;
 
   config: FormattedMarketConfig | null;
 
-  connection: Connection;
+  private connection: Connection;
 
   private constructor(connection: Connection) {
     this.connection = connection;
@@ -106,10 +107,10 @@ export default class SolendMarket {
     const market = new SolendMarket(connection);
     const rawConfig = (await (
       await fetch(`${API_ENDPOINT}/v1/config?deployment=${environment}`)
-    ).json()) as Config;
+    ).json()) as ConfigType;
     market.config = formatReserveConfig(rawConfig);
     market.reserves = market.config.reserves.map(
-      (res) => new SolendReserve(res, market)
+      (res) => new SolendReserve(res, market, connection)
     );
 
     return market;
@@ -164,7 +165,7 @@ export default class SolendMarket {
     await Promise.all(promises);
   }
 
-  async loadLMRewardData() {
+  private async loadLMRewardData() {
     const data = (
       await fetch(`${API_ENDPOINT}/liquidity-mining/reward-stats`)
     ).json() as Promise<{
@@ -174,7 +175,7 @@ export default class SolendMarket {
     return data;
   }
 
-  async loadExternalRewardData() {
+  private async loadExternalRewardData() {
     const data = (
       await fetch(`${API_ENDPOINT}/liquidity-mining/external-reward-stats`)
     ).json() as Promise<{
@@ -184,7 +185,7 @@ export default class SolendMarket {
     return data;
   }
 
-  async loadPriceData(symbols: Array<string>) {
+  private async loadPriceData(symbols: Array<string>) {
     const data = (await (
       await fetch(`${API_ENDPOINT}/v1/prices/?symbols=${symbols.join(",")}`)
     ).json()) as {
@@ -204,7 +205,7 @@ export default class SolendMarket {
     );
   }
 
-  getLatestRewardRate(
+  private getLatestRewardRate(
     rewardRates: Array<{
       beginningSlot: number;
       rewardRate: string;
@@ -255,6 +256,7 @@ export default class SolendMarket {
                 currentSlot
               ).rewardRate,
               rewardMint: "SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp",
+              rewardSymbol: "SLND",
               price: new BigNumber(priceData.SLND).toNumber(),
             }
           : null,
@@ -265,7 +267,8 @@ export default class SolendMarket {
                 currentSlot
               ).rewardRate,
               rewardMint: externalReward.supply.rewardMint,
-              price: 1,
+              rewardSymbol: externalReward.supply.rewardSymbol,
+              price: priceData[externalReward.supply.rewardSymbol],
             }
           : null,
       ].filter((x) => x);
@@ -278,6 +281,7 @@ export default class SolendMarket {
                 currentSlot
               ).rewardRate,
               rewardMint: "SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp",
+              rewardSymbol: "SLND",
               price: new BigNumber(priceData.SLND).toNumber(),
             }
           : null,
@@ -288,7 +292,8 @@ export default class SolendMarket {
                 currentSlot
               ).rewardRate,
               rewardMint: externalReward.borrow.rewardMint,
-              price: 1,
+              rewardSymbol: externalReward.borrow.rewardSymbol,
+              price: priceData[externalReward.borrow.rewardSymbol],
             }
           : null,
       ].filter((x) => x);
@@ -319,6 +324,17 @@ export default class SolendMarket {
 
     await Promise.all(loadReserves);
   }
+
+  async refreshAll() {
+    const promises = [
+      this.reserves.every((reserve) => reserve.data)
+        ? this.loadReservesData()
+        : null,
+      this.rewardsData ? this.loadRewardData() : null,
+    ].filter((x) => x);
+
+    await Promise.all(promises);
+  }
 }
 
 type ReserveData = {
@@ -329,7 +345,7 @@ type ReserveData = {
   minBorrowRate: number;
   optimalBorrowRate: number;
   maxBorrowRate: number;
-  borrowFeeWad: BN;
+  borrowFeePercentage: number;
   hostFeePercentage: number;
   depositLimit: BN;
   reserveBorrowLimit: BN;
@@ -351,30 +367,37 @@ type ReserveData = {
 type ParsedReserve = NonNullable<ReturnType<typeof parseReserve>>["info"];
 type FormattedReserveConfig = FormattedMarketConfig["reserves"][0];
 
-class SolendReserve {
+export class SolendReserve {
   config: FormattedReserveConfig;
 
-  market: SolendMarket;
+  private market: SolendMarket;
 
-  buffer: AccountInfo<Buffer> | null;
+  private buffer: AccountInfo<Buffer> | null;
 
   data: ReserveData | null;
 
-  constructor(reserveConfig: FormattedReserveConfig, market: SolendMarket) {
+  private connection: Connection;
+
+  constructor(
+    reserveConfig: FormattedReserveConfig,
+    market: SolendMarket,
+    connection: Connection
+  ) {
     this.config = reserveConfig;
     this.market = market;
     this.buffer = null;
     this.data = null;
+    this.connection = connection;
   }
 
-  calculateSupplyAPY(reserve: ParsedReserve) {
+  private calculateSupplyAPY(reserve: ParsedReserve) {
     const currentUtilization = this.calculateUtilizationRatio(reserve);
 
     const borrowAPY = this.calculateBorrowAPY(reserve);
     return currentUtilization * borrowAPY;
   }
 
-  calculateUtilizationRatio(reserve: ParsedReserve) {
+  private calculateUtilizationRatio(reserve: ParsedReserve) {
     const totalBorrowsWads = new BigNumber(
       reserve.liquidity.borrowedAmountWads.toString()
     )
@@ -387,7 +410,7 @@ class SolendReserve {
     return currentUtilization;
   }
 
-  calculateBorrowAPY(reserve: ParsedReserve) {
+  private calculateBorrowAPY(reserve: ParsedReserve) {
     const currentUtilization = this.calculateUtilizationRatio(reserve);
     const optimalUtilization = reserve.config.optimalUtilizationRate / 100;
 
@@ -417,7 +440,7 @@ class SolendReserve {
 
   async load() {
     if (!this.buffer) {
-      this.buffer = await this.market.connection.getAccountInfo(
+      this.buffer = await this.connection.getAccountInfo(
         new PublicKey(this.config.address),
         "processed"
       );
@@ -464,22 +487,31 @@ class SolendReserve {
       );
     }
 
-    return this.market.rewardsData[this.config.address].supply
-      .reduce(
-        (acc, reward) =>
-          acc.plus(
-            this.calculateRewardAPY(
-              reward.rewardRate,
-              data.totalDepositsWads.toString(),
-              reward.price,
-              data.assetPriceUSD,
-              this.config.decimals
-            )
-          ),
-        new BigNumber(0)
+    const rewards = this.market.rewardsData[this.config.mintAddress].supply.map(
+      (reward) => ({
+        rewardMint: reward.rewardMint,
+        rewardSymbol: reward.rewardSymbol,
+        apy: this.calculateRewardAPY(
+          reward.rewardRate,
+          data.totalDepositsWads.toString(),
+          reward.price,
+          data.assetPriceUSD,
+          this.config.decimals
+        ).toNumber(),
+        price: reward.price,
+      })
+    );
+    const totalAPY = new BigNumber(data.supplyInterestAPY)
+      .plus(
+        rewards.reduce((acc, reward) => acc.plus(reward.apy), new BigNumber(0))
       )
-      .plus(data.supplyInterestAPY)
       .toNumber();
+
+    return {
+      interestAPY: data.supplyInterestAPY,
+      totalAPY,
+      rewards,
+    };
   }
 
   totalBorrowAPY() {
@@ -490,25 +522,31 @@ class SolendReserve {
       );
     }
 
-    console.log(this.config.name, this.config.mintAddress);
-
-    return new BigNumber(data.supplyInterestAPY)
+    const rewards = this.market.rewardsData[this.config.mintAddress].borrow.map(
+      (reward) => ({
+        rewardMint: reward.rewardMint,
+        rewardSymbol: reward.rewardSymbol,
+        apy: this.calculateRewardAPY(
+          reward.rewardRate,
+          data.totalBorrowsWads.toString(),
+          reward.price,
+          data.assetPriceUSD,
+          this.config.decimals
+        ).toNumber(),
+        price: reward.price,
+      })
+    );
+    const totalAPY = new BigNumber(data.borrowInterestAPY)
       .minus(
-        this.market.rewardsData[this.config.mintAddress].borrow.reduce(
-          (acc, reward) =>
-            acc.plus(
-              this.calculateRewardAPY(
-                reward.rewardRate,
-                data.totalBorrowsWads.toString(),
-                reward.price,
-                data.assetPriceUSD,
-                this.config.decimals
-              )
-            ),
-          new BigNumber(0)
-        )
+        rewards.reduce((acc, reward) => acc.plus(reward.apy), new BigNumber(0))
       )
       .toNumber();
+
+    return {
+      interestAPY: data.borrowInterestAPY,
+      totalAPY,
+      rewards,
+    };
   }
 
   private formatReserveData(
@@ -526,14 +564,18 @@ class SolendReserve {
 
     return {
       // Reserve config
-      optimalUtilizationRate: parsedData.config.optimalUtilizationRate,
+      optimalUtilizationRate: parsedData.config.optimalUtilizationRate / 100,
       loanToValueRatio: parsedData.config.loanToValueRatio / 100,
       liquidationBonus: parsedData.config.liquidationBonus / 100,
       liquidationThreshold: parsedData.config.liquidationThreshold / 100,
       minBorrowRate: parsedData.config.minBorrowRate / 100,
       optimalBorrowRate: parsedData.config.optimalBorrowRate / 100,
       maxBorrowRate: parsedData.config.maxBorrowRate / 100,
-      borrowFeeWad: parsedData.config.fees.borrowFeeWad,
+      borrowFeePercentage: new BigNumber(
+        parsedData.config.fees.borrowFeeWad.toString()
+      )
+        .dividedBy(WAD)
+        .toNumber(),
       hostFeePercentage: parsedData.config.fees.hostFeePercentage / 100,
       depositLimit: parsedData.config.depositLimit,
       reserveBorrowLimit: parsedData.config.borrowLimit,
@@ -563,7 +605,7 @@ type Position = {
   amount: BN;
 };
 
-type ObligationStats = {
+export type ObligationStats = {
   liquidationThreshold: number;
   userTotalDeposit: number;
   userTotalBorrow: number;
@@ -630,8 +672,6 @@ export class SolendObligation {
 
       userTotalDeposit = userTotalDeposit.plus(supplyAmountUSD);
 
-      console.log(userTotalDeposit.toNumber());
-
       borrowLimit = borrowLimit.plus(supplyAmountUSD.multipliedBy(loanToValue));
 
       liquidationThreshold = liquidationThreshold.plus(
@@ -649,7 +689,7 @@ export class SolendObligation {
     });
 
     let userTotalBorrow = new BigNumber(0);
-    console.log("----borrow-----");
+
     const borrows = obligation.borrows.map((borrow) => {
       const reserve = reserves.find(
         (reserve) => reserve.config.address === borrow.borrowReserve.toBase58()
@@ -668,26 +708,11 @@ export class SolendObligation {
         .multipliedBy(reserve!.data!.assetPriceUSD)
         .dividedBy("1".concat(Array(reserve!.data!.decimals + 1).join("0")));
 
-      console.log("borrow", userTotalBorrow.toNumber());
-      userTotalBorrow = userTotalBorrow.plus(borrowAmountUSD);
-
-      console.log(
-        "borrow",
-        reserve!.config.name,
-        borrowAmount.toString(),
-        reserve!.data!.assetPriceUSD
-      );
-      console.log(
-        "borrow",
-        reserve!.config.name,
-        Number(borrowAmount.toString()) * reserve!.data!.assetPriceUSD
-      );
-      console.log("borrow", borrowAmountUSD.toNumber());
-      console.log("borrow", userTotalBorrow.toNumber());
-
       if (!borrowAmount.eq(new BN("0"))) {
         positions += 1;
       }
+
+      userTotalBorrow = userTotalBorrow.plus(borrowAmountUSD);
 
       return {
         mintAddress: reserve!.config.mintAddress,

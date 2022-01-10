@@ -1,32 +1,37 @@
-export type Config = {
+export type ConfigType = {
   programID: string;
-  assets: Asset[];
-  oracles: Oracles;
-  markets: Market[];
+  assets: AssetType[];
+  oracles: OraclesType;
+  markets: MarketType[];
 };
-export type Asset = {
+
+export type AssetType = {
   name: string;
   symbol: string;
   decimals: number;
   mintAddress: string;
 };
-export type Oracles = {
+
+export type OraclesType = {
   pythProgramID: string;
   switchboardProgramID: string;
-  assets: OracleAsset[];
+  assets: OracleAssetType[];
 };
-export type OracleAsset = {
+
+export type OracleAssetType = {
   asset: string;
   priceAddress: string;
   switchboardFeedAddress: string;
 };
-export type Market = {
+
+export type MarketType = {
   name: string;
   address: string;
   authorityAddress: string;
-  reserves: Reserve[];
+  reserves: ReserveType[];
 };
-export type Reserve = {
+
+export type ReserveType = {
   asset: string;
   address: string;
   collateralMintAddress: string;

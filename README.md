@@ -2,12 +2,6 @@
 
 This SDK currently contains the primitives to parse and read Solend accounts and make lending transactions.
 
-## Installation
-
-```
-yarn add @solendprotocol/solend-sdk
-```
-
 ## Usage
 
 Follow along the examples directories for usages of:
@@ -19,3 +13,9 @@ Follow along the examples directories for usages of:
 Solend program addresses can be found in and
 
 - https://docs.solend.fi/protocol/addresses
+
+## Installation
+
+```
+yarn add @solendprotocol/solend-sdk
+```
