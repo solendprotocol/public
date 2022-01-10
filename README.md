@@ -61,6 +61,7 @@ const solendAction = await SolendAction.buildDepositTxns(
 
 ## Upcoming
 
+- Better support for obligation based actions (Fully repay borrow, max borrow up to borrow limit, etc.)
 - Showing and claiming past reward lots
 - Better caching of data
 - React hook API
