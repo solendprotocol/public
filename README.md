@@ -22,7 +22,7 @@ For the full set of developer tools, check out the brand new
 
 ## Basic usage
 
-### Reading account data
+### Reading data
 ```typescript
 // There are three levels of data you can request (and cache) about the lending market.
 // 1. Initalize market with parameters and metadata
@@ -43,6 +43,9 @@ console.log(reserve.stats.totalSupplyAPY().rewards); // {apy: 0.07, rewardMint: 
 
 // Refresh all cached data
 market.refreshAll()
+
+const obligation = market.fetchObligationByWallet('[WALLET_ID]');
+console.log(obligation.stats.borrowLimit)
 
 ```
 
