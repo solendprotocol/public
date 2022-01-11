@@ -60,7 +60,7 @@ const solendAction = await SolendAction.buildDepositTxns(
     'production'
   );
 
-  await solendAction.sendTransactions(sendTransaction); // sendTransaction from wallet adapter or custom
+await solendAction.sendTransactions(sendTransaction); // sendTransaction from wallet adapter or custom
 ```
 
 ## Upcoming

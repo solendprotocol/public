@@ -7,14 +7,14 @@ import { Obligation, parseObligation } from "../state/obligation";
 import BN from "bn.js";
 import { WAD, WANG } from "./constants";
 
-type RewardInfo = {
+export type RewardInfo = {
   rewardRate: string;
   rewardMint?: string;
   rewardSymbol: string;
   price: number;
 };
 
-type RewardsData = {
+export type RewardsData = {
   [key: string]: {
     supply: Array<RewardInfo>;
     borrow: Array<RewardInfo>;
@@ -249,7 +249,7 @@ export class SolendMarket {
       const externalReward = externalRewards[mintAddress];
 
       const supply = [
-        lmReward.supply
+        lmReward?.supply
           ? {
               rewardRate: this.getLatestRewardRate(
                 lmReward.supply.rewardRates,
@@ -260,7 +260,7 @@ export class SolendMarket {
               price: new BigNumber(priceData.SLND).toNumber(),
             }
           : null,
-        externalReward.supply
+        externalReward?.supply
           ? {
               rewardRate: this.getLatestRewardRate(
                 externalReward.supply.rewardRates,
@@ -274,7 +274,7 @@ export class SolendMarket {
       ].filter((x) => x);
 
       const borrow = [
-        lmReward.borrow
+        lmReward?.borrow
           ? {
               rewardRate: this.getLatestRewardRate(
                 lmReward.borrow.rewardRates,
@@ -285,7 +285,7 @@ export class SolendMarket {
               price: new BigNumber(priceData.SLND).toNumber(),
             }
           : null,
-        externalReward.borrow
+        externalReward?.borrow
           ? {
               rewardRate: this.getLatestRewardRate(
                 externalReward.borrow.rewardRates,
@@ -343,7 +343,7 @@ export class SolendMarket {
   }
 }
 
-type ReserveData = {
+export type ReserveData = {
   optimalUtilizationRate: number;
   loanToValueRatio: number;
   liquidationBonus: number;
@@ -606,7 +606,7 @@ export class SolendReserve {
   }
 }
 
-type Position = {
+export type Position = {
   mintAddress: string;
   amount: BN;
 };
