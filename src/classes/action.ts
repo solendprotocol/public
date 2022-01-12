@@ -35,13 +35,15 @@ import {
   refreshObligationInstruction,
   syncNative,
 } from "../instructions";
-import { WAD } from "./constants";
+import { U64_MAX, WAD } from "./constants";
 import BigNumber from "bignumber.js";
 import { parseReserve } from "..";
 
 export const POSITION_LIMIT = 6;
 
 const API_ENDPOINT = "https://api.solend.fi";
+
+const SOL_PADDING_FOR_INTEREST = "1000000";
 
 export type ActionType = "deposit" | "borrow" | "withdraw" | "repay";
 
@@ -321,7 +323,7 @@ export class SolendAction {
       environment
     );
 
-    axn.addSupportIxs("withdraw");
+    await axn.addSupportIxs("withdraw");
     await axn.addWithdrawIx();
 
     return axn;
@@ -332,6 +334,7 @@ export class SolendAction {
     amount: string,
     symbol: string,
     publicKey: PublicKey,
+    obligation?: Obligation,
     environment: "production" | "devnet" = "production"
   ) {
     const axn = await SolendAction.initialize(
@@ -343,7 +346,7 @@ export class SolendAction {
     );
 
     await axn.addSupportIxs("repay");
-    await axn.addRepayIx();
+    await axn.addRepayIx(obligation);
 
     return axn;
   }
@@ -508,10 +511,55 @@ export class SolendAction {
     );
   }
 
-  addRepayIx() {
+  async addRepayIx(obligation?: Obligation) {
+    let safeBorrow = new BN(this.amount);
+
+    if (obligation && this.symbol === "SOL" && this.amount === U64_MAX) {
+      const buffer = await this.connection.getAccountInfo(
+        new PublicKey(this.reserve.address),
+        "processed"
+      );
+
+      if (!buffer) {
+        throw Error(`Unable to fetch reserve data for ${this.reserve.asset}`);
+      }
+
+      const parsedData = parseReserve(
+        new PublicKey(this.reserve.address),
+        buffer
+      )?.info;
+
+      if (!parsedData) {
+        throw Error(`Unable to parse data of reserve ${this.reserve.asset}`);
+      }
+
+      const borrow = obligation.borrows.find(
+        (borrow) => borrow.borrowReserve.toBase58() === this.reserve.address
+      );
+
+      if (!borrow) {
+        throw Error(
+          `Unable to find obligation borrow to repay for ${obligation.owner.toBase58()}`
+        );
+      }
+
+      safeBorrow = new BN(
+        Math.floor(
+          new BigNumber(borrow.borrowedAmountWads.toString())
+            .multipliedBy(
+              parsedData.liquidity.cumulativeBorrowRateWads.toString()
+            )
+            .dividedBy(borrow.cumulativeBorrowRateWads.toString())
+            .dividedBy(WAD)
+            .plus(SOL_PADDING_FOR_INTEREST)
+            .toNumber()
+        ).toString()
+      );
+    }
+
     this.lendingIxs.push(
       repayObligationLiquidityInstruction(
-        new BN(this.amount),
+        safeBorrow,
         this.userTokenAccountAddress,
         new PublicKey(this.reserve.liquidityAddress),
         new PublicKey(this.reserve.address),
