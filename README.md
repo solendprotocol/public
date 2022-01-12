@@ -1,16 +1,14 @@
 **Note: The Solend TS is in early stages of release and is subject to changes and improvements. To report any bugs or feature requests, the #dev-support channel in the [Solend Discord](https://discord.gg/aGXvPNGXDT) is the fastest way to get a response.**
 
-
 ## Installation
 
 ```
 yarn add @solendprotocol/solend-sdk
 ```
 
-
 # Solend Typescript SDK
 
-This is the Solend Typescript to interact with http://solend.fi. 
+This is the Solend Typescript to interact with http://solend.fi.
 
 For the full set of developer tools, check out the brand new
 
@@ -19,10 +17,10 @@ For the full set of developer tools, check out the brand new
 
 [Latest API documentation](http://sdk.solend.fi/)
 
-
 ## Basic usage
 
 ### Reading data
+
 ```typescript
 // There are three levels of data you can request (and cache) about the lending market.
 // 1. Initalize market with parameters and metadata
@@ -50,15 +48,16 @@ console.log(obligation.stats.borrowLimit)
 ```
 
 ### Perform lending action
+
 ```typescript
 // Create one or more (may contain setup accuont creation txns) to perform a Solend action.
 const solendAction = await SolendAction.buildDepositTxns(
-    connection,
-    amountBase,
-    symbol,
-    publicKey,
-    'production'
-  );
+  connection,
+  amountBase,
+  symbol,
+  publicKey,
+  "production"
+);
 
 await solendAction.sendTransactions(sendTransaction); // sendTransaction from wallet adapter or custom
 ```
@@ -71,6 +70,7 @@ await solendAction.sendTransactions(sendTransaction); // sendTransaction from wa
 - React hook API
 
 ## FAQ
+
 #### Interest rates do not match what's show on solend.fi
 
 The Solend SDK pulls certain price data from cached sources from our backend api that's different from solend.fi's sources. Divergences should be very small and these price sources will soon be consolidated.
