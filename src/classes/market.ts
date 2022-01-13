@@ -6,6 +6,7 @@ import { parseReserve } from "../state/reserve";
 import { Obligation, parseObligation } from "../state/obligation";
 import BN from "bn.js";
 import { WAD, WANG } from "./constants";
+import axios from "axios";
 
 export type RewardInfo = {
   rewardRate: string;
@@ -106,8 +107,8 @@ export class SolendMarket {
   ) {
     const market = new SolendMarket(connection);
     const rawConfig = (await (
-      await fetch(`${API_ENDPOINT}/v1/config?deployment=${environment}`)
-    ).json()) as ConfigType;
+      await axios.get(`${API_ENDPOINT}/v1/config?deployment=${environment}`)
+    ).data) as ConfigType;
     market.config = formatReserveConfig(rawConfig);
     market.reserves = market.config.reserves.map(
       (res) => new SolendReserve(res, market, connection)
@@ -167,8 +168,8 @@ export class SolendMarket {
 
   private async loadLMRewardData() {
     const data = (
-      await fetch(`${API_ENDPOINT}/liquidity-mining/reward-stats`)
-    ).json() as Promise<{
+      await axios.get(`${API_ENDPOINT}/liquidity-mining/reward-stats`)
+      ).data as Promise<{
       [key: string]: RewardResponse;
     }>;
 
@@ -177,8 +178,8 @@ export class SolendMarket {
 
   private async loadExternalRewardData() {
     const data = (
-      await fetch(`${API_ENDPOINT}/liquidity-mining/external-reward-stats`)
-    ).json() as Promise<{
+      await axios.get(`${API_ENDPOINT}/liquidity-mining/external-reward-stats`)
+    ).data as Promise<{
       [key: string]: ExternalRewardResponse;
     }>;
 
@@ -187,8 +188,8 @@ export class SolendMarket {
 
   private async loadPriceData(symbols: Array<string>) {
     const data = (await (
-      await fetch(`${API_ENDPOINT}/v1/prices/?symbols=${symbols.join(",")}`)
-    ).json()) as {
+      await axios.get(`${API_ENDPOINT}/v1/prices/?symbols=${symbols.join(",")}`)
+    ).data) as {
       results: Array<{
         identifier: string;
         price: string;
