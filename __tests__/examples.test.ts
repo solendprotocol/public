@@ -1,5 +1,4 @@
-import "isomorphic-fetch";
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { SolendMarket } from "../dist";
 
 describe("calculate", function () {
@@ -12,9 +11,9 @@ describe("calculate", function () {
     const market = await SolendMarket.initialize(
       connection
     );
-    await market.loadReservesData();
-    await market.loadRewardData();
+    await market.loadReserves();
+    await market.loadRewards();
     const reserve = market.reserves.find(res => res.config.symbol === 'USDC');
-    expect(reserve!.data!.decimals).toEqual(6);
+    expect(reserve!.stats!.decimals).toEqual(6);
   });
 });

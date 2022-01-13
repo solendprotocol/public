@@ -38,6 +38,7 @@ import {
 import { U64_MAX, WAD } from "./constants";
 import BigNumber from "bignumber.js";
 import { parseReserve } from "..";
+import axios from "axios";
 
 export const POSITION_LIMIT = 6;
 
@@ -161,8 +162,8 @@ export class SolendAction {
     hostAta?: PublicKey
   ) {
     const solendInfo = (await (
-      await fetch(`${API_ENDPOINT}/v1/config?deployment=${environment}`)
-    ).json()) as ConfigType;
+      await axios.get(`${API_ENDPOINT}/v1/config?deployment=${environment}`)
+    ).data) as ConfigType;
 
     const lendingMarket = solendInfo.markets.find(
       (market) => market.name === "main"
