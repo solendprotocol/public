@@ -1,5 +1,4 @@
-import "isomorphic-fetch";
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { SolendMarket } from "../dist";
 
 describe("calculate", function () {
