@@ -573,9 +573,7 @@ export class SolendAction {
 
   async addSupportIxs(action: ActionType) {
     await this.addRefreshIxs(action === "deposit");
-    if (action !== "deposit") {
-      await this.addObligationIxs();
-    }
+    await this.addObligationIxs();
     await this.addAtaIxs(action);
   }
 
