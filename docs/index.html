@@ -9,7 +9,7 @@
 <a href="#solend-typescript-sdk" id="solend-typescript-sdk" style="color: inherit; text-decoration: none;">
   <h1>Solend Typescript SDK</h1>
 </a>
-<p>This is the Solend Typescript to interact with <a href="http://solend.fi">http://solend.fi</a>. </p>
+<p>This is the Solend Typescript to interact with <a href="http://solend.fi">http://solend.fi</a>.</p>
 <p>For the full set of developer tools, check out the brand new</p>
 <p><a href="https://dev.solend.fi/">
 <img width="200" alt="Screen Shot 2022-01-09 at 5 54 30 PM" src="https://user-images.githubusercontent.com/89805726/148710356-a6cdb798-934a-459d-b795-d4a1099168db.png"></a></p>
@@ -28,7 +28,7 @@
 <a href="#perform-lending-action" id="perform-lending-action" style="color: inherit; text-decoration: none;">
   <h3>Perform lending action</h3>
 </a>
-<pre><code class="language-typescript"><span class="hl-2">// Create one or more (may contain setup accuont creation txns) to perform a Solend action.</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-4">solendAction</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-0">SolendAction</span><span class="hl-1">.</span><span class="hl-6">buildDepositTxns</span><span class="hl-1">(</span><br/><span class="hl-1">    </span><span class="hl-0">connection</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-0">amountBase</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-0">symbol</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-0">publicKey</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-7">&#39;production&#39;</span><br/><span class="hl-1">  );</span><br/><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-0">solendAction</span><span class="hl-1">.</span><span class="hl-6">sendTransactions</span><span class="hl-1">(</span><span class="hl-0">sendTransaction</span><span class="hl-1">); </span><span class="hl-2">// sendTransaction from wallet adapter or custom</span>
+<pre><code class="language-typescript"><span class="hl-2">// Create one or more (may contain setup accuont creation txns) to perform a Solend action.</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-4">solendAction</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-0">SolendAction</span><span class="hl-1">.</span><span class="hl-6">buildDepositTxns</span><span class="hl-1">(</span><br/><span class="hl-1">  </span><span class="hl-0">connection</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">amountBase</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">symbol</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">publicKey</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-7">&quot;production&quot;</span><br/><span class="hl-1">);</span><br/><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-0">solendAction</span><span class="hl-1">.</span><span class="hl-6">sendTransactions</span><span class="hl-1">(</span><span class="hl-0">sendTransaction</span><span class="hl-1">); </span><span class="hl-2">// sendTransaction from wallet adapter or custom</span>
 </code></pre>
 
 <a href="#upcoming" id="upcoming" style="color: inherit; text-decoration: none;">
