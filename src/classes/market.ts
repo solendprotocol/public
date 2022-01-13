@@ -169,7 +169,7 @@ export class SolendMarket {
   private async loadLMRewardData() {
     const data = (
       await axios.get(`${API_ENDPOINT}/liquidity-mining/reward-stats`)
-      ).data as Promise<{
+    ).data as Promise<{
       [key: string]: RewardResponse;
     }>;
 
