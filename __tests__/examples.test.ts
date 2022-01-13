@@ -12,9 +12,9 @@ describe("calculate", function () {
     const market = await SolendMarket.initialize(
       connection
     );
-    await market.loadReservesData();
-    await market.loadRewardData();
+    await market.loadReserves();
+    await market.loadRewards();
     const reserve = market.reserves.find(res => res.config.symbol === 'USDC');
-    expect(reserve!.data!.decimals).toEqual(6);
+    expect(reserve!.stats!.decimals).toEqual(6);
   });
 });
