@@ -335,7 +335,6 @@ export class SolendAction {
     amount: string,
     symbol: string,
     publicKey: PublicKey,
-    obligation?: Obligation,
     environment: "production" | "devnet" = "production"
   ) {
     const axn = await SolendAction.initialize(
@@ -347,7 +346,7 @@ export class SolendAction {
     );
 
     await axn.addSupportIxs("repay");
-    await axn.addRepayIx(obligation);
+    await axn.addRepayIx();
 
     return axn;
   }
@@ -490,12 +489,14 @@ export class SolendAction {
 
     this.lendingIxs.push(
       withdrawObligationCollateralAndRedeemReserveLiquidity(
-        new BN(
-          new BigNumber(this.amount)
-            .dividedBy(cTokenExchangeRate)
-            .integerValue(BigNumber.ROUND_FLOOR)
-            .toString()
-        ),
+      this.amount === U64_MAX
+        ? new BN(this.amount)
+        : new BN(
+            new BigNumber(this.amount)
+              .dividedBy(cTokenExchangeRate)
+              .integerValue(BigNumber.ROUND_FLOOR)
+              .toString(),
+          ),
         new PublicKey(this.reserve.collateralSupplyAddress),
         this.userCollateralAccountAddress,
         new PublicKey(this.reserve.address),
@@ -512,55 +513,10 @@ export class SolendAction {
     );
   }
 
-  async addRepayIx(obligation?: Obligation) {
-    let safeBorrow = new BN(this.amount);
-
-    if (obligation && this.symbol === "SOL" && this.amount === U64_MAX) {
-      const buffer = await this.connection.getAccountInfo(
-        new PublicKey(this.reserve.address),
-        "processed"
-      );
-
-      if (!buffer) {
-        throw Error(`Unable to fetch reserve data for ${this.reserve.asset}`);
-      }
-
-      const parsedData = parseReserve(
-        new PublicKey(this.reserve.address),
-        buffer
-      )?.info;
-
-      if (!parsedData) {
-        throw Error(`Unable to parse data of reserve ${this.reserve.asset}`);
-      }
-
-      const borrow = obligation.borrows.find(
-        (borrow) => borrow.borrowReserve.toBase58() === this.reserve.address
-      );
-
-      if (!borrow) {
-        throw Error(
-          `Unable to find obligation borrow to repay for ${obligation.owner.toBase58()}`
-        );
-      }
-
-      safeBorrow = new BN(
-        Math.floor(
-          new BigNumber(borrow.borrowedAmountWads.toString())
-            .multipliedBy(
-              parsedData.liquidity.cumulativeBorrowRateWads.toString()
-            )
-            .dividedBy(borrow.cumulativeBorrowRateWads.toString())
-            .dividedBy(WAD)
-            .plus(SOL_PADDING_FOR_INTEREST)
-            .toNumber()
-        ).toString()
-      );
-    }
-
+  async addRepayIx() {
     this.lendingIxs.push(
       repayObligationLiquidityInstruction(
-        safeBorrow,
+        new BN(this.amount),
         this.userTokenAccountAddress,
         new PublicKey(this.reserve.liquidityAddress),
         new PublicKey(this.reserve.address),
@@ -721,13 +677,61 @@ export class SolendAction {
       this.connection
     );
 
+    let safeRepay = new BN(this.amount);
+
+    if (
+      this.obligationAccountInfo &&
+      action === 'repay' &&
+      this.amount === U64_MAX
+    ) {
+      const buffer = await this.connection.getAccountInfo(
+        new PublicKey(this.reserve.address),
+        'processed',
+      );
+
+      if (!buffer) {
+        throw Error(`Unable to fetch reserve data for ${this.reserve.asset}`);
+      }
+
+      const parsedData = parseReserve(
+        new PublicKey(this.reserve.address),
+        buffer,
+      )?.info;
+
+      if (!parsedData) {
+        throw Error(`Unable to parse data of reserve ${this.reserve.asset}`);
+      }
+
+      const borrow = this.obligationAccountInfo.borrows.find(
+        (borrow) => borrow.borrowReserve.toBase58() === this.reserve.address,
+      );
+
+      if (!borrow) {
+        throw Error(
+          `Unable to find obligation borrow to repay for ${this.obligationAccountInfo.owner.toBase58()}`,
+        );
+      }
+
+      safeRepay = new BN(
+        Math.floor(
+          new BigNumber(borrow.borrowedAmountWads.toString())
+            .multipliedBy(
+              parsedData.liquidity.cumulativeBorrowRateWads.toString(),
+            )
+            .dividedBy(borrow.cumulativeBorrowRateWads.toString())
+            .dividedBy(WAD)
+            .plus(SOL_PADDING_FOR_INTEREST)
+            .toNumber(),
+        ).toString(),
+      );
+    }
     const sendAction = action === "deposit" || action === "repay";
     const transferLamportsIx = SystemProgram.transfer({
       fromPubkey: this.publicKey,
       toPubkey: this.userTokenAccountAddress,
       lamports:
         (userWSOLAccountInfo ? 0 : rentExempt) +
-        (sendAction ? parseInt(this.amount, 10) : 0),
+        (sendAction ? parseInt(safeRepay.toString(), 10) : 0),
     });
     preIxs.push(transferLamportsIx);
 
@@ -769,7 +773,7 @@ export class SolendAction {
       ]),
     ].length;
 
-    if (distinctReserveCount >= POSITION_LIMIT - 1) {
+    if (distinctReserveCount >= POSITION_LIMIT) {
       this.preTxnIxs.push(...preIxs);
       this.postTxnIxs.push(...postIxs);
     } else {
