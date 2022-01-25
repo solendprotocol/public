@@ -20,11 +20,10 @@ import { LendingInstruction } from "./instruction";
 ///   2. `[]` Deposit reserve account - refreshed.
 ///   3. `[writable]` Obligation account.
 ///   4. `[]` Lending market account.
-///   5. `[]` Derived lending market authority.
-///   6. `[signer]` Obligation owner.
-///   7. `[signer]` User transfer authority ($authority).
-///   8. `[]` Clock sysvar.
-///   9. `[]` Token program id.
+///   5. `[signer]` Obligation owner.
+///   6. `[signer]` User transfer authority ($authority).
+///   7. `[]` Clock sysvar.
+///   8. `[]` Token program id.
 export const depositObligationCollateralInstruction = (
   collateralAmount: number | BN,
   sourceCollateral: PublicKey,
@@ -32,7 +31,6 @@ export const depositObligationCollateralInstruction = (
   depositReserve: PublicKey,
   obligation: PublicKey,
   lendingMarket: PublicKey,
-  lendingMarketAuthority: PublicKey,
   obligationOwner: PublicKey,
   transferAuthority: PublicKey,
   solendProgramAddress: PublicKey
@@ -57,7 +55,6 @@ export const depositObligationCollateralInstruction = (
     { pubkey: depositReserve, isSigner: false, isWritable: false },
     { pubkey: obligation, isSigner: false, isWritable: true },
     { pubkey: lendingMarket, isSigner: false, isWritable: false },
-    { pubkey: lendingMarketAuthority, isSigner: false, isWritable: false },
     { pubkey: obligationOwner, isSigner: true, isWritable: false },
     { pubkey: transferAuthority, isSigner: true, isWritable: false },
     { pubkey: SYSVAR_CLOCK_PUBKEY, isSigner: false, isWritable: false },
