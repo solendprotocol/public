@@ -489,14 +489,14 @@ export class SolendAction {
 
     this.lendingIxs.push(
       withdrawObligationCollateralAndRedeemReserveLiquidity(
-      this.amount === U64_MAX
-        ? new BN(this.amount)
-        : new BN(
-            new BigNumber(this.amount)
-              .dividedBy(cTokenExchangeRate)
-              .integerValue(BigNumber.ROUND_FLOOR)
-              .toString(),
-          ),
+        this.amount === U64_MAX
+          ? new BN(this.amount)
+          : new BN(
+              new BigNumber(this.amount)
+                .dividedBy(cTokenExchangeRate)
+                .integerValue(BigNumber.ROUND_FLOOR)
+                .toString()
+            ),
         new PublicKey(this.reserve.collateralSupplyAddress),
         this.userCollateralAccountAddress,
         new PublicKey(this.reserve.address),
@@ -681,12 +681,12 @@ export class SolendAction {
 
     if (
       this.obligationAccountInfo &&
-      action === 'repay' &&
+      action === "repay" &&
       this.amount === U64_MAX
     ) {
       const buffer = await this.connection.getAccountInfo(
         new PublicKey(this.reserve.address),
-        'processed',
+        "processed"
       );
 
       if (!buffer) {
@@ -695,7 +695,7 @@ export class SolendAction {
 
       const parsedData = parseReserve(
         new PublicKey(this.reserve.address),
-        buffer,
+        buffer
       )?.info;
 
       if (!parsedData) {
@@ -703,12 +703,12 @@ export class SolendAction {
       }
 
       const borrow = this.obligationAccountInfo.borrows.find(
-        (borrow) => borrow.borrowReserve.toBase58() === this.reserve.address,
+        (borrow) => borrow.borrowReserve.toBase58() === this.reserve.address
       );
 
       if (!borrow) {
         throw Error(
-          `Unable to find obligation borrow to repay for ${this.obligationAccountInfo.owner.toBase58()}`,
+          `Unable to find obligation borrow to repay for ${this.obligationAccountInfo.owner.toBase58()}`
         );
       }
 
@@ -716,13 +716,13 @@ export class SolendAction {
         Math.floor(
           new BigNumber(borrow.borrowedAmountWads.toString())
             .multipliedBy(
-              parsedData.liquidity.cumulativeBorrowRateWads.toString(),
+              parsedData.liquidity.cumulativeBorrowRateWads.toString()
             )
             .dividedBy(borrow.cumulativeBorrowRateWads.toString())
             .dividedBy(WAD)
             .plus(SOL_PADDING_FOR_INTEREST)
-            .toNumber(),
-        ).toString(),
+            .toNumber()
+        ).toString()
       );
     }
     const sendAction = action === "deposit" || action === "repay";

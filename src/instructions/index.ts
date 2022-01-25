@@ -10,3 +10,5 @@ export * from "./withdrawObligationCollateral";
 export * from "./depositReserveLiquidityAndObligationCollateral";
 export * from "./withdrawObligationCollateralAndRedeemReserveLiquidity";
 export * from "./syncNative";
+export * from "./initLendingMarket";
+export * from "./initReserve";
