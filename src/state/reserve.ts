@@ -50,6 +50,30 @@ export interface ReserveConfig {
   borrowLimit: BN;
 }
 
+export const ReserveConfigLayout = BufferLayout.struct(
+  [
+    BufferLayout.u8("optimalUtilizationRate"),
+    BufferLayout.u8("loanToValueRatio"),
+    BufferLayout.u8("liquidationBonus"),
+    BufferLayout.u8("liquidationThreshold"),
+    BufferLayout.u8("minBorrowRate"),
+    BufferLayout.u8("optimalBorrowRate"),
+    BufferLayout.u8("maxBorrowRate"),
+    BufferLayout.struct(
+      [
+        Layout.uint64("borrowFeeWad"),
+        Layout.uint64("flashLoanFeeWad"),
+        BufferLayout.u8("hostFeePercentage"),
+      ],
+      "fees"
+    ),
+    Layout.uint64("depositLimit"),
+    Layout.uint64("borrowLimit"),
+    Layout.publicKey("feeReceiver"),
+  ],
+  "config"
+);
+
 export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
   [
     BufferLayout.u8("version"),
@@ -84,31 +108,7 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
       ],
       "collateral"
     ),
-
-    BufferLayout.struct(
-      [
-        BufferLayout.u8("optimalUtilizationRate"),
-        BufferLayout.u8("loanToValueRatio"),
-        BufferLayout.u8("liquidationBonus"),
-        BufferLayout.u8("liquidationThreshold"),
-        BufferLayout.u8("minBorrowRate"),
-        BufferLayout.u8("optimalBorrowRate"),
-        BufferLayout.u8("maxBorrowRate"),
-        BufferLayout.struct(
-          [
-            Layout.uint64("borrowFeeWad"),
-            Layout.uint64("flashLoanFeeWad"),
-            BufferLayout.u8("hostFeePercentage"),
-          ],
-          "fees"
-        ),
-        Layout.uint64("depositLimit"),
-        Layout.uint64("borrowLimit"),
-        Layout.publicKey("feeReceiver"),
-      ],
-      "config"
-    ),
-
+    ReserveConfigLayout,
     BufferLayout.blob(256, "padding"),
   ]
 );
