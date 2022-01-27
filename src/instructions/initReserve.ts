@@ -6,12 +6,13 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import * as BufferLayout from "buffer-layout";
+import BN from "bn.js";
 import * as Layout from "../utils/layout";
 import { ReserveConfig, ReserveConfigLayout } from "../state";
 import { LendingInstruction } from "./instruction";
 
 export const initReserveInstruction = (
-  liquidityAmount: number | bigint,
+  liquidityAmount: number | BN,
   config: ReserveConfig,
   sourceLiquidity: PublicKey,
   destinationCollateral: PublicKey,
@@ -39,7 +40,7 @@ export const initReserveInstruction = (
   dataLayout.encode(
     {
       instruction: LendingInstruction.InitReserve,
-      liquidityAmount: BigInt(liquidityAmount),
+      liquidityAmount: new BN(liquidityAmount),
       config,
     },
     data
