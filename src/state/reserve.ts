@@ -45,6 +45,7 @@ export interface ReserveConfig {
   maxBorrowRate: number;
   fees: {
     borrowFeeWad: BN;
+    flashLoanFeeWad: BN;
     hostFeePercentage: number;
   };
   depositLimit: BN;
