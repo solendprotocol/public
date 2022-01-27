@@ -24,6 +24,7 @@
     "axios": "^0.24.0",
     "bignumber.js": "^9.0.2",
     "bn.js": "^5.2.0",
+    "buffer": "^6.0.3",
     "buffer-layout": "^1.2.0",
     "isomorphic-fetch": "^3.0.0"
   },
