@@ -6,6 +6,7 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import * as BufferLayout from "buffer-layout";
+import * as Layout from "../utils/layout";
 import { ReserveConfig, ReserveConfigLayout } from "../state";
 import { LendingInstruction } from "./instruction";
 
@@ -30,7 +31,7 @@ export const initReserveInstruction = (
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
     BufferLayout.u8("instruction"),
-    BufferLayout.u64("liquidityAmount"),
+    Layout.uint64("liquidityAmount"),
     ReserveConfigLayout,
   ]);
 

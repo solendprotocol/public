@@ -2,6 +2,7 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import * as BufferLayout from "buffer-layout";
+import { Buffer } from 'buffer';
 import * as Layout from "../utils/layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
 
