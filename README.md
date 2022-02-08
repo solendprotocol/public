@@ -25,7 +25,9 @@ For the full set of developer tools, check out the brand new
 // There are three levels of data you can request (and cache) about the lending market.
 // 1. Initalize market with parameters and metadata
 const market = await SolendMarket.initialize(
-  connection
+  connection,
+  'production', // optional environment argument
+  new PublicKey('7RCz8wb6WXxUhAigok9ttgrVgDFFFbibcirECzWSBauM'), // optional market address (TURBO SOL). Defaults to 'Main' market
 );
 console.log(market.reserves.map(reserve => reserve.config.loanToValueRatio);
 
@@ -56,7 +58,8 @@ const solendAction = await SolendAction.buildDepositTxns(
   amountBase,
   symbol,
   publicKey,
-  "production"
+  "production",
+  new PublicKey('7RCz8wb6WXxUhAigok9ttgrVgDFFFbibcirECzWSBauM'), // optional market address (TURBO SOL). Defaults to 'Main' market
 );
 
 await solendAction.sendTransactions(sendTransaction); // sendTransaction from wallet adapter or custom
