@@ -29,6 +29,7 @@ export type MarketType = {
   address: string;
   authorityAddress: string;
   reserves: ReserveType[];
+  isPrimary: boolean;
 };
 
 export type ReserveType = {
