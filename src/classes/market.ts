@@ -52,7 +52,9 @@ type FormattedMarketConfig = ReturnType<typeof formatReserveConfig>;
 const API_ENDPOINT = "https://api.solend.fi";
 
 function formatReserveConfig(config: ConfigType, marketAddress?: string) {
-  const market = marketAddress ? config.markets.find((mar) => mar.address === marketAddress) : (config.markets.find(mar => mar.isPrimary) ?? config.markets[0]);
+  const market = marketAddress
+    ? config.markets.find((mar) => mar.address === marketAddress)
+    : config.markets.find((mar) => mar.isPrimary) ?? config.markets[0];
   if (!market) {
     throw Error("No markets found.");
   }
@@ -104,7 +106,7 @@ export class SolendMarket {
   static async initialize(
     connection: Connection,
     environment: "production" | "devnet" = "production",
-    marketAddress?: string,
+    marketAddress?: string
   ) {
     const market = new SolendMarket(connection);
     const rawConfig = (await (
@@ -439,13 +441,13 @@ export class SolendReserve {
         optimalBorrowRate;
     }
 
-  const SLOTS_PER_YEAR = 63072000;
-  const apy =
-    new BigNumber(1)
-      .plus(new BigNumber(borrowAPR).dividedBy(63072000))
-      .toNumber() **
-      SLOTS_PER_YEAR -
-    1;
+    const SLOTS_PER_YEAR = 63072000;
+    const apy =
+      new BigNumber(1)
+        .plus(new BigNumber(borrowAPR).dividedBy(63072000))
+        .toNumber() **
+        SLOTS_PER_YEAR -
+      1;
 
     return apy;
   }
@@ -503,20 +505,23 @@ export class SolendReserve {
       );
     }
 
-    const rewards = this.market.rewardsData[this.config.mintAddress].supply.map(
-      (reward) => ({
-        rewardMint: reward.rewardMint,
-        rewardSymbol: reward.rewardSymbol,
-        apy: this.calculateRewardAPY(
-          reward.rewardRate,
-          stats.totalDepositsWads.toString(),
-          reward.price,
-          stats.assetPriceUSD,
-          this.config.decimals
-        ).toNumber(),
-        price: reward.price,
-      })
-    );
+    const rewards = this.market.config?.isPrimary
+      ? this.market.rewardsData[this.config.mintAddress].supply.map(
+          (reward) => ({
+            rewardMint: reward.rewardMint,
+            rewardSymbol: reward.rewardSymbol,
+            apy: this.calculateRewardAPY(
+              reward.rewardRate,
+              stats.totalDepositsWads.toString(),
+              reward.price,
+              stats.assetPriceUSD,
+              this.config.decimals
+            ).toNumber(),
+            price: reward.price,
+          })
+        )
+      : [];
+
     const totalAPY = new BigNumber(stats.supplyInterestAPY)
       .plus(
         rewards.reduce((acc, reward) => acc.plus(reward.apy), new BigNumber(0))
@@ -538,20 +543,22 @@ export class SolendReserve {
       );
     }
 
-    const rewards = this.market.rewardsData[this.config.mintAddress].borrow.map(
-      (reward) => ({
-        rewardMint: reward.rewardMint,
-        rewardSymbol: reward.rewardSymbol,
-        apy: this.calculateRewardAPY(
-          reward.rewardRate,
-          stats.totalBorrowsWads.toString(),
-          reward.price,
-          stats.assetPriceUSD,
-          this.config.decimals
-        ).toNumber(),
-        price: reward.price,
-      })
-    );
+    const rewards = this.market.config?.isPrimary
+      ? this.market.rewardsData[this.config.mintAddress].borrow.map(
+          (reward) => ({
+            rewardMint: reward.rewardMint,
+            rewardSymbol: reward.rewardSymbol,
+            apy: this.calculateRewardAPY(
+              reward.rewardRate,
+              stats.totalBorrowsWads.toString(),
+              reward.price,
+              stats.assetPriceUSD,
+              this.config.decimals
+            ).toNumber(),
+            price: reward.price,
+          })
+        )
+      : [];
     const totalAPY = new BigNumber(stats.borrowInterestAPY)
       .minus(
         rewards.reduce((acc, reward) => acc.plus(reward.apy), new BigNumber(0))

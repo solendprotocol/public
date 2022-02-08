@@ -27,7 +27,7 @@ import {
 import BN from "bn.js";
 import {
   depositReserveLiquidityAndObligationCollateralInstruction,
-  depositReserveLiquidityInstruction,	
+  depositReserveLiquidityInstruction,
   redeemReserveCollateralInstruction,
   repayObligationLiquidityInstruction,
   withdrawObligationCollateralAndRedeemReserveLiquidity,
@@ -49,14 +49,14 @@ const API_ENDPOINT = "https://api.solend.fi";
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
 
-export type ActionType =	
-| 'deposit'	
-| 'borrow'	
-| 'withdraw'	
-| 'repay'	
-| 'mint'	
-| 'redeem'
-| 'depositCollateral';
+export type ActionType =
+  | "deposit"
+  | "borrow"
+  | "withdraw"
+  | "repay"
+  | "mint"
+  | "redeem"
+  | "depositCollateral";
 
 function getTokenInfo(symbol: string, solendInfo: ConfigType) {
   const tokenInfo = solendInfo.assets.find((asset) => asset.symbol === symbol);
@@ -171,15 +171,18 @@ export class SolendAction {
     connection: Connection,
     environment: "production" | "devnet" = "production",
     lendingMarketAddress?: PublicKey,
-    hostAta?: PublicKey,
+    hostAta?: PublicKey
   ) {
     const solendInfo = (await (
       await axios.get(`${API_ENDPOINT}/v1/config?deployment=${environment}`)
     ).data) as ConfigType;
 
-    const lendingMarket = solendInfo.markets.find((market) => market.address === lendingMarketAddress?.toString()) ?? solendInfo.markets.find(
-      (market) => market.isPrimary
-    ) ?? solendInfo.markets[0];
+    const lendingMarket =
+      solendInfo.markets.find(
+        (market) => market.address === lendingMarketAddress?.toString()
+      ) ??
+      solendInfo.markets.find((market) => market.isPrimary) ??
+      solendInfo.markets[0];
 
     const seed = lendingMarket.address.slice(0, 32);
 
@@ -205,7 +208,7 @@ export class SolendAction {
     if (obligationAccountInfo) {
       obligationDetails = parseObligation(
         PublicKey.default,
-        obligationAccountInfo,
+        obligationAccountInfo
       )!.info;
 
       obligationDetails.deposits.forEach((deposit) => {
@@ -222,13 +225,13 @@ export class SolendAction {
       [
         ...new Set([
           ...borrowReserves.map((e) => e.toBase58()),
-          ...(action === 'borrow' ? [reserve.address] : []),
+          ...(action === "borrow" ? [reserve.address] : []),
         ]),
       ].length +
       [
         ...new Set([
           ...depositReserves.map((e) => e.toBase58()),
-          ...(action === 'deposit' ? [reserve.address] : []),
+          ...(action === "deposit" ? [reserve.address] : []),
         ]),
       ].length;
 
@@ -279,16 +282,16 @@ export class SolendAction {
     symbol: string,
     publicKey: PublicKey,
     environment: "production" | "devnet" = "production",
-    lendingMarketAddress?: PublicKey,
+    lendingMarketAddress?: PublicKey
   ) {
     const axn = await SolendAction.initialize(
-      'deposit',
+      "deposit",
       amount,
       symbol,
       publicKey,
       connection,
       environment,
-      lendingMarketAddress,
+      lendingMarketAddress
     );
 
     await axn.addSupportIxs("deposit");
@@ -307,14 +310,14 @@ export class SolendAction {
     lendingMarketAddress?: PublicKey
   ) {
     const axn = await SolendAction.initialize(
-      'borrow',
+      "borrow",
       amount,
       symbol,
       publicKey,
       connection,
       environment,
       lendingMarketAddress,
-      hostAta,
+      hostAta
     );
 
     await axn.addSupportIxs("borrow");
@@ -322,70 +325,70 @@ export class SolendAction {
 
     return axn;
   }
-  static async buildDepositReserveLiquidityTxns(	
-    connection: Connection,	
-    amount: string | BN,	
-    symbol: string,	
-    publicKey: PublicKey,	
+  static async buildDepositReserveLiquidityTxns(
+    connection: Connection,
+    amount: string | BN,
+    symbol: string,
+    publicKey: PublicKey,
     environment: "production" | "devnet" = "production",
     lendingMarketAddress?: PublicKey
-  ) {	
-    const axn = await SolendAction.initialize(	
-      'mint',		
-      amount,	
-      symbol,	
-      publicKey,	
-      connection,	
+  ) {
+    const axn = await SolendAction.initialize(
+      "mint",
+      amount,
+      symbol,
+      publicKey,
+      connection,
       environment,
-      lendingMarketAddress,
-    );	
-    await axn.addSupportIxs('mint');	
-    await axn.addDepositReserveLiquidityIx();	
-    return axn;	
+      lendingMarketAddress
+    );
+    await axn.addSupportIxs("mint");
+    await axn.addDepositReserveLiquidityIx();
+    return axn;
   }
 
-  static async buildRedeemReserveCollateralTxns(	
-    connection: Connection,	
-    amount: string | BN,	
-    symbol: string,	
-    publicKey: PublicKey,	
+  static async buildRedeemReserveCollateralTxns(
+    connection: Connection,
+    amount: string | BN,
+    symbol: string,
+    publicKey: PublicKey,
     environment: "production" | "devnet" = "production",
     lendingMarketAddress?: PublicKey
-  ) {	
-    const axn = await SolendAction.initialize(	
-      'redeem',	
-      amount,	
-      symbol,	
-      publicKey,	
-      connection,	
+  ) {
+    const axn = await SolendAction.initialize(
+      "redeem",
+      amount,
+      symbol,
+      publicKey,
+      connection,
       environment,
-      lendingMarketAddress,
-    );	
-    await axn.addSupportIxs('redeem');	
-    await axn.addRedeemReserveCollateralIx();	
-    return axn;	
+      lendingMarketAddress
+    );
+    await axn.addSupportIxs("redeem");
+    await axn.addRedeemReserveCollateralIx();
+    return axn;
   }
 
-  static async buildDepositObligationCollateralTxns(	
-    connection: Connection,	
-    amount: string | BN,	
-    symbol: string,	
-    publicKey: PublicKey,	
+  static async buildDepositObligationCollateralTxns(
+    connection: Connection,
+    amount: string | BN,
+    symbol: string,
+    publicKey: PublicKey,
     environment: "production" | "devnet" = "production",
     lendingMarketAddress?: PublicKey
-  ) {	
-    const axn = await SolendAction.initialize(	
-      'depositCollateral',	
-      amount,	
-      symbol,	
-      publicKey,	
-      connection,	
+  ) {
+    const axn = await SolendAction.initialize(
+      "depositCollateral",
+      amount,
+      symbol,
+      publicKey,
+      connection,
       environment,
-      lendingMarketAddress,
-    );	
-    await axn.addSupportIxs('depositCollateral');	
-    await axn.addDepositObligationCollateralIx();	
-    return axn;	
+      lendingMarketAddress
+    );
+    await axn.addSupportIxs("depositCollateral");
+    await axn.addDepositObligationCollateralIx();
+    return axn;
   }
 
   static async buildWithdrawTxns(
@@ -397,7 +400,7 @@ export class SolendAction {
     lendingMarketAddress?: PublicKey
   ) {
     const axn = await SolendAction.initialize(
-      'withdraw',
+      "withdraw",
       amount,
       symbol,
       publicKey,
@@ -418,10 +421,10 @@ export class SolendAction {
     symbol: string,
     publicKey: PublicKey,
     environment: "production" | "devnet" = "production",
-    lendingMarketAddress?: PublicKey,
+    lendingMarketAddress?: PublicKey
   ) {
     const axn = await SolendAction.initialize(
-      'repay',
+      "repay",
       amount,
       symbol,
       publicKey,
@@ -525,7 +528,7 @@ export class SolendAction {
       )
     );
   }
-  
+
   addDepositReserveLiquidityIx() {
     this.lendingIxs.push(
       depositReserveLiquidityInstruction(
@@ -539,7 +542,7 @@ export class SolendAction {
         new PublicKey(this.lendingMarket.authorityAddress),
         this.publicKey, // transferAuthority
         new PublicKey(this.solendInfo.programID)
-      ),
+      )
     );
   }
 
@@ -556,7 +559,7 @@ export class SolendAction {
         new PublicKey(this.lendingMarket.authorityAddress), // lendingMarketAuthority
         this.publicKey, // transferAuthority
         new PublicKey(this.solendInfo.programID)
-      ),
+      )
     );
   }
 
@@ -572,7 +575,7 @@ export class SolendAction {
         this.publicKey, // obligationOwner
         this.publicKey, // transferAuthority
         new PublicKey(this.solendInfo.programID)
-      ),
+      )
     );
   }
 
@@ -664,10 +667,10 @@ export class SolendAction {
   }
 
   async addSupportIxs(action: ActionType) {
-    if (['withdraw', 'borrow'].includes(action)) {
+    if (["withdraw", "borrow"].includes(action)) {
       await this.addRefreshIxs();
     }
-    if (!['mint', 'redeem'].includes(action)) {
+    if (!["mint", "redeem"].includes(action)) {
       await this.addObligationIxs();
     }
     await this.addAtaIxs(action);
@@ -775,9 +778,7 @@ export class SolendAction {
       }
     }
 
-    if (
-      action === 'withdraw' || action === 'mint' || action === 'deposit'
-    ) {
+    if (action === "withdraw" || action === "mint" || action === "deposit") {
       const userCollateralAccountInfo = await this.connection.getAccountInfo(
         this.userCollateralAccountAddress
       );
@@ -793,7 +794,7 @@ export class SolendAction {
             this.publicKey
           );
 
-        if (this.positions === 6 && this.symbol === 'SOL') {
+        if (this.positions === 6 && this.symbol === "SOL") {
           this.preTxnIxs.push(createUserCollateralAccountIx);
         } else {
           this.setupIxs.push(createUserCollateralAccountIx);
