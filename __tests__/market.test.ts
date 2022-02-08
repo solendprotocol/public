@@ -32,7 +32,7 @@ describe("calculate", function () {
     await market.loadReserves();
     await market.loadRewards();
     const reserve = market.reserves.find(res => res.config.symbol === 'USDC');
-    expect(await reserve!.totalBorrowAPY()).toEqual([]);
+    expect((await reserve!.totalBorrowAPY()).rewards).toEqual([]);
     expect(reserve!.stats!.optimalUtilizationRate).toEqual(0.8);
   });
 
