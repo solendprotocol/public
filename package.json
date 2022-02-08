@@ -1,6 +1,6 @@
 {
   "name": "@solendprotocol/solend-sdk",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
