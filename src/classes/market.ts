@@ -8,6 +8,8 @@ import BN from "bn.js";
 import { WAD, WANG } from "./constants";
 import axios from "axios";
 
+const SLOTS_PER_YEAR = 63072000;
+
 export type RewardInfo = {
   rewardRate: string;
   rewardMint?: string;
@@ -400,10 +402,32 @@ export class SolendReserve {
     this.connection = connection;
   }
 
-  private calculateSupplyAPY(reserve: ParsedReserve) {
+  private calculateSupplyAPY = (reserve: ParsedReserve) => {
+    const apr = this.calculateSupplyAPR(reserve);
+    const apy =
+      new BigNumber(1)
+        .plus(new BigNumber(apr).dividedBy(SLOTS_PER_YEAR))
+        .toNumber() **
+        SLOTS_PER_YEAR -
+      1;
+    return apy;
+  };
+
+  private calculateBorrowAPY = (reserve: ParsedReserve) => {
+    const apr = this.calculateBorrowAPR(reserve);
+    const apy =
+      new BigNumber(1)
+        .plus(new BigNumber(apr).dividedBy(SLOTS_PER_YEAR))
+        .toNumber() **
+        SLOTS_PER_YEAR -
+      1;
+    return apy;
+  };
+
+  private calculateSupplyAPR(reserve: ParsedReserve) {
     const currentUtilization = this.calculateUtilizationRatio(reserve);
 
-    const borrowAPY = this.calculateBorrowAPY(reserve);
+    const borrowAPY = this.calculateBorrowAPR(reserve);
     return currentUtilization * borrowAPY;
   }
 
@@ -420,7 +444,7 @@ export class SolendReserve {
     return currentUtilization;
   }
 
-  private calculateBorrowAPY(reserve: ParsedReserve) {
+  private calculateBorrowAPR(reserve: ParsedReserve) {
     const currentUtilization = this.calculateUtilizationRatio(reserve);
     const optimalUtilization = reserve.config.optimalUtilizationRate / 100;
 
@@ -441,15 +465,7 @@ export class SolendReserve {
         optimalBorrowRate;
     }
 
-    const SLOTS_PER_YEAR = 63072000;
-    const apy =
-      new BigNumber(1)
-        .plus(new BigNumber(borrowAPR).dividedBy(63072000))
-        .toNumber() **
-        SLOTS_PER_YEAR -
-      1;
-
-    return apy;
+    return borrowAPR;
   }
 
   setBuffer(buffer: AccountInfo<Buffer> | null) {
