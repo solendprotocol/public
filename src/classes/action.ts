@@ -770,7 +770,7 @@ export class SolendAction {
             this.publicKey
           );
 
-        if (this.positions === 6 && this.hostAta) {
+        if (this.positions === POSITION_LIMIT && this.hostAta) {
           this.preTxnIxs.push(createUserTokenAccountIx);
         } else {
           this.setupIxs.push(createUserTokenAccountIx);
@@ -794,7 +794,7 @@ export class SolendAction {
             this.publicKey
           );
 
-        if (this.positions === 6 && this.symbol === "SOL") {
+        if (this.positions === POSITION_LIMIT && this.symbol === "SOL") {
           this.preTxnIxs.push(createUserCollateralAccountIx);
         } else {
           this.setupIxs.push(createUserCollateralAccountIx);
@@ -903,16 +903,7 @@ export class SolendAction {
       postIxs.push(closeWSOLAccountIx);
     }
 
-    // Union of addresses
-    const distinctReserveCount = [
-      ...new Set([
-        ...this.depositReserves.map((e) => e.toBase58()),
-        ...this.borrowReserves.map((e) => e.toBase58()),
-        this.reserve.address,
-      ]),
-    ].length;
-
-    if (distinctReserveCount >= POSITION_LIMIT) {
+    if (this.positions && this.positions >= POSITION_LIMIT) {
       this.preTxnIxs.push(...preIxs);
       this.postTxnIxs.push(...postIxs);
     } else {
