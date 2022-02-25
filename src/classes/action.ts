@@ -667,7 +667,7 @@ export class SolendAction {
   }
 
   async addSupportIxs(action: ActionType) {
-    if (!['deposit', 'repay'].includes(action)) {
+    if (["withdraw", "borrow"].includes(action)) {
       await this.addRefreshIxs();
     }
     if (!["mint", "redeem"].includes(action)) {
@@ -864,7 +864,7 @@ export class SolendAction {
       this.connection
     );
 
-    const sendAction = action === "deposit" || action === "repay" || action === "mint";
+    const sendAction = action === "deposit" || action === "repay";
     const transferLamportsIx = SystemProgram.transfer({
       fromPubkey: this.publicKey,
       toPubkey: this.userTokenAccountAddress,
