@@ -5,10 +5,8 @@ import BigNumber from "bignumber.js";
 import { parseReserve } from "../state/reserve";
 import { Obligation, parseObligation } from "../state/obligation";
 import BN from "bn.js";
-import { WAD, WANG } from "./constants";
+import { WAD, WANG, SLOTS_PER_YEAR } from "./constants";
 import axios from "axios";
-
-const SLOTS_PER_YEAR = 63072000;
 
 export type RewardInfo = {
   rewardRate: string;
