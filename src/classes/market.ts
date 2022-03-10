@@ -432,12 +432,12 @@ export class SolendReserve {
   private calculateUtilizationRatio(reserve: ParsedReserve) {
     const totalBorrowsWads = new BigNumber(
       reserve.liquidity.borrowedAmountWads.toString()
-    )
-      .div(WAD)
+    ).div(WAD);
+    const currentUtilization = totalBorrowsWads
+      .dividedBy(
+        totalBorrowsWads.plus(reserve.liquidity.availableAmount.toString())
+      )
       .toNumber();
-    const currentUtilization =
-      totalBorrowsWads /
-      (reserve.liquidity.availableAmount.toNumber() + totalBorrowsWads);
 
     return currentUtilization;
   }
