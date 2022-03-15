@@ -14,8 +14,8 @@
       "mintAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
     },
     {
-      "name": "Ethereum",
-      "symbol": "ETH",
+      "name": "Sollet Ethereum",
+      "symbol": "soETH",
       "decimals": 6,
       "mintAddress": "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk"
     },
@@ -84,6 +84,12 @@
       "symbol": "mSOL",
       "decimals": 9,
       "mintAddress": "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"
+    },
+    {
+      "name": "Wormhole Ethereum",
+      "symbol": "ETH",
+      "decimals": 8,
+      "mintAddress": "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"
     }
   ],
   "markets": [
@@ -118,7 +124,7 @@
           "liquidityFeeReceiverAddress": "Cpyk5WRGmdK2yFGTJCrmgyABPiNEF5eCyCMMZLxpdkXu"
         },
         {
-          "asset": "ETH",
+          "asset": "soETH",
           "address": "3PArRsZQ6SLkr1WERZWyC6AqsajtALMq4C66ZMYz4dKQ",
           "collateralMintAddress": "AppJPZka33cu4DyUenFe9Dc1ZmZ3oQju6mBn9k37bNAa",
           "collateralSupplyAddress": "2Yv6ZgZ9ccV8bCYD7T5t2kcAQYRbukMKha6NiPQ8cFAT",
@@ -186,6 +192,14 @@
           "liquidityAddress": "CNREdzCSa2X5HQ6xjDZ1jd2XN3nmwTHfQkYj9pWAZuXs",
           "liquidityFeeReceiverAddress": "8hWXJ8jY6WrnbRM47hJZbstfBz3eX9HtsPTHvv2RJH2D",
           "userSupplyCap": 4000000
+        },
+        {
+          "asset": "ETH",
+          "address": "CPDiKagfozERtJ33p7HHhEfJERjvfk1VAjMXAFLrvrKP",
+          "collateralMintAddress": "FbKvdbx5h6F86h1pZuEqv7FxwmsVhJ88cDuSqHvLm6Xf",
+          "collateralSupplyAddress": "8HAaZSiCbVqrLDQHxg3yey8JWuGbeyC2tNTEmzgmt4C4",
+          "liquidityAddress": "BtGoQiwEWUZQfNaxSxzBgRikfT1rx3hSkzjQEWvktEMe",
+          "liquidityFeeReceiverAddress": "86FvZEpX1y6pK5E6JPLbhoBvp6P2n1givZiikFGgi6Lj"
         }
       ]
     }
