@@ -29,7 +29,7 @@ const market = await SolendMarket.initialize(
   'production', // optional environment argument
   new PublicKey('7RCz8wb6WXxUhAigok9ttgrVgDFFFbibcirECzWSBauM'), // optional market address (TURBO SOL). Defaults to 'Main' market
 );
-console.log(market.reserves.map(reserve => reserve.config.loanToValueRatio);
+console.log(market.reserves.map(reserve => reserve.config.loanToValueRatio));
 
 // 2. Read on-chain accounts for reserve data and cache
 await market.loadReserves();
