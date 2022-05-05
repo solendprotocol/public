@@ -1,6 +1,7 @@
 import { Connection, Keypair, Transaction, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { SolendAction, SolendMarket } from "../src";
+const util = require('util')
+import { SolendAction, SolendMarket } from "../dist";
 
 jest.setTimeout(50_000);
 
