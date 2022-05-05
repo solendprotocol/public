@@ -864,7 +864,8 @@ export class SolendAction {
       this.connection
     );
 
-    const sendAction = action === "deposit" || action === "repay" || action === "mint";
+    const sendAction =
+      action === "deposit" || action === "repay" || action === "mint";
     const transferLamportsIx = SystemProgram.transfer({
       fromPubkey: this.publicKey,
       toPubkey: this.userTokenAccountAddress,
