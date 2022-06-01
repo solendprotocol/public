@@ -17,6 +17,8 @@
     "lint": "prettier --write .; prettier --check .;eslint ."
   },
   "dependencies": {
+    "@mithraic-labs/psy-american": "^0.2.1",
+    "@project-serum/anchor": "^0.24.2",
     "@pythnetwork/client": "^2.5.1",
     "@solana/buffer-layout": "^4.0.0",
     "@solana/spl-token": "^0.1.8",
