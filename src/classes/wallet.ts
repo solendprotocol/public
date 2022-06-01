@@ -23,19 +23,6 @@ import { estimateCurrentScore } from "./utils";
 
 const API_ENDPOINT = "https://api.solend.fi";
 
-export type FullClaimDataType = ClaimData & {
-  claimed: boolean;
-  claimedAt: number;
-  claimStatusBump: number;
-  claimable: boolean;
-  distributor: {
-    mint: PublicKey;
-    bump: number;
-  };
-  claimId: PublicKey;
-  distributorATAPublicKey: PublicKey;
-};
-
 type ClaimType = {
   obligationID: string;
   lotNumber: number;
@@ -61,6 +48,11 @@ export type EnrichedClaimType = {
   distributorATAPublicKey: PublicKey;
   claimId: PublicKey;
   claimStatusBump: number;
+  optionMarket:
+    | (OptionMarketWithKey & {
+        userBalance: number;
+      })
+    | null;
 } & ClaimType;
 
 type RewardStatType = {
@@ -98,24 +90,6 @@ type ExternalRewardScoreType = RewardScoreType & {
   reserveID: string;
   rewardMint: string;
   rewardSymbol: string;
-};
-
-type ClaimData = {
-  name: string;
-  obligationID: string;
-  lotNumber: number;
-  index: number;
-  quantity: string;
-  root: string;
-  proof: Array<string>;
-  distributorPublicKey: PublicKey;
-  optionMarketKey: PublicKey | null;
-  incentivizer: string;
-  optionMarket:
-    | (OptionMarketWithKey & {
-        userBalance: number;
-      })
-    | null;
 };
 
 type SolendReward = {
