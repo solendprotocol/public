@@ -226,7 +226,7 @@ export class SolendMarket {
 
   async loadRewards() {
     if (!this.config) {
-      throw Error("Market must be initialized to call initialize.");
+      throw Error("Market must be initialized to call loadRewards.");
     }
 
     const promises = [
