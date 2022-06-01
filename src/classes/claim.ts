@@ -4,6 +4,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { PsyAmericanIdl, getOptionByKey } from "@mithraic-labs/psy-american";
 import * as anchor from "@project-serum/anchor";
 import { EnrichedClaimType } from "./wallet";
 import {
@@ -25,6 +26,101 @@ export class SolendClaim {
   constructor(metadata: EnrichedClaimType, provider: anchor.AnchorProvider) {
     this.metadata = metadata;
     this.provider = provider;
+  }
+
+  async exerciseOption(amount: number) {
+    if (!this.metadata.optionMarketKey) {
+      throw Error(
+        "This reward is not an option and does not need to be exercised"
+      );
+    }
+    const psyOptionsProgram = new anchor.Program(
+      PsyAmericanIdl,
+      new PublicKey("R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs"),
+      this.provider
+    ) as any;
+
+    // Mint a bunch of contracts to the minter
+    const optionMarket = await getOptionByKey(
+      psyOptionsProgram,
+      new PublicKey(this.metadata.optionMarketKey)
+    );
+
+    if (!optionMarket) {
+      throw new Error("Option market with that key is not found.");
+    }
+    const ixs = [];
+
+    const claimantTokenAccountAddress = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      optionMarket.underlyingAssetMint,
+      this.provider.wallet.publicKey,
+      true
+    );
+
+    const claimantTokenAccountInfo =
+      await this.provider.connection.getAccountInfo(
+        claimantTokenAccountAddress
+      );
+
+    if (!claimantTokenAccountInfo) {
+      const createUserTokenAccountIx =
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          optionMarket.underlyingAssetMint,
+          claimantTokenAccountAddress,
+          this.provider.wallet.publicKey,
+          this.provider.wallet.publicKey
+        );
+      ixs.push(createUserTokenAccountIx);
+    }
+
+    const exerciserOptionTokenSrc = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      optionMarket.optionMint,
+      this.provider.wallet.publicKey
+    );
+    const underlyingAssetDest = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      optionMarket.underlyingAssetMint,
+      this.provider.wallet.publicKey
+    );
+    const quoteAssetSrc = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      optionMarket.quoteAssetMint,
+      this.provider.wallet.publicKey
+    );
+
+    if (!optionMarket) {
+      throw new Error("Option market with that key is not found.");
+    }
+
+    const exerciseOptionIx = psyOptionsProgram.instruction.exerciseOptionV2(
+      new anchor.BN(amount),
+      {
+        accounts: {
+          userAuthority: this.provider.wallet.publicKey,
+          optionAuthority: this.provider.wallet.publicKey,
+          optionMarket: optionMarket.key,
+          optionMint: optionMarket.optionMint,
+          exerciserOptionTokenSrc,
+          underlyingAssetPool: optionMarket.underlyingAssetPool,
+          underlyingAssetDest,
+          quoteAssetPool: optionMarket.quoteAssetPool,
+          quoteAssetSrc,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        },
+      }
+    );
+
+    return await this.provider.sendAndConfirm(
+      new Transaction().add(...ixs, exerciseOptionIx)
+    );
   }
 
   async getClaimTransaction() {
