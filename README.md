@@ -64,11 +64,42 @@ const solendAction = await SolendAction.buildDepositTxns(
 await solendAction.sendTransactions(sendTransaction); // sendTransaction from wallet adapter or custom
 ```
 
+### Manage user rewards
+
+```typescript
+const { wallet } = useWallet();
+// const wallet = anchor.Wallet.local();
+
+const solendWallet = await SolendWallet.initialize(wallet, connection);
+
+// Claim rewards
+const mndeRewards =
+  solendWallet.rewards["MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey"];
+console.log(
+  "Claimable rewards:",
+  mndeRewards.claimableAmount / 10 ** mndeRewards.decimals
+);
+
+const sig1 = await mndeRewards.rewardClaims
+  .find((claim) => !claim.metadata.claimedAt)
+  ?.claim();
+
+// Exercise options (after claiming)
+const slndOptionClaim = solendWallet.rewards["SLND_OPTION"].rewardClaims.find(
+  (claim) => claim.metadata.optionMarket.userBalance
+);
+
+const sig2 = await slndOptionClaim.exercise(
+  slndOptionClaim.optionMarket.userBalance
+);
+
+const [setupIxs, claimIxs] = await solendWallet.getClaimIxs();
+// Claim all claimable rewards
+```
+
 ## Upcoming
 
 - Better support for obligation based actions (Fully repay borrow, max borrow up to borrow limit, etc.)
-- Showing and claiming past reward lots
-- Better caching of data
 - React hook API
 
 ## FAQ

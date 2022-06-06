@@ -23,7 +23,7 @@ import { estimateCurrentScore } from "./utils";
 
 const API_ENDPOINT = "https://api.solend.fi";
 
-type ClaimType = {
+export type ClaimType = {
   obligationID: string;
   lotNumber: number;
   index: number;
@@ -92,7 +92,7 @@ type ExternalRewardScoreType = RewardScoreType & {
   rewardSymbol: string;
 };
 
-type SolendReward = {
+export type SolendReward = {
   lifetimeAmount: number;
   symbol: string;
   claimedAmount: number;
@@ -137,7 +137,6 @@ export class SolendWallet {
       this.provider
     );
 
-    console.log(this.provider);
     const psyOptionsProgram = new anchor.Program(
       PsyAmericanIdl,
       new PublicKey("R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs"),
@@ -311,15 +310,13 @@ export class SolendWallet {
       mostRecentSlot
     )) as number;
 
-    const rewards = fullData
-      .filter((d) => !["slnd_options", "slnd"].includes(d.incentivizer))
-      .reduce((acc, currentValue) => {
-        if (!acc[currentValue.distributor.mint]) {
-          acc[currentValue.distributor.mint] = [];
-        }
-        acc[currentValue.distributor.mint].push(currentValue);
-        return acc;
-      }, {} as { [mint: string]: Array<EnrichedClaimType> });
+    const rewards = fullData.reduce((acc, currentValue) => {
+      if (!acc[currentValue.distributor.mint]) {
+        acc[currentValue.distributor.mint] = [];
+      }
+      acc[currentValue.distributor.mint].push(currentValue);
+      return acc;
+    }, {} as { [mint: string]: Array<EnrichedClaimType> });
 
     const externalEarningsData = externalScoreData.reduce(
       (acc, rewardScore) => {
@@ -337,14 +334,13 @@ export class SolendWallet {
             ).toNumber()
           : 0;
 
-          console.log(acc, rewardScore);
-
         return {
           ...acc,
           [rewardScore.rewardMint]: {
             symbol: rewardScore.rewardSymbol,
             lifetimeAmount:
-              (acc[rewardScore.rewardMint]?.lifetimeAmount ?? 0) + Number(currentScore)/10**36,
+              (acc[rewardScore.rewardMint]?.lifetimeAmount ?? 0) +
+              Number(currentScore),
           },
         };
       },
@@ -394,16 +390,20 @@ export class SolendWallet {
       },
     };
 
-    const rewardMetaData = (
-      await( await axios.get(
-          `${API_ENDPOINT}/tokens/?symbols=${Object.values(rewardsData).map(rew => rew.symbol).join(',')}`
+    const rewardMetadata = (
+      await (
+        await axios.get(
+          `${API_ENDPOINT}/tokens/?symbols=${Object.values(rewardsData)
+            .map((rew) => rew.symbol)
+            .join(",")}`
         )
-      ).data).results as Array<{
-      coingeckoID : string,
-      decimals: number,
-      logo : string,
-      mint: string,
-      name: string,
+      ).data
+    ).results as Array<{
+      coingeckoID: string;
+      decimals: number;
+      logo: string;
+      mint: string;
+      name: string;
       symbol: string;
     }>;
 
@@ -411,26 +411,45 @@ export class SolendWallet {
       Object.entries(rewardsData).map(([rewardMint, earning]) => {
         const rewardData = rewards[rewardMint];
         const rewardClaims = fullData
-          .filter((lot) =>  lot.mintAddress.toBase58() === rewardMint)
+          .filter((lot) => lot.mintAddress.toBase58() === rewardMint)
           .map((reward) => new SolendClaim(reward, this.provider));
-        const metadata = rewardMetaData.find(rew => rew?.mint === rewardMint)
+        const metadata = rewardMetadata.find(
+          (rew) => rew?.symbol === earning.symbol
+        );
 
         return [
           rewardMint,
           {
             ...earning,
             ...metadata,
-            lifetimeAmount: earning.lifetimeAmount  / (10**(36 - (metadata?.decimals ?? 0))),
-            claimedAmount: rewardData
-              ?.filter((reward) => reward.claimedAt)
-              .reduce((acc, reward) => acc + Number(reward.quantity), 0) ?? 0,
-            claimableAmount: rewardData
-              ?.filter((reward) => !reward.claimedAt && reward.claimable)
-              .reduce((acc, reward) => acc + Number(reward.quantity), 0) ?? 0,
+            lifetimeAmount:
+              earning.lifetimeAmount / 10 ** (36 - (metadata?.decimals ?? 0)),
+            claimedAmount:
+              rewardData
+                ?.filter((reward) => reward.claimedAt)
+                .reduce((acc, reward) => acc + Number(reward.quantity), 0) ?? 0,
+            claimableAmount:
+              rewardData
+                ?.filter((reward) => !reward.claimedAt && reward.claimable)
+                .reduce((acc, reward) => acc + Number(reward.quantity), 0) ?? 0,
             rewardClaims: rewardClaims,
           },
         ];
       })
     );
+  }
+
+  async getClaimAllIxs() {
+    const allSetupIxs = [];
+    const allClaimIxs = [];
+    for (const claim of Object.values(this.rewards).flatMap(
+      (reward) => reward.rewardClaims
+    )) {
+      const [setupIxs, claimIxs] = await claim.getClaimIxs();
+      allSetupIxs.push(...setupIxs);
+      allClaimIxs.push(...claimIxs);
+    }
+
+    return [allSetupIxs, allClaimIxs];
   }
 }
