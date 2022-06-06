@@ -28,7 +28,7 @@ export class SolendClaim {
     this.provider = provider;
   }
 
-  async exerciseOption(amount: number) {
+  async getExerciseIxs(amount: number) {
     if (!this.metadata.optionMarketKey) {
       throw Error(
         "This reward is not an option and does not need to be exercised"
@@ -49,7 +49,8 @@ export class SolendClaim {
     if (!optionMarket) {
       throw new Error("Option market with that key is not found.");
     }
-    const ixs = [];
+    const setupIxs = [];
+    const exerciseIxs = [];
 
     const claimantTokenAccountAddress = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -74,7 +75,7 @@ export class SolendClaim {
           this.provider.wallet.publicKey,
           this.provider.wallet.publicKey
         );
-      ixs.push(createUserTokenAccountIx);
+      setupIxs.push(createUserTokenAccountIx);
     }
 
     const exerciserOptionTokenSrc = await Token.getAssociatedTokenAddress(
@@ -118,18 +119,22 @@ export class SolendClaim {
       }
     );
 
-    return await this.provider.sendAndConfirm(
-      new Transaction().add(...ixs, exerciseOptionIx)
-    );
+    exerciseIxs.push(exerciseOptionIx);
+
+    return [setupIxs, exerciseIxs];
   }
 
-  async getClaimTransaction() {
+  async getClaimIxs() {
+    if (!this.metadata.claimable || this.metadata.claimedAt) {
+      return [[], []];
+    }
     const anchorProgram = new anchor.Program(
       MerkleDistributorJSON,
       new PublicKey(MERKLE_PROGRAM_ID),
       this.provider
     );
-    const ixs = [];
+    const setupIxs = [];
+    const claimIxs = [];
 
     const claimantTokenAccountAddress = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -154,7 +159,7 @@ export class SolendClaim {
           this.provider.wallet.publicKey,
           this.provider.wallet.publicKey
         );
-      ixs.push(createUserTokenAccountIx);
+      setupIxs.push(createUserTokenAccountIx);
     }
 
     const claimIx = anchorProgram.instruction.claim(
@@ -176,12 +181,15 @@ export class SolendClaim {
       }
     );
 
-    ixs.push(claimIx);
+    claimIxs.push(claimIx);
 
-    return new Transaction().add(...ixs);
+    return [setupIxs, claimIxs];
   }
 
   async claim() {
-    return await this.provider.sendAndConfirm(await this.getClaimTransaction());
+    const [setupIxs, claimIxs] = await this.getClaimIxs();
+    return await this.provider.sendAndConfirm(
+      new Transaction().add(...setupIxs, ...claimIxs)
+    );
   }
 }

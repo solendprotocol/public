@@ -6,19 +6,6 @@ import { SolendAction, SolendMarket, SolendWallet } from "../src";
 jest.setTimeout(50_000);
 
 describe("calculate", function () {
-  it("reads wallet", async function () {
-    const connection = new Connection('https://api.mainnet-beta.solana.com', {
-      commitment: "finalized",
-    });
-      const wallet = anchor.Wallet.local();
-      const solendWallet = await SolendWallet.initialize(
-        wallet,
-        connection,
-      );
-
-      console.log(solendWallet);
-  });
-
   it("reads solend main market", async function () {
     const connection = new Connection('https://api.mainnet-beta.solana.com', {
       commitment: "finalized",
