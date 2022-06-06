@@ -2,3 +2,4 @@ dist/
 __tests__/
 docs/
 node_modules/
+*.md
