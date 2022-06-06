@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@pythnetwork/client": "^2.5.1",
-    "@solana/buffer-layout": "^3.0.0",
+    "@solana/buffer-layout": "^4.0.0",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.31.0",
     "axios": "^0.24.0",
