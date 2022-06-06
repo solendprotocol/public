@@ -137,6 +137,7 @@ export class SolendWallet {
       this.provider
     );
 
+    console.log(this.provider);
     const psyOptionsProgram = new anchor.Program(
       PsyAmericanIdl,
       new PublicKey("R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs"),
@@ -336,12 +337,14 @@ export class SolendWallet {
             ).toNumber()
           : 0;
 
+          console.log(acc, rewardScore);
+
         return {
           ...acc,
           [rewardScore.rewardMint]: {
             symbol: rewardScore.rewardSymbol,
             lifetimeAmount:
-              acc[rewardScore.rewardMint].lifetimeAmount + Number(currentScore),
+              (acc[rewardScore.rewardMint]?.lifetimeAmount ?? 0) + Number(currentScore)/10**36,
           },
         };
       },
@@ -391,24 +394,40 @@ export class SolendWallet {
       },
     };
 
+    const rewardMetaData = (
+      await( await axios.get(
+          `${API_ENDPOINT}/tokens/?symbols=${Object.values(rewardsData).map(rew => rew.symbol).join(',')}`
+        )
+      ).data).results as Array<{
+      coingeckoID : string,
+      decimals: number,
+      logo : string,
+      mint: string,
+      name: string,
+      symbol: string;
+    }>;
+
     this.rewards = Object.fromEntries(
       Object.entries(rewardsData).map(([rewardMint, earning]) => {
         const rewardData = rewards[rewardMint];
         const rewardClaims = fullData
-          .filter((lot) => lot.mintAddress === rewardMint)
+          .filter((lot) =>  lot.mintAddress.toBase58() === rewardMint)
           .map((reward) => new SolendClaim(reward, this.provider));
+        const metadata = rewardMetaData.find(rew => rew?.mint === rewardMint)
 
         return [
           rewardMint,
           {
             ...earning,
+            ...metadata,
+            lifetimeAmount: earning.lifetimeAmount  / (10**(36 - (metadata?.decimals ?? 0))),
             claimedAmount: rewardData
-              .filter((reward) => reward.claimedAt)
-              .reduce((acc, reward) => acc + Number(reward.quantity), 0),
+              ?.filter((reward) => reward.claimedAt)
+              .reduce((acc, reward) => acc + Number(reward.quantity), 0) ?? 0,
             claimableAmount: rewardData
-              .filter((reward) => !reward.claimedAt && reward.claimable)
-              .reduce((acc, reward) => acc + Number(reward.quantity), 0),
-            rewardClaims,
+              ?.filter((reward) => !reward.claimedAt && reward.claimable)
+              .reduce((acc, reward) => acc + Number(reward.quantity), 0) ?? 0,
+            rewardClaims: rewardClaims,
           },
         ];
       })
