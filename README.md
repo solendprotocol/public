@@ -73,8 +73,7 @@ const { wallet } = useWallet();
 const solendWallet = await SolendWallet.initialize(wallet, connection);
 
 // Claim rewards
-const mndeRewards =
-  solendWallet.rewards["MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey"];
+const mndeRewards = solendWallet.rewards["MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey"];
 console.log(
   "Claimable rewards:",
   mndeRewards.claimableAmount / 10 ** mndeRewards.decimals
