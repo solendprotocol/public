@@ -49,6 +49,9 @@ export interface ReserveConfig {
   };
   depositLimit: BN;
   borrowLimit: BN;
+  feeReceiver?: PublicKey;
+  protocolLiquidationFee: number;
+  protocolTakeRate: number;
 }
 
 export const ReserveConfigLayout = BufferLayout.struct(
