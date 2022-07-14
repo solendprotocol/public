@@ -627,7 +627,7 @@ export class SolendAction {
 
     this.lendingIxs.push(
       withdrawObligationCollateralAndRedeemReserveLiquidity(
-        this.amount === new BN(U64_MAX)
+        this.amount.eq(new BN(U64_MAX))
           ? this.amount
           : new BN(
               new BigNumber(this.amount.toString())
@@ -812,7 +812,7 @@ export class SolendAction {
     if (
       this.obligationAccountInfo &&
       action === "repay" &&
-      this.amount === new BN(U64_MAX)
+      this.amount.eq(new BN(U64_MAX))
     ) {
       const buffer = await this.connection.getAccountInfo(
         new PublicKey(this.reserve.address),
