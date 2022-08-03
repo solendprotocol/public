@@ -148,7 +148,7 @@ export class SolendReserve {
       throw Error(`Unable to parse data of reserve ${this.config.name}`);
     }
 
-    this.stats = await this.formatReserveData(parsedData);
+    this.stats = this.formatReserveData(parsedData);
   }
 
   calculateRewardAPY(
