@@ -36,7 +36,6 @@ export const flashBorrowReserveLiquidityInstruction = (
     [lendingMarket.toBytes()],
     lendingProgramId
   );
-  console.log(`neery: ${lendingMarketAuthority}`);
 
   const keys = [
     { pubkey: sourceLiquidity, isSigner: false, isWritable: true },
