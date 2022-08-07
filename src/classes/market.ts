@@ -104,7 +104,7 @@ export class SolendMarket {
 
   static async initialize(
     connection: Connection,
-    environment: "production" | "devnet" = "production",
+    environment: "production" | "devnet" | "beta" = "production",
     marketAddress?: string
   ) {
     const market = new SolendMarket(connection);

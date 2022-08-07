@@ -13,3 +13,5 @@ export * from "./syncNative";
 export * from "./initLendingMarket";
 export * from "./initReserve";
 export * from "./updateReserveConfig";
+export * from "./flashBorrowReserveLiquidity";
+export * from "./flashRepayReserveLiquidity";
