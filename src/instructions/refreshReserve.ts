@@ -1,6 +1,5 @@
 import {
   PublicKey,
-  SYSVAR_CLOCK_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
 import * as BufferLayout from "buffer-layout";
@@ -39,11 +38,6 @@ export const refreshReserveInstruction = (
     });
   }
 
-  keys.push({
-    pubkey: SYSVAR_CLOCK_PUBKEY,
-    isSigner: false,
-    isWritable: false,
-  });
   return new TransactionInstruction({
     keys,
     programId: solendProgramAddress,
