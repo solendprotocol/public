@@ -1,11 +1,14 @@
 /* eslint-disable no-unused-vars */
 import JSBI from "jsbi";
+import { readFileSync } from "fs";
+import path from "path";
 import {
-  Connection,
-  Keypair,
-  Transaction,
-  PublicKey,
-} from "@solana/web3.js";
+  Marinade,
+  MarinadeConfig,
+  Wallet,
+  Provider,
+} from "@marinade.finance/marinade-ts-sdk";
+import { Connection, Keypair, Transaction, PublicKey } from "@solana/web3.js";
 import {
   SOLEND_BETA_PROGRAM_ID,
   flashBorrowReserveLiquidityInstruction,
@@ -34,17 +37,38 @@ const NULL_PUBKEY = new PublicKey(
   "nu11111111111111111111111111111111111111111"
 );
 
-const SOLANA_RPC_ENDPOINT = "https://solend.rpcpool.com/a3e03ba77d5e870c8c694b19d61c"
+const SOLANA_RPC_ENDPOINT =
+  "https://solend.rpcpool.com/a3e03ba77d5e870c8c694b19d61c";
 const OBLIGATION = new PublicKey(
   "HQNn9kb7QyCuu2QxuE6yd8cJRebpBq824cu1gM6gRRVb"
 );
+const connection = new Connection(SOLANA_RPC_ENDPOINT);
 
-const WALLET_PRIVATE_KEY: number[] = JSON.parse(
-  process.env.WALLET_PRIVATE_KEY || "[]"
-);
-export const USER_KEYPAIR = Keypair.fromSecretKey(
-  Uint8Array.from(WALLET_PRIVATE_KEY)
-);
+// const WALLET_PRIVATE_KEY: number[] = JSON.parse(
+//   process.env.WALLET_PRIVATE_KEY || "[]"
+// );
+// export const USER_KEYPAIR = Keypair.fromSecretKey(
+//   Uint8Array.from(WALLET_PRIVATE_KEY)
+// );
+
+const readKeyfile = (filePath: string): Keypair => {
+  if (filePath[0] == "~") {
+    filePath = path.join(process.env.HOME as string, filePath.slice(1));
+  }
+
+  return Keypair.fromSecretKey(
+    Uint8Array.from(JSON.parse(readFileSync(filePath, { encoding: "utf-8" })))
+  );
+};
+
+export const USER_KEYPAIR = readKeyfile("~/.config/solana/id.json");
+
+const wallet = new Wallet(USER_KEYPAIR);
+const config = new MarinadeConfig({
+  connection,
+  publicKey: wallet.publicKey,
+});
+const marinade = new Marinade(config);
 
 const U64_MAX = new BN("18446744073709551615"); // jank life
 
@@ -61,7 +85,7 @@ const getATA = async (mintAddress: PublicKey, owner: PublicKey) => {
   );
 };
 
-const AMM = "Serum";
+const AMM = "Orca";
 
 const lever = async (
   lendingProgramId: PublicKey,
@@ -74,29 +98,34 @@ const lever = async (
   shortReserveSwitchboard: PublicKey,
   obligation: Obligation,
   jupiter: Jupiter,
-  flashLoanAmount: number, // quantity of tokens to flash bhorrow
-  inputAmount: number // quantity of tokens already available in obligation owner's wallet
+  flashLoanAmount: number // quantity of tokens to flash bhorrow
+  // inputAmount: number // quantity of tokens already available in obligation owner's wallet
 ) => {
   if (longReserve == null || shortReserve == null || obligation == null) {
     throw "1";
   }
 
   const payer = obligation.info.owner;
+  // const payer = USER_KEYPAIR.publicKey;
 
   // invariant: user will get market value of (flashLoanAmount + inputAmount) tokens in the longReserve mint type.
   const routes = await jupiter.computeRoutes({
     inputMint: new PublicKey(shortReserve.info.liquidity.mintPubkey),
     outputMint: new PublicKey(longReserve.info.liquidity.mintPubkey),
-    amount: JSBI.BigInt(flashLoanAmount + inputAmount), // 1000000 => 1 USDC if inputToken.address is USDC mint
+    amount: JSBI.BigInt(flashLoanAmount), // 1000000 => 1 USDC if inputToken.address is USDC mint
     slippage: 1, // 1 = 1%
     onlyDirectRoutes: true,
     forceFetch: true,
   });
-  routes.routesInfos.forEach((route) => console.log(route.marketInfos[0].amm.label));
+  routes.routesInfos.forEach((route) =>
+    console.log(route.marketInfos[0].amm.label)
+  );
 
-  const route = routes.routesInfos.find((route) => route.marketInfos[0].amm.label == AMM);
+  const route = routes.routesInfos.find(
+    (route) => route.marketInfos[0].amm.label == AMM
+  );
   if (route == null) {
-    throw 'undefined route info';
+    throw "undefined route info";
   }
 
   const { transactions } = await jupiter.exchange({
@@ -133,8 +162,24 @@ const lever = async (
     )
   );
 
-  for (let i = 0; i < swapTransaction.instructions.length; i++) {
-    tx.add(swapTransaction.instructions[i]);
+  // for (let i = 2; i < swapTransaction.instructions.length - 1; i++) {
+  //   tx.add(swapTransaction.instructions[i]);
+  //   console.log(swapTransaction.instructions[i].programId.toBase58());
+  //   console.log(
+  //     swapTransaction.instructions[i].keys.map((x) => x.pubkey.toBase58())
+  //   );
+  // }
+
+  const { associatedMSolTokenAccountAddress, transaction: transactionmsol } =
+    await marinade.deposit(new BN(flashLoanAmount));
+
+  console.log(transactionmsol);
+  for (let i = 0; i < transactionmsol.instructions.length; i++) {
+    tx.add(transactionmsol.instructions[i]);
+    // console.log(transactionmsol.instructions[i].programId.toBase58());
+    // console.log(
+    //   transactionmsol.instructions[i].keys.map((x) => x.pubkey.toBase58())
+    // );
   }
 
   const [lendingMarketAuthority, _] = findProgramAddressSync(
@@ -344,7 +389,7 @@ const delever = async (
     )
   );
 
-  // approximate ctoken => liquidity conversion lmao. 
+  // approximate ctoken => liquidity conversion lmao.
   const swapAmount = Math.ceil(
     obligation.info.deposits[0].depositedAmount.toNumber()
   );
@@ -359,9 +404,11 @@ const delever = async (
       forceFetch: true,
     });
 
-    const route = routes.routesInfos.find((route) => route.marketInfos[0].amm.label == AMM);
+    const route = routes.routesInfos.find(
+      (route) => route.marketInfos[0].amm.label == AMM
+    );
     if (route == null) {
-      throw 'undefined route info';
+      throw "undefined route info";
     }
     const { transactions } = await jupiter.exchange({
       routeInfo: route,
@@ -397,7 +444,6 @@ const main = async () => {
   const action = process.argv[2];
 
   const payer = USER_KEYPAIR;
-  const connection = new Connection(SOLANA_RPC_ENDPOINT);
 
   const lendingMarketKey = new PublicKey(
     "HB1cecsgnFPBfKxEDfarVtKXEARWuViJKCqztWiFB3Uk"
@@ -422,6 +468,15 @@ const main = async () => {
     return;
   }
   const usdcReserve = parseReserve(usdcReserveKey, usdcReserveAccount);
+
+  const solReserveKey = new PublicKey(
+    "h346nBr4UmAss3LjbFGBugjJHNcegQFw9ih6g9woNme"
+  );
+  const solReserveAccount = await connection.getAccountInfo(solReserveKey);
+  if (solReserveAccount == null) {
+    return;
+  }
+  const solReserve = parseReserve(solReserveKey, solReserveAccount);
 
   const msolReserveKey = new PublicKey(
     "E7SMTfMiy7gLcpEv7JD9XGDwipaNC4agzGYRp48ZFRpZ"
@@ -453,17 +508,20 @@ const main = async () => {
       msolReserve,
       NULL_PUBKEY,
       new PublicKey("CEPVH2t11KS4CaL3w4YxT9tRiijoGA4VEbnQ97cEpDmQ"),
-      usdcReserve,
+      // usdcReserve,
+      solReserve,
       NULL_PUBKEY,
-      new PublicKey("CZx29wKMUxaJDq6aLVQTdViPL754tTR64NAgQBUGxxHb"),
+      new PublicKey("AdtRGGhmqvom3Jemp5YNrxd9q9unX36BZk1pujkkXijL"),
       obligation,
       jupiter,
-      1e6,
-      1e6
+      100e6
+      // 1e6
     );
 
     console.log("Sending!");
-    const sig = await connection.sendTransaction(leverTx, [payer]);
+    const sig = await connection.sendTransaction(leverTx, [payer], {
+      // skipPreflight: true,
+    });
     console.log(sig);
   }
 
