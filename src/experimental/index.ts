@@ -67,6 +67,7 @@ const wallet = new Wallet(USER_KEYPAIR);
 const config = new MarinadeConfig({
   connection,
   publicKey: wallet.publicKey,
+  referralCode: new PublicKey("SLN6aJmT5rP8cfeGnGNAQGJkyhA8oNQ2tP8AXX5TEcW"),
 });
 const marinade = new Marinade(config);
 
