@@ -119,11 +119,14 @@ const preLever = async (
   const seed = `${strategy}${lendingMarket.toString()}`.slice(0, 32);
   console.log(`Seed is ${seed}`);
 
-  const obligationAddress = await PublicKey.createWithSeed(
-    owner,
-    seed,
-    programId
+  const obligationAddress = new PublicKey(
+    "HQNn9kb7QyCuu2QxuE6yd8cJRebpBq824cu1gM6gRRVb"
   );
+  // const obligationAddress = await PublicKey.createWithSeed(
+  //   owner,
+  //   seed,
+  //   programId
+  // );
   console.log(obligationAddress.toString());
   const tx = new Transaction();
 
@@ -357,10 +360,16 @@ const lever = async (
     )
   );
 
+  // either we're re-levering (case 1) or levering for the first time (case 2)
+  const depositKeys =
+    obligation.info.deposits.length > 0
+      ? obligation.info.deposits.map((ol) => ol.depositReserve)
+      : [new PublicKey(longReserve.pubkey)];
+
   tx.add(
     refreshObligationInstruction(
       obligation.pubkey,
-      obligation.info.deposits.map((ol) => ol.depositReserve),
+      depositKeys,
       obligation.info.borrows.map((ol) => ol.borrowReserve),
       lendingProgramId
     )
@@ -454,8 +463,9 @@ const delever = async (
 
   const flashBorrowAmount = obligation.info.borrows[0].borrowedAmountWads
     .div(new BN(10).pow(new BN(18)))
-    .add(new BN(1)) // couldn't find a ceiling fn
-    .toNumber();
+    .add(new BN(1)); // couldn't find a ceiling fn
+
+  console.log("attempting to flash borrow ", flashBorrowAmount.toString());
 
   tx.add(
     flashBorrowReserveLiquidityInstruction(
@@ -521,11 +531,8 @@ const delever = async (
     )
   );
 
-  // approximate ctoken => liquidity conversion lmao.
-  const swapAmount = Math.ceil(
-    obligation.info.deposits[0].depositedAmount.toNumber()
-  );
-
+  // FIXME: using an approximate sol => msol conversion here.
+  const swapAmount = Math.ceil(flashBorrowAmount.toNumber() / 1.06);
   {
     const routes = await jupiter.computeRoutes({
       inputMint: new PublicKey(suppliedReserve.info.liquidity.mintPubkey),
@@ -549,7 +556,9 @@ const delever = async (
     // FIXME: handle setupTransaction
     const { setupTransaction, swapTransaction, cleanupTransaction } =
       transactions;
-    for (let i = 0; i < swapTransaction.instructions.length; i++) {
+
+    // length - 1 bc jupiter to close wSOL token accounts :(
+    for (let i = 0; i < swapTransaction.instructions.length - 1; i++) {
       tx.add(swapTransaction.instructions[i]);
     }
   }
@@ -670,12 +679,11 @@ const main = async () => {
       msolReserve,
       NULL_PUBKEY,
       new PublicKey("CEPVH2t11KS4CaL3w4YxT9tRiijoGA4VEbnQ97cEpDmQ"),
-      // usdcReserve,
       solReserve,
       NULL_PUBKEY,
       new PublicKey("AdtRGGhmqvom3Jemp5YNrxd9q9unX36BZk1pujkkXijL"),
       obligation,
-      1e6,
+      1e8,
       wsolTokenAccountExtra
     );
 
@@ -688,29 +696,41 @@ const main = async () => {
   }
 
   // de-lever
-  // if (action == "delever") {
-  //   console.log("delevering!");
+  if (action == "delever") {
+    const jupiter = await Jupiter.load({
+      connection,
+      cluster: "mainnet-beta",
+      user: USER_KEYPAIR, // or public key
+    });
 
-  //   const obligationAccount = await connection.getAccountInfo(OBLIGATION);
-  //   if (obligationAccount == null) {
-  //     return;
-  //   }
-  //   const obligation = parseObligation(OBLIGATION, obligationAccount);
-  //   const deleverTx = await delever(
-  //     SOLEND_BETA_PROGRAM_ID,
-  //     lendingMarket,
-  //     msolReserve,
-  //     NULL_PUBKEY,
-  //     new PublicKey("CEPVH2t11KS4CaL3w4YxT9tRiijoGA4VEbnQ97cEpDmQ"),
-  //     usdcReserve,
-  //     NULL_PUBKEY,
-  //     new PublicKey("CZx29wKMUxaJDq6aLVQTdViPL754tTR64NAgQBUGxxHb"),
-  //     obligation,
-  //   );
+    console.log("delevering!");
 
-  //   const sig = await connection.sendTransaction(deleverTx, [payer]);
-  //   console.log(sig);
-  // }
+    const obligationAccount = await connection.getAccountInfo(
+      obligationAddress
+    );
+    if (obligationAccount == null) {
+      return;
+    }
+    const obligation = parseObligation(obligationAddress, obligationAccount);
+    const deleverTx = await delever(
+      SOLEND_BETA_PROGRAM_ID,
+      lendingMarket,
+      msolReserve,
+      NULL_PUBKEY,
+      new PublicKey("CEPVH2t11KS4CaL3w4YxT9tRiijoGA4VEbnQ97cEpDmQ"),
+      solReserve,
+      NULL_PUBKEY,
+      new PublicKey("AdtRGGhmqvom3Jemp5YNrxd9q9unX36BZk1pujkkXijL"),
+      obligation,
+      jupiter
+    );
+
+    const sig = await connection.sendTransaction(deleverTx, [payer], {
+      skipPreflight: false,
+    });
+    console.log(sig);
+    await connection.confirmTransaction(sig);
+  }
 
   return;
 };
