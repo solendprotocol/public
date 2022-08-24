@@ -6,3 +6,4 @@ export * from "./reserve";
 export * from "./obligation";
 export * from "./types";
 export * from "./constants";
+export * from "./bnumber";
