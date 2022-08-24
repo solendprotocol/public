@@ -112,11 +112,11 @@ const main = async () => {
   }
   // lever
   if (action == "lever") {
-    const { extraSigner, setup, lever } = await txBuilder.buildLeverTxs(1e8);
+    const { setup, lever } = await txBuilder.buildLeverTxs(1e8);
 
     if (setup.instructions.length > 0) {
       console.log("setup");
-      const sig = await connection.sendTransaction(setup, [payer, extraSigner]);
+      const sig = await connection.sendTransaction(setup, [payer]);
       console.log(sig);
       await connection.confirmTransaction(sig);
     } else {

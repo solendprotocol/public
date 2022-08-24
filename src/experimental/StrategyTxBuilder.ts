@@ -187,30 +187,47 @@ export class MsolStrategyTxBuilder {
       }
     }
 
-    const kp = new Keypair();
-    const wsolTokenAccountExtra = kp.publicKey;
-    tx.add(
-      SystemProgram.createAccount({
-        fromPubkey: this.owner,
-        newAccountPubkey: wsolTokenAccountExtra,
-        lamports: await this.connection.getMinimumBalanceForRentExemption(165),
-        space: 165,
-        programId: TOKEN_PROGRAM_ID,
-      })
+    // create extra wsol account. needed to send native sol to marinade. gets closed by the lever tx.
+    // in case the lever tx fails, it's nice to use a deterministic key.
+    const seed = `strat-extra-wsol-${this.lendingMarketKey.toString()}`.slice(
+      0,
+      32
     );
-    tx.add(
-      Token.createInitAccountInstruction(
-        TOKEN_PROGRAM_ID,
-        WRAPPED_SOL_MINT,
-        wsolTokenAccountExtra,
-        this.owner
-      )
+    const extraWSOLAccount = await PublicKey.createWithSeed(
+      this.owner,
+      seed,
+      TOKEN_PROGRAM_ID
     );
+
+    if (!(await this.connection.getAccountInfo(extraWSOLAccount))) {
+      console.log("Creating extraWSOLAccount ", extraWSOLAccount.toString());
+      tx.add(
+        SystemProgram.createAccountWithSeed({
+          fromPubkey: this.owner,
+          newAccountPubkey: extraWSOLAccount,
+          basePubkey: this.owner,
+          seed: seed,
+          lamports: await this.connection.getMinimumBalanceForRentExemption(
+            165
+          ),
+          space: 165,
+          programId: TOKEN_PROGRAM_ID,
+        })
+      );
+      tx.add(
+        Token.createInitAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          WRAPPED_SOL_MINT,
+          extraWSOLAccount,
+          this.owner
+        )
+      );
+    }
 
     return {
       tx: tx,
       obligationKey: this.obligationKey,
-      extraWSOLAccount: kp,
+      extraWSOLAccount: extraWSOLAccount,
     };
   };
 
@@ -410,11 +427,9 @@ export class MsolStrategyTxBuilder {
     const { tx: setup, extraWSOLAccount, obligationKey } = await this.setupTx();
 
     return {
-      // needed upstream to sign transaction
-      extraSigner: extraWSOLAccount,
       setup: setup,
       lever: await this.leverTx(
-        extraWSOLAccount.publicKey,
+        extraWSOLAccount,
         obligationKey,
         startingMSolAmount
       ),
