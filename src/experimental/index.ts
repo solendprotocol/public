@@ -1,19 +1,12 @@
 /* eslint-disable no-unused-vars */
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-} from "@solana/web3.js";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import {
   SOLEND_BETA_PROGRAM_ID,
-  parseLendingMarket,
   parseReserve,
   parseObligation,
   obligationToString,
 } from "../../dist";
-import {
-  Jupiter,
-} from "@jup-ag/core";
+import { Jupiter } from "@jup-ag/core";
 import { MsolStrategyTxBuilder } from "./StrategyTxBuilder";
 
 const SOLANA_RPC_ENDPOINT =
@@ -55,19 +48,14 @@ const main = async () => {
     return;
   }
 
-  const lendingMarket = parseLendingMarket(
-    lendingMarketKey,
-    lendingMarketAccount
-  );
-
-  const usdcReserveKey = new PublicKey(
-    "AtSBZ8CRwAAkxtvtqdaxQ8YBpebwCio7epjrE2qFHru9"
-  );
-  const usdcReserveAccount = await connection.getAccountInfo(usdcReserveKey);
-  if (usdcReserveAccount == null) {
-    return;
-  }
-  const usdcReserve = parseReserve(usdcReserveKey, usdcReserveAccount);
+  // const usdcReserveKey = new PublicKey(
+  //   "AtSBZ8CRwAAkxtvtqdaxQ8YBpebwCio7epjrE2qFHru9"
+  // );
+  // const usdcReserveAccount = await connection.getAccountInfo(usdcReserveKey);
+  // if (usdcReserveAccount == null) {
+  //   return;
+  // }
+  // const usdcReserve = parseReserve(usdcReserveKey, usdcReserveAccount);
 
   const solReserveKey = new PublicKey(
     "h346nBr4UmAss3LjbFGBugjJHNcegQFw9ih6g9woNme"
@@ -112,7 +100,14 @@ const main = async () => {
   }
   // lever
   if (action == "lever") {
-    const { setup, lever } = await txBuilder.buildLeverTxs(1e8);
+    const obligationAccount = await connection.getAccountInfo(
+      txBuilder.obligationKey
+    );
+
+    const obligation = obligationAccount
+      ? parseObligation(txBuilder.obligationKey, obligationAccount)
+      : null;
+    const { setup, lever } = await txBuilder.buildLeverTxs(1e8, obligation);
 
     if (setup.instructions.length > 0) {
       console.log("setup");
