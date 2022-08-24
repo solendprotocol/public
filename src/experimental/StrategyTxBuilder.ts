@@ -12,7 +12,6 @@ import {
 } from "@solana/spl-token";
 import {
   Connection,
-  Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -25,7 +24,6 @@ import {
   flashBorrowReserveLiquidityInstruction,
   flashRepayReserveLiquidityInstruction,
   initObligationInstruction,
-  parseLendingMarket,
   parseObligation,
   parseReserve,
   refreshObligationInstruction,
@@ -34,7 +32,6 @@ import {
   withdrawObligationCollateralAndRedeemReserveLiquidity,
 } from "../../dist";
 
-type LendingMarket = ReturnType<typeof parseLendingMarket>;
 type Reserve = ReturnType<typeof parseReserve>;
 type Obligation = ReturnType<typeof parseObligation>;
 const U64_MAX = new BN("18446744073709551615"); // jank life
@@ -200,7 +197,6 @@ export class MsolStrategyTxBuilder {
     );
 
     if (!(await this.connection.getAccountInfo(extraWSOLAccount))) {
-      console.log("Creating extraWSOLAccount ", extraWSOLAccount.toString());
       tx.add(
         SystemProgram.createAccountWithSeed({
           fromPubkey: this.owner,
@@ -269,7 +265,8 @@ export class MsolStrategyTxBuilder {
   private leverTx = async (
     extraWSOLAccount: PublicKey,
     obligationKey: PublicKey,
-    inputAmount: number // quantity of mSOL in user's wallet in fractional units (eg 1e9 => 1 "whole" msol)
+    inputAmount: number, // quantity of mSOL in user's wallet in fractional units (eg 1e9 => 1 "whole" msol)
+    obligation?: Obligation // only exists if we're re-levering
   ) => {
     if (this.msolReserve == null || this.solReserve == null) {
       throw "1";
@@ -321,8 +318,9 @@ export class MsolStrategyTxBuilder {
       )
     );
 
-    const { associatedMSolTokenAccountAddress, transaction: transactionmsol } =
-      await this.marinade.deposit(flashLoanAmount);
+    const { transaction: transactionmsol } = await this.marinade.deposit(
+      flashLoanAmount
+    );
 
     for (let i = 0; i < transactionmsol.instructions.length; i++) {
       tx.add(transactionmsol.instructions[i]);
@@ -374,18 +372,20 @@ export class MsolStrategyTxBuilder {
     );
 
     // either we're re-levering (case 1) or levering for the first time (case 2)
-    // const depositKeys =
-    //   obligation.info.deposits.length > 0
-    //     ? obligation.info.deposits.map((ol) => ol.depositReserve)
-    //     : [new PublicKey(this.msolReserve.pubkey)];
-    const depositKeys = [new PublicKey(this.msolReserve.pubkey)];
+    if (obligation) {
+      console.log("Obligation exists.");
+    }
+
+    const depositKeys =
+      obligation && obligation.info.deposits.length > 0
+        ? obligation.info.deposits.map((ol) => ol.depositReserve)
+        : [new PublicKey(this.msolReserve.pubkey)];
 
     tx.add(
       refreshObligationInstruction(
         obligationKey,
         depositKeys,
-        // obligation.info.borrows.map((ol) => ol.borrowReserve),
-        [],
+        obligation ? obligation.info.borrows.map((ol) => ol.borrowReserve) : [],
         this.solendProgramId
       )
     );
@@ -423,7 +423,10 @@ export class MsolStrategyTxBuilder {
     return tx;
   };
 
-  buildLeverTxs = async (startingMSolAmount: number) => {
+  buildLeverTxs = async (
+    startingMSolAmount: number,
+    obligation?: Obligation
+  ) => {
     const { tx: setup, extraWSOLAccount, obligationKey } = await this.setupTx();
 
     return {
@@ -431,7 +434,8 @@ export class MsolStrategyTxBuilder {
       lever: await this.leverTx(
         extraWSOLAccount,
         obligationKey,
-        startingMSolAmount
+        startingMSolAmount,
+        obligation
       ),
     };
   };
@@ -476,7 +480,7 @@ export class MsolStrategyTxBuilder {
     // 3. withdraw everything from obligation (this.msolReserve.mint)
     // 4. swap msolReserve assets to short reserve (this may even be optional, idk)
     // 5. flash repay debt
-    let tx = new Transaction();
+    const tx = new Transaction();
 
     const flashBorrowAmount = obligation.info.borrows[0].borrowedAmountWads
       .div(new BN(10).pow(new BN(18)))
@@ -571,8 +575,7 @@ export class MsolStrategyTxBuilder {
       });
 
       // FIXME: handle setupTransaction
-      const { setupTransaction, swapTransaction, cleanupTransaction } =
-        transactions;
+      const { swapTransaction } = transactions;
 
       // length - 1 bc jupiter to close wSOL token accounts :(
       for (let i = 0; i < swapTransaction.instructions.length - 1; i++) {
