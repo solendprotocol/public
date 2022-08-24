@@ -7,7 +7,7 @@ import {
   obligationToString,
 } from "../../dist";
 import { Jupiter } from "@jup-ag/core";
-import { MsolStrategyTxBuilder } from "./StrategyTxBuilder";
+import { MsolStrategy } from "./StrategyTxBuilder";
 
 const SOLANA_RPC_ENDPOINT =
   "https://solend.rpcpool.com/a3e03ba77d5e870c8c694b19d61c";
@@ -75,7 +75,7 @@ const main = async () => {
   }
   const msolReserve = parseReserve(msolReserveKey, msolReserveAccount);
 
-  const txBuilder = await MsolStrategyTxBuilder.initialize(
+  const txBuilder = await MsolStrategy.initialize(
     connection,
     USER_KEYPAIR.publicKey,
     msolReserve,

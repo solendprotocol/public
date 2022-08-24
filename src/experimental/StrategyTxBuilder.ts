@@ -41,7 +41,7 @@ const NULL_PUBKEY = new PublicKey(
 );
 const AMM = "Orca";
 
-export class MsolStrategyTxBuilder {
+export class MsolStrategy {
   connection: Connection;
   owner: PublicKey;
   msolReserve: Reserve;
@@ -77,7 +77,7 @@ export class MsolStrategyTxBuilder {
       solendProgramId
     );
 
-    return new MsolStrategyTxBuilder(
+    return new MsolStrategy(
       connection,
       owner,
       msolReserve,
@@ -372,10 +372,6 @@ export class MsolStrategyTxBuilder {
     );
 
     // either we're re-levering (case 1) or levering for the first time (case 2)
-    if (obligation) {
-      console.log("Obligation exists.");
-    }
-
     const depositKeys =
       obligation && obligation.info.deposits.length > 0
         ? obligation.info.deposits.map((ol) => ol.depositReserve)
@@ -601,7 +597,7 @@ export class MsolStrategyTxBuilder {
     return tx;
   };
 
-  getATA = async (mintAddress: PublicKey, owner: PublicKey) => {
+  private getATA = async (mintAddress: PublicKey, owner: PublicKey) => {
     return Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
