@@ -1,0 +1,149 @@
+/* eslint-disable no-unused-vars */
+import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
+import {
+  SOLEND_BETA_PROGRAM_ID,
+  parseReserve,
+  parseObligation,
+  obligationToString,
+  SolendMarket,
+  flashBorrowReserveLiquidityInstruction,
+  flashRepayReserveLiquidityInstruction,
+} from "../../dist";
+import { Jupiter } from "@jup-ag/core";
+import { MsolStrategy } from "./StrategyTxBuilder";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  Token,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+
+const SOLANA_RPC_ENDPOINT =
+  "https://solend.rpcpool.com/a3e03ba77d5e870c8c694b19d61c";
+
+const connection = new Connection(SOLANA_RPC_ENDPOINT);
+
+const WALLET_PRIVATE_KEY: number[] = JSON.parse(
+  process.env.WALLET_PRIVATE_KEY || "[]"
+);
+export const USER_KEYPAIR = Keypair.fromSecretKey(
+  Uint8Array.from(WALLET_PRIVATE_KEY)
+);
+
+const getATA = async (mintAddress: PublicKey, owner: PublicKey) => {
+  return Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mintAddress,
+    owner
+  );
+};
+
+const main = async () => {
+  const action = process.argv[2];
+
+  const payer = USER_KEYPAIR;
+
+  const lendingMarketKey = new PublicKey(
+    "HB1cecsgnFPBfKxEDfarVtKXEARWuViJKCqztWiFB3Uk"
+  );
+  const lendingMarketAccount = await connection.getAccountInfo(
+    lendingMarketKey
+  );
+  if (lendingMarketAccount == null) {
+    return;
+  }
+
+  const market = await SolendMarket.initialize(
+    connection,
+    "beta",
+    lendingMarketKey.toString()
+  );
+
+  const solReserve = market.reserves.find(
+    (res) => res.config.liquidityToken.symbol == "SOL"
+  );
+  const msolReserve = market.reserves.find(
+    (res) => res.config.liquidityToken.symbol == "mSOL"
+  );
+  if (!solReserve || !msolReserve) {
+    console.log("Can't find both reserves.");
+    return;
+  }
+
+  const solATA = await getATA(
+    new PublicKey(solReserve.config.liquidityToken.mint),
+    payer.publicKey
+  );
+  console.log(solATA.toString());
+
+  // extra instruction
+  // Token.createTransferInstruction(
+  //   TOKEN_PROGRAM_ID,
+  //   solATA,
+  //   solATA,
+  //   payer.publicKey,
+  //   [],
+  //   1e6
+  // ),
+
+  let tx = new Transaction();
+  tx.add(
+    flashBorrowReserveLiquidityInstruction(
+      // liquidity amount
+      1e9,
+
+      // source liquidity
+      new PublicKey(solReserve.config.liquidityAddress),
+
+      // destination liquidity
+      solATA,
+
+      // reserve address
+      new PublicKey(solReserve.config.address),
+
+      // lending market address
+      new PublicKey(market.config.address),
+
+      // program id
+      SOLEND_BETA_PROGRAM_ID
+    ),
+    flashRepayReserveLiquidityInstruction(
+      // liquidity amount
+      1e9,
+
+      // index of flash borrow instruction
+      0,
+
+      // source liquidity
+      solATA,
+
+      // destination liquidity
+      new PublicKey(solReserve.config.liquidityAddress),
+
+      // fee receiver
+      new PublicKey(solReserve.config.liquidityFeeReceiverAddress),
+
+      // host fees
+      solATA,
+
+      // reserve address
+      new PublicKey(solReserve.config.address),
+
+      // lending market address
+      new PublicKey(market.config!.address),
+
+      // user transfer authority
+      payer.publicKey,
+
+      // program id
+      SOLEND_BETA_PROGRAM_ID
+    )
+  );
+
+  const sig = await connection.sendTransaction(tx, [payer]);
+  console.log(sig);
+
+  await connection.confirmTransaction(sig);
+};
+
+main();

@@ -89,7 +89,7 @@ export class SolendObligation {
       }
 
       return {
-        mintAddress: reserve!.config.mintAddress,
+        mintAddress: reserve!.config.liquidityToken.mint,
         amount: supplyAmount,
       };
     });
@@ -122,7 +122,7 @@ export class SolendObligation {
       userTotalBorrow = userTotalBorrow.plus(borrowAmountUSD);
 
       return {
-        mintAddress: reserve!.config.mintAddress,
+        mintAddress: reserve!.config.liquidityToken.mint,
         amount: borrowAmount,
       };
     });
