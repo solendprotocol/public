@@ -35,6 +35,7 @@ describe("calculate", function () {
       await market.loadRewards();
       const reserve = market.reserves.find(res => res.config.symbol === 'USDC');
       expect(reserve!.stats!.decimals).toEqual(6);
+      expect(reserve!.stats!.protocolTakeRate).toBeLessThanOrEqual(1);
   });
 
   it("reads solend invictus market", async function () {

@@ -28,6 +28,7 @@ export type ReserveData = {
   supplyInterestAPY: number;
   borrowInterestAPY: number;
   assetPriceUSD: number;
+  protocolTakeRate: number;
   userDepositLimit?: number;
   cumulativeBorrowRateWads: BN;
   cTokenExchangeRate: number;
@@ -259,6 +260,7 @@ export class SolendReserve {
       minBorrowRate: parsedData.config.minBorrowRate / 100,
       optimalBorrowRate: parsedData.config.optimalBorrowRate / 100,
       maxBorrowRate: parsedData.config.maxBorrowRate / 100,
+      protocolTakeRate: parsedData.config.protocolTakeRate / 100,
       borrowFeePercentage: new BigNumber(
         parsedData.config.fees.borrowFeeWad.toString()
       )
