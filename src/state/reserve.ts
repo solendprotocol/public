@@ -74,6 +74,8 @@ export const ReserveConfigLayout = BufferLayout.struct(
     Layout.uint64("depositLimit"),
     Layout.uint64("borrowLimit"),
     Layout.publicKey("feeReceiver"),
+    BufferLayout.u8("protocolLiquidationFee"),
+    BufferLayout.u8("protocolTakeRate"),
   ],
   "config"
 );

@@ -1,8 +1,8 @@
-import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import * as BufferLayout from 'buffer-layout';
-import { ReserveConfig } from '../state/reserve';
-import * as Layout from '../utils/layout';
-import { LendingInstruction } from './instruction';
+import { PublicKey, TransactionInstruction } from "@solana/web3.js";
+import * as BufferLayout from "buffer-layout";
+import { ReserveConfig } from "../state/reserve";
+import * as Layout from "../utils/layout";
+import { LendingInstruction } from "./instruction";
 
 /// Updates a reserves config and a reserve price oracle pubkeys
 ///
@@ -27,22 +27,22 @@ export const updateReserveConfig = (
   solendProgramAddress: PublicKey
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
-    BufferLayout.u8('instruction'),
-    BufferLayout.u8('optimalUtilizationRate'),
-    BufferLayout.u8('loanToValueRatio'),
-    BufferLayout.u8('liquidationBonus'),
-    BufferLayout.u8('liquidationThreshold'),
-    BufferLayout.u8('minBorrowRate'),
-    BufferLayout.u8('optimalBorrowRate'),
-    BufferLayout.u8('maxBorrowRate'),
-    Layout.uint64('borrowFeeWad'),
-    Layout.uint64('flashLoanFeeWad'),
-    BufferLayout.u8('hostFeePercentage'),
-    Layout.uint64('depositLimit'),
-    Layout.uint64('borrowLimit'),
-    Layout.publicKey('feeReceiver'),
-    BufferLayout.u8('protocolLiquidationFee'),
-    BufferLayout.u8('protocolTakeRate'),
+    BufferLayout.u8("instruction"),
+    BufferLayout.u8("optimalUtilizationRate"),
+    BufferLayout.u8("loanToValueRatio"),
+    BufferLayout.u8("liquidationBonus"),
+    BufferLayout.u8("liquidationThreshold"),
+    BufferLayout.u8("minBorrowRate"),
+    BufferLayout.u8("optimalBorrowRate"),
+    BufferLayout.u8("maxBorrowRate"),
+    Layout.uint64("borrowFeeWad"),
+    Layout.uint64("flashLoanFeeWad"),
+    BufferLayout.u8("hostFeePercentage"),
+    Layout.uint64("depositLimit"),
+    Layout.uint64("borrowLimit"),
+    Layout.publicKey("feeReceiver"),
+    BufferLayout.u8("protocolLiquidationFee"),
+    BufferLayout.u8("protocolTakeRate"),
   ]);
 
   const data = Buffer.alloc(dataLayout.span);
@@ -65,7 +65,7 @@ export const updateReserveConfig = (
       protocolLiquidationFee: reserveConfig.protocolLiquidationFee,
       protocolTakeRate: reserveConfig.protocolTakeRate,
     },
-    data,
+    data
   );
 
   const keys = [
