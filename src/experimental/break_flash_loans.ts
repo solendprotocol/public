@@ -10,8 +10,6 @@ import {
   flashRepayReserveLiquidityInstruction,
   SOLEND_PRODUCTION_PROGRAM_ID,
 } from "../../dist";
-import { Jupiter } from "@jup-ag/core";
-import { MsolStrategy } from "./StrategyTxBuilder";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
