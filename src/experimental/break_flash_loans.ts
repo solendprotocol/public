@@ -8,6 +8,7 @@ import {
   SolendMarket,
   flashBorrowReserveLiquidityInstruction,
   flashRepayReserveLiquidityInstruction,
+  SOLEND_PRODUCTION_PROGRAM_ID,
 } from "../../dist";
 import { Jupiter } from "@jup-ag/core";
 import { MsolStrategy } from "./StrategyTxBuilder";
@@ -46,13 +47,8 @@ const main = async () => {
   const lendingMarketKey = new PublicKey(
     "HB1cecsgnFPBfKxEDfarVtKXEARWuViJKCqztWiFB3Uk"
   );
-  const lendingMarketAccount = await connection.getAccountInfo(
-    lendingMarketKey
-  );
-  if (lendingMarketAccount == null) {
-    return;
-  }
 
+  // main pool
   const market = await SolendMarket.initialize(
     connection,
     "beta",
@@ -65,8 +61,26 @@ const main = async () => {
   const msolReserve = market.reserves.find(
     (res) => res.config.liquidityToken.symbol == "mSOL"
   );
+
   if (!solReserve || !msolReserve) {
     console.log("Can't find both reserves.");
+    return;
+  }
+  console.log(solReserve!.config.address);
+
+  // turbo sol pool
+  const marketTurbo = await SolendMarket.initialize(
+    connection,
+    "beta",
+    "Az4MpWtMcpENQZwbEbTnrgyd2qk3wsMwQXimadUiHSQp"
+  );
+  const solReserveTurbo =
+    marketTurbo.reserves.find(
+      (res) => res.config.liquidityToken.symbol == "SOL"
+    ) ?? null;
+
+  if (!solReserveTurbo) {
+    console.log("Can't find turbo sol reserve");
     return;
   }
 
@@ -74,7 +88,6 @@ const main = async () => {
     new PublicKey(solReserve.config.liquidityToken.mint),
     payer.publicKey
   );
-  console.log(solATA.toString());
 
   // extra instruction
   // Token.createTransferInstruction(
@@ -85,6 +98,8 @@ const main = async () => {
   //   [],
   //   1e6
   // ),
+
+  console.log(solReserveTurbo.config.liquidityAddress);
 
   let tx = new Transaction();
   tx.add(
@@ -105,7 +120,7 @@ const main = async () => {
       new PublicKey(market.config.address),
 
       // program id
-      SOLEND_BETA_PROGRAM_ID
+      SOLEND_BETA_PROGRAM_ID,
     ),
     flashRepayReserveLiquidityInstruction(
       // liquidity amount
@@ -141,7 +156,7 @@ const main = async () => {
   );
 
   const sig = await connection.sendTransaction(tx, [payer]);
-  console.log(sig);
+  console.log(`https://solscan.io/tx/${sig}`);
 
   await connection.confirmTransaction(sig);
 };
