@@ -3,8 +3,29 @@ import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import { parseReserve } from "../state/reserve";
 import BN from "bn.js";
-import { FormattedMarketConfig, RewardsData } from "./market";
+import { MarketConfig, RewardsData } from "./market";
 import { WAD, WANG, SLOTS_PER_YEAR } from "./constants";
+
+export type APIReserveConfig = {
+  liquidityToken: {
+    coingeckoID: string;
+    decimals: number;
+    logo: string;
+    mint: string;
+    name: string;
+    symbol: string;
+    volume24h: number;
+  };
+  pythOracle: string;
+  switchboardOracle: string;
+  address: string;
+  collateralMintAddress: string;
+  collateralSupplyAddress: string;
+  liquidityAddress: string;
+  liquidityFeeReceiverAddress: string;
+  userSupplyCap: number;
+  userBorrowCap: number;
+};
 
 export type ReserveData = {
   optimalUtilizationRate: number;
@@ -35,10 +56,9 @@ export type ReserveData = {
 };
 
 type ParsedReserve = NonNullable<ReturnType<typeof parseReserve>>["info"];
-type FormattedReserveConfig = FormattedMarketConfig["reserves"][0];
 
 export class SolendReserve {
-  config: FormattedReserveConfig;
+  config: APIReserveConfig;
 
   private rewardsData: RewardsData | null;
 
@@ -48,7 +68,7 @@ export class SolendReserve {
 
   private connection: Connection;
 
-  constructor(reserveConfig: FormattedReserveConfig, connection: Connection) {
+  constructor(reserveConfig: APIReserveConfig, connection: Connection) {
     this.config = reserveConfig;
     this.rewardsData = null;
     this.buffer = null;
@@ -138,7 +158,9 @@ export class SolendReserve {
     }
 
     if (!this.buffer) {
-      throw Error(`Error requesting account info for ${this.config.name}`);
+      throw Error(
+        `Error requesting account info for ${this.config.liquidityToken.name}`
+      );
     }
 
     const parsedData = parseReserve(
@@ -146,10 +168,12 @@ export class SolendReserve {
       this.buffer
     )?.info;
     if (!parsedData) {
-      throw Error(`Unable to parse data of reserve ${this.config.name}`);
+      throw Error(
+        `Unable to parse data of reserve ${this.config.liquidityToken.name}`
+      );
     }
 
-    this.stats = await this.formatReserveData(parsedData);
+    this.stats = this.formatReserveData(parsedData);
   }
 
   calculateRewardAPY(
@@ -176,7 +200,7 @@ export class SolendReserve {
       throw Error("SolendMarket must call loadRewards.");
     }
 
-    const rewards = this.rewardsData[this.config.mintAddress].supply.map(
+    const rewards = this.rewardsData[this.config.liquidityToken.mint].supply.map(
       (reward) => ({
         rewardMint: reward.rewardMint,
         rewardSymbol: reward.rewardSymbol,
@@ -185,7 +209,7 @@ export class SolendReserve {
           stats.totalDepositsWads.toString(),
           reward.price,
           stats.assetPriceUSD,
-          this.config.decimals
+          this.config.liquidityToken.decimals
         ).toNumber(),
         price: reward.price,
       })
@@ -210,7 +234,7 @@ export class SolendReserve {
       throw Error("SolendMarket must call loadRewards.");
     }
 
-    const rewards = this.rewardsData[this.config.mintAddress].borrow.map(
+    const rewards = this.rewardsData[this.config.liquidityToken.mint].borrow.map(
       (reward) => ({
         rewardMint: reward.rewardMint,
         rewardSymbol: reward.rewardSymbol,
@@ -219,7 +243,7 @@ export class SolendReserve {
           stats.totalBorrowsWads.toString(),
           reward.price,
           stats.assetPriceUSD,
-          this.config.decimals
+          this.config.liquidityToken.decimals
         ).toNumber(),
         price: reward.price,
       })
@@ -271,10 +295,10 @@ export class SolendReserve {
       reserveBorrowLimit: parsedData.config.borrowLimit,
 
       // Reserve info
-      name: this.config.name,
-      symbol: this.config.symbol,
-      decimals: this.config.decimals,
-      mintAddress: this.config.mintAddress,
+      name: this.config.liquidityToken.name,
+      symbol: this.config.liquidityToken.symbol,
+      decimals: this.config.liquidityToken.decimals,
+      mintAddress: this.config.liquidityToken.mint,
       totalDepositsWads,
       totalBorrowsWads,
       totalLiquidityWads,
