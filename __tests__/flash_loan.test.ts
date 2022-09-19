@@ -26,14 +26,14 @@ describe("flash loan", () => {
         "AAGH44cPMYSq51JZ1rth2AzBqSVass8bxwFxtEQy2L9x"
       );
 
-      const reserve = market.reserves.find(res => res.config.symbol === 'SOL');
+      const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'SOL');
       if (reserve == null) {
         throw 'can\'t find reserve!';
       }
 
-      console.log(`reserve: ${JSON.stringify(reserve?.config.mintAddress)}`);
+      console.log(`reserve: ${JSON.stringify(reserve?.config.liquidityToken.mint)}`);
 
-      const token = new Token(connection, new PublicKey(reserve!.config.mintAddress), TOKEN_PROGRAM_ID, payer);
+      const token = new Token(connection, new PublicKey(reserve!.config.liquidityToken.mint), TOKEN_PROGRAM_ID, payer);
       const tokenAccount = await token.createAccount(payer.publicKey);
 
       const delegate = Keypair.generate();
