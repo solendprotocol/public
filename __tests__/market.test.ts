@@ -33,7 +33,7 @@ describe("calculate", function () {
       );
       await market.loadReserves();
       await market.loadRewards();
-      const reserve = market.reserves.find(res => res.config.symbol === 'USDC');
+      const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'USDC');
       expect(reserve!.stats!.decimals).toEqual(6);
       expect(reserve!.stats!.protocolTakeRate).toBeLessThanOrEqual(1);
   });
@@ -50,7 +50,7 @@ describe("calculate", function () {
     );
     await market.loadReserves();
     await market.loadRewards();
-    const reserve = market.reserves.find(res => res.config.symbol === 'USDC');
+    const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'USDC');
     expect((await reserve!.totalBorrowAPY()).rewards).toEqual([]);
     expect(reserve!.stats!.optimalUtilizationRate).toEqual(0.8);
   });

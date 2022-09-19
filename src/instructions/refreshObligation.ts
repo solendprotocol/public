@@ -1,6 +1,5 @@
 import {
   PublicKey,
-  SYSVAR_CLOCK_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
 import BufferLayout from "buffer-layout";
@@ -32,7 +31,6 @@ export const refreshObligationInstruction = (
 
   const keys = [
     { pubkey: obligation, isSigner: false, isWritable: true },
-    { pubkey: SYSVAR_CLOCK_PUBKEY, isSigner: false, isWritable: false },
   ];
 
   depositReserves.forEach((depositReserve) =>

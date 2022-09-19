@@ -16,6 +16,8 @@ export enum LendingInstruction {
   DepositReserveLiquidityAndObligationCollateral = 14,
   WithdrawObligationCollateralAndRedeemReserveLiquidity = 15,
   UpdateReserveConfig = 16,
+  FlashBorrowReserveLiquidity = 19,
+  FlashRepayReserveLiquidity = 20,
 }
 
 /** Instructions defined by the program */

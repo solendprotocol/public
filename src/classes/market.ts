@@ -2,9 +2,14 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import { ConfigType } from "./types";
 import BigNumber from "bignumber.js";
 import { SolendObligation } from "./obligation";
-import { SolendReserve } from "./reserve";
+import { APIReserveConfig, SolendReserve } from "./reserve";
 import { parseObligation } from "../state/obligation";
 import axios from "axios";
+import {
+  SOLEND_BETA_PROGRAM_ID,
+  SOLEND_DEVNET_PROGRAM_ID,
+  SOLEND_PRODUCTION_PROGRAM_ID,
+} from "./constants";
 
 export type RewardInfo = {
   rewardRate: string;
@@ -43,7 +48,18 @@ export type RewardResponse = {
   borrow: RewardStatType;
 };
 
-export type FormattedMarketConfig = ReturnType<typeof formatReserveConfig>;
+export type Config = Array<MarketConfig>;
+
+export type MarketConfig = {
+  name: string;
+  isPrimary: boolean;
+  description: string;
+  creator: string;
+  address: string;
+  hidden: boolean;
+  authorityAddress: string;
+  reserves: Array<APIReserveConfig>;
+};
 
 const API_ENDPOINT = "https://api.solend.fi";
 
@@ -87,36 +103,67 @@ export function formatReserveConfig(
 }
 
 export class SolendMarket {
+  private connection: Connection;
   reserves: Array<SolendReserve>;
 
   rewardsData: RewardsData | null;
 
-  config: FormattedMarketConfig | null;
+  config: MarketConfig;
+  programId: PublicKey;
 
-  private connection: Connection;
-
-  private constructor(connection: Connection) {
+  private constructor(
+    connection: Connection,
+    config: MarketConfig,
+    reserves: Array<SolendReserve>,
+    programId: PublicKey
+  ) {
     this.connection = connection;
-    this.reserves = [];
+    this.reserves = reserves;
     this.rewardsData = null;
-    this.config = null;
+    this.config = config;
+    this.programId = programId;
   }
 
   static async initialize(
     connection: Connection,
-    environment: "production" | "devnet" = "production",
+    environment: "production" | "devnet" | "beta" = "production",
     marketAddress?: string
   ) {
-    const market = new SolendMarket(connection);
-    const rawConfig = (await (
-      await axios.get(`${API_ENDPOINT}/v1/config?deployment=${environment}`)
-    ).data) as ConfigType;
-    market.config = formatReserveConfig(rawConfig, marketAddress);
-    market.reserves = market.config.reserves.map(
+    const config = (await (
+      await axios.get(
+        `${API_ENDPOINT}/v1/markets/configs?deployment=${environment}`
+      )
+    ).data) as Config;
+
+    let marketConfig;
+    if (marketAddress) {
+      marketConfig =
+        config.find((market) => market.address == marketAddress) ?? null;
+      if (!marketConfig) {
+        throw `market address not found: ${marketAddress}`;
+      }
+    } else {
+      marketConfig = config[0];
+    }
+
+    const reserves = marketConfig.reserves.map(
       (res) => new SolendReserve(res, connection)
     );
 
-    return market;
+    let programId;
+    switch (environment) {
+      case "production":
+        programId = SOLEND_PRODUCTION_PROGRAM_ID;
+        break;
+      case "devnet":
+        programId = SOLEND_DEVNET_PROGRAM_ID;
+        break;
+      case "beta":
+        programId = SOLEND_BETA_PROGRAM_ID;
+        break;
+    }
+
+    return new SolendMarket(connection, marketConfig, reserves, programId);
   }
 
   async fetchObligationByWallet(publicKey: PublicKey) {
@@ -127,7 +174,7 @@ export class SolendMarket {
     const obligationAddress = await PublicKey.createWithSeed(
       publicKey,
       config.address.slice(0, 32),
-      new PublicKey(config?.programID)
+      this.programId
     );
     const rawObligationData = await this.connection.getAccountInfo(
       obligationAddress
@@ -247,7 +294,9 @@ export class SolendMarket {
 
     this.rewardsData = this.reserves.reduce((acc, reserve) => {
       const {
-        config: { mintAddress },
+        config: {
+          liquidityToken: { mint: mintAddress },
+        },
       } = reserve;
       const lmReward = lmRewards[this.config!.address][mintAddress];
 
@@ -311,7 +360,7 @@ export class SolendMarket {
 
       return {
         ...acc,
-        [reserve.config.mintAddress]: {
+        [reserve.config.liquidityToken.mint]: {
           supply,
           borrow,
         },
