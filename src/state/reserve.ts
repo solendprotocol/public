@@ -115,7 +115,7 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
       "collateral"
     ),
     ReserveConfigLayout,
-    BufferLayout.blob(256, "padding"),
+    BufferLayout.blob(247, "padding"),
   ]
 );
 

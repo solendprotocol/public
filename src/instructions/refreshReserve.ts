@@ -1,7 +1,4 @@
-import {
-  PublicKey,
-  TransactionInstruction,
-} from "@solana/web3.js";
+import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import * as BufferLayout from "buffer-layout";
 import { LendingInstruction } from "./instruction";
 

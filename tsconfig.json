@@ -9,7 +9,8 @@
     "outDir": "./dist",
     "strict": true,
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "typeRoots": ["./types", "./node_modules/@types"]
   },
   "include": ["src/**/*"],
   "exclude": ["src/experimental/*"]
