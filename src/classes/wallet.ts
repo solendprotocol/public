@@ -1,7 +1,6 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import axios from "axios";
 import { SolendClaim } from "./claim";
-import { ConfigType } from "./types";
 import * as anchor from "@project-serum/anchor";
 import {
   Token,
@@ -19,7 +18,9 @@ import {
   MERKLE_PROGRAM_ID,
   MerkleDistributorJSON,
 } from "../utils/merkle_distributor";
+import { ExternalRewardStatType, ConfigType } from "./shared";
 import { estimateCurrentScore } from "./utils";
+import { getProgramId } from "./constants";
 
 const API_ENDPOINT = "https://api.solend.fi";
 
@@ -55,27 +56,6 @@ export type EnrichedClaimType = {
     | null;
 } & ClaimType;
 
-type RewardStatType = {
-  rewardsPerShare: string;
-  totalBalance: string;
-  lastSlot: number;
-  side: "supply" | "borrow";
-  rewardRates: Array<{
-    beginningSlot: number;
-    rewardRate: string;
-    name?: string;
-  }>;
-};
-
-type ExternalRewardStatType = RewardStatType & {
-  tokenMint: string;
-  reserveID: string;
-  market: string;
-  mint: string;
-  rewardMint: string;
-  rewardSymbol: string;
-};
-
 type RewardScoreType = {
   obligationId: string;
   balance: string;
@@ -102,13 +82,22 @@ export type SolendReward = {
 
 export class SolendWallet {
   config: ConfigType | null;
+
   rewards: { [key: string]: SolendReward };
+
   provider: anchor.AnchorProvider;
 
-  private constructor(wallet: anchor.Wallet, connection: Connection) {
+  programId: PublicKey;
+
+  private constructor(
+    wallet: anchor.Wallet,
+    connection: Connection,
+    environment: string
+  ) {
     this.config = null;
     this.rewards = {};
     this.provider = new anchor.AnchorProvider(connection, wallet, {});
+    this.programId = getProgramId(environment);
   }
 
   static async initialize(
@@ -116,15 +105,17 @@ export class SolendWallet {
     connection: Connection,
     environment: "production" | "devnet" = "production"
   ) {
-    const market = new SolendWallet(wallet, connection);
+    const loadedWallet = new SolendWallet(wallet, connection, environment);
     const config = (await (
-      await axios.get(`${API_ENDPOINT}/v1/config?deployment=${environment}`)
+      await axios.get(
+        `${API_ENDPOINT}/v1/markets/configs?scope=all&deployment=${environment}`
+      )
     ).data) as ConfigType;
-    market.config = config;
+    loadedWallet.config = config;
 
-    await market.loadRewards();
+    await loadedWallet.loadRewards();
 
-    return market;
+    return loadedWallet;
   }
 
   async loadRewards() {
@@ -143,23 +134,6 @@ export class SolendWallet {
       this.provider
     ) as any;
 
-    const lmStatResponse = (
-      await axios.get(`${API_ENDPOINT}/liquidity-mining/reward-stats-v2`)
-    ).data as Promise<{
-      [poolKey: string]: {
-        [keys: string]: {
-          supply: RewardStatType;
-          borrow: RewardStatType;
-        };
-      };
-    }>;
-
-    const lmScoreResponse = (
-      await axios.get(
-        `${API_ENDPOINT}/liquidity-mining/reward-score-v2?wallet=${this.provider.wallet.publicKey.toBase58()}`
-      )
-    ).data as Promise<{ [poolKey: string]: Array<RewardScoreType> }>;
-
     const externalStatResponse = (
       await axios.get(
         `${API_ENDPOINT}/liquidity-mining/external-reward-stats-v2?flat=true`
@@ -172,14 +146,14 @@ export class SolendWallet {
       )
     ).data as Promise<Array<ExternalRewardScoreType>>;
 
-    const primaryMarketSeed = this.config.markets
+    const primaryMarketSeed = this.config
       .find((market) => market.isPrimary)!
       .address.slice(0, 32);
 
     const obligationAddress = await PublicKey.createWithSeed(
       this.provider.wallet.publicKey,
       primaryMarketSeed,
-      new PublicKey(this.config.programID)
+      new PublicKey(this.programId)
     );
 
     const claimResponse = (
@@ -188,15 +162,7 @@ export class SolendWallet {
       )
     ).data as Promise<Array<ClaimType>>;
 
-    const [
-      lmStatData,
-      lmScoreData,
-      externalStatData,
-      externalScoreData,
-      claimData,
-    ] = await Promise.all([
-      lmStatResponse,
-      lmScoreResponse,
+    const [externalStatData, externalScoreData, claimData] = await Promise.all([
       externalStatResponse,
       externalScoreResponse,
       claimResponse,
@@ -352,42 +318,8 @@ export class SolendWallet {
       }
     );
 
-    const slndEarningsData = Object.entries(lmScoreData).reduce(
-      (acc, [poolKey, pool]) => {
-        const sum = pool.reduce((acc, rewardScore) => {
-          if (
-            !lmStatData[poolKey] ||
-            !lmStatData[poolKey][rewardScore.tokenMint] ||
-            !lmStatData[poolKey][rewardScore.tokenMint][rewardScore.side]
-          )
-            return acc;
-
-          const rewardStat =
-            lmStatData[poolKey][rewardScore.tokenMint][rewardScore.side];
-
-          const currentScore = rewardStat
-            ? estimateCurrentScore(
-                rewardStat,
-                rewardScore,
-                mostRecentSlot,
-                mostRecentSlotTime
-              ).toNumber()
-            : 0;
-
-          return acc + Number(currentScore);
-        }, 0);
-
-        return acc + sum;
-      },
-      0
-    );
-
     const rewardsData = {
       ...externalEarningsData,
-      SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp: {
-        symbol: "SLND",
-        lifetimeAmount: slndEarningsData,
-      },
     };
 
     const rewardMetadata = (

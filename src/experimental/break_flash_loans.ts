@@ -2,13 +2,9 @@
 import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
   SOLEND_BETA_PROGRAM_ID,
-  parseReserve,
-  parseObligation,
-  obligationToString,
   SolendMarket,
   flashBorrowReserveLiquidityInstruction,
   flashRepayReserveLiquidityInstruction,
-  SOLEND_PRODUCTION_PROGRAM_ID,
 } from "../../dist";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -38,8 +34,6 @@ const getATA = async (mintAddress: PublicKey, owner: PublicKey) => {
 };
 
 const main = async () => {
-  const action = process.argv[2];
-
   const payer = USER_KEYPAIR;
 
   const lendingMarketKey = new PublicKey(
@@ -87,19 +81,10 @@ const main = async () => {
     payer.publicKey
   );
 
-  // extra instruction
-  // Token.createTransferInstruction(
-  //   TOKEN_PROGRAM_ID,
-  //   solATA,
-  //   solATA,
-  //   payer.publicKey,
-  //   [],
-  //   1e6
-  // ),
-
   console.log(solReserveTurbo.config.liquidityAddress);
 
-  let tx = new Transaction();
+  const tx = new Transaction();
+
   tx.add(
     flashBorrowReserveLiquidityInstruction(
       // liquidity amount
@@ -118,7 +103,7 @@ const main = async () => {
       new PublicKey(market.config.address),
 
       // program id
-      SOLEND_BETA_PROGRAM_ID,
+      SOLEND_BETA_PROGRAM_ID
     ),
     flashRepayReserveLiquidityInstruction(
       // liquidity amount
