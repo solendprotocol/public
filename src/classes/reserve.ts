@@ -3,72 +3,23 @@ import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import { parseReserve } from "../state/reserve";
 import BN from "bn.js";
-import { MarketConfig, RewardsData } from "./market";
 import { WAD, WANG, SLOTS_PER_YEAR } from "./constants";
-
-export type APIReserveConfig = {
-  liquidityToken: {
-    coingeckoID: string;
-    decimals: number;
-    logo: string;
-    mint: string;
-    name: string;
-    symbol: string;
-    volume24h: number;
-  };
-  pythOracle: string;
-  switchboardOracle: string;
-  address: string;
-  collateralMintAddress: string;
-  collateralSupplyAddress: string;
-  liquidityAddress: string;
-  liquidityFeeReceiverAddress: string;
-  userSupplyCap: number;
-  userBorrowCap: number;
-};
-
-export type ReserveData = {
-  optimalUtilizationRate: number;
-  loanToValueRatio: number;
-  liquidationBonus: number;
-  liquidationThreshold: number;
-  minBorrowRate: number;
-  optimalBorrowRate: number;
-  maxBorrowRate: number;
-  borrowFeePercentage: number;
-  hostFeePercentage: number;
-  depositLimit: BN;
-  reserveBorrowLimit: BN;
-  name: string;
-  symbol: string;
-  decimals: number;
-  mintAddress: string;
-  totalDepositsWads: BN;
-  totalBorrowsWads: BN;
-  totalLiquidityWads: BN;
-  supplyInterestAPY: number;
-  borrowInterestAPY: number;
-  assetPriceUSD: number;
-  protocolTakeRate: number;
-  userDepositLimit?: number;
-  cumulativeBorrowRateWads: BN;
-  cTokenExchangeRate: number;
-};
+import { ReserveConfigType, RewardsDataType, ReserveDataType } from "./shared";
 
 type ParsedReserve = NonNullable<ReturnType<typeof parseReserve>>["info"];
 
 export class SolendReserve {
-  config: APIReserveConfig;
+  config: ReserveConfigType;
 
-  private rewardsData: RewardsData | null;
+  private rewardsData: RewardsDataType | null;
 
   private buffer: AccountInfo<Buffer> | null;
 
-  stats: ReserveData | null;
+  stats: ReserveDataType | null;
 
   private connection: Connection;
 
-  constructor(reserveConfig: APIReserveConfig, connection: Connection) {
+  constructor(reserveConfig: ReserveConfigType, connection: Connection) {
     this.config = reserveConfig;
     this.rewardsData = null;
     this.buffer = null;
@@ -146,7 +97,7 @@ export class SolendReserve {
     this.buffer = buffer;
   }
 
-  async load(rewardsData?: RewardsData) {
+  async load(rewardsData?: RewardsDataType) {
     if (rewardsData) {
       this.rewardsData = rewardsData;
     }
@@ -200,20 +151,20 @@ export class SolendReserve {
       throw Error("SolendMarket must call loadRewards.");
     }
 
-    const rewards = this.rewardsData[this.config.liquidityToken.mint].supply.map(
-      (reward) => ({
-        rewardMint: reward.rewardMint,
-        rewardSymbol: reward.rewardSymbol,
-        apy: this.calculateRewardAPY(
-          reward.rewardRate,
-          stats.totalDepositsWads.toString(),
-          reward.price,
-          stats.assetPriceUSD,
-          this.config.liquidityToken.decimals
-        ).toNumber(),
-        price: reward.price,
-      })
-    );
+    const rewards = this.rewardsData[
+      this.config.liquidityToken.mint
+    ].supply.map((reward) => ({
+      rewardMint: reward.rewardMint,
+      rewardSymbol: reward.rewardSymbol,
+      apy: this.calculateRewardAPY(
+        reward.rewardRate,
+        stats.totalDepositsWads.toString(),
+        reward.price,
+        stats.assetPriceUSD,
+        this.config.liquidityToken.decimals
+      ).toNumber(),
+      price: reward.price,
+    }));
 
     const totalAPY = new BigNumber(stats.supplyInterestAPY)
       .plus(
@@ -234,20 +185,20 @@ export class SolendReserve {
       throw Error("SolendMarket must call loadRewards.");
     }
 
-    const rewards = this.rewardsData[this.config.liquidityToken.mint].borrow.map(
-      (reward) => ({
-        rewardMint: reward.rewardMint,
-        rewardSymbol: reward.rewardSymbol,
-        apy: this.calculateRewardAPY(
-          reward.rewardRate,
-          stats.totalBorrowsWads.toString(),
-          reward.price,
-          stats.assetPriceUSD,
-          this.config.liquidityToken.decimals
-        ).toNumber(),
-        price: reward.price,
-      })
-    );
+    const rewards = this.rewardsData[
+      this.config.liquidityToken.mint
+    ].borrow.map((reward) => ({
+      rewardMint: reward.rewardMint,
+      rewardSymbol: reward.rewardSymbol,
+      apy: this.calculateRewardAPY(
+        reward.rewardRate,
+        stats.totalBorrowsWads.toString(),
+        reward.price,
+        stats.assetPriceUSD,
+        this.config.liquidityToken.decimals
+      ).toNumber(),
+      price: reward.price,
+    }));
 
     const totalAPY = new BigNumber(stats.borrowInterestAPY)
       .minus(
@@ -264,7 +215,7 @@ export class SolendReserve {
 
   private formatReserveData(
     parsedData: NonNullable<ReturnType<typeof parseReserve>>["info"]
-  ): ReserveData {
+  ): ReserveDataType {
     const totalBorrowsWads = parsedData.liquidity.borrowedAmountWads;
     const totalLiquidityWads = parsedData.liquidity.availableAmount.mul(
       new BN(WAD)

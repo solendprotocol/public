@@ -8,7 +8,6 @@ import * as BufferLayout from "buffer-layout";
 import BN from "bn.js";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
-import {parseLendingMarket, parseObligation, parseReserve} from "../state";
 
 export const flashRepayReserveLiquidityInstruction = (
   liquidityAmount: number | BN,
