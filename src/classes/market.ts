@@ -1,119 +1,33 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { ConfigType } from "./types";
-import BigNumber from "bignumber.js";
 import { SolendObligation } from "./obligation";
-import { APIReserveConfig, SolendReserve } from "./reserve";
+import { SolendReserve } from "./reserve";
 import { parseObligation } from "../state/obligation";
 import axios from "axios";
+import { getProgramId } from "./constants";
 import {
-  SOLEND_BETA_PROGRAM_ID,
-  SOLEND_DEVNET_PROGRAM_ID,
-  SOLEND_PRODUCTION_PROGRAM_ID,
-} from "./constants";
+  RewardsDataType,
+  ExternalRewardStatType,
+  MarketConfigType,
+} from "./shared";
 
-export type RewardInfo = {
-  rewardRate: string;
-  rewardMint?: string;
-  rewardSymbol: string;
-  price: number;
-};
-
-export type RewardsData = {
-  [key: string]: {
-    supply: Array<RewardInfo>;
-    borrow: Array<RewardInfo>;
-  };
-};
-
-export type RewardStatType = {
-  rewardsPerShare: string;
-  totalBalance: string;
-  lastSlot: number;
-  rewardRates: Array<{
-    beginningSlot: number;
-    rewardRate: string;
-    name?: string;
-  }>;
-} | null;
-
-type ExternalRewardStatType = RewardStatType & {
-  rewardMint: string;
-  rewardSymbol: string;
-  reserveID: string;
-  side: "supply" | "borrow";
-};
-
-export type RewardResponse = {
-  supply: RewardStatType;
-  borrow: RewardStatType;
-};
-
-export type Config = Array<MarketConfig>;
-
-export type MarketConfig = {
-  name: string;
-  isPrimary: boolean;
-  description: string;
-  creator: string;
-  address: string;
-  hidden: boolean;
-  authorityAddress: string;
-  reserves: Array<APIReserveConfig>;
-};
+type Config = Array<MarketConfigType>;
 
 const API_ENDPOINT = "https://api.solend.fi";
 
-export function formatReserveConfig(
-  config: ConfigType,
-  marketAddress?: string
-) {
-  const market = marketAddress
-    ? config.markets.find((mar) => mar.address === marketAddress)
-    : config.markets.find((mar) => mar.isPrimary) ?? config.markets[0];
-  if (!market) {
-    throw Error("No markets found.");
-  }
-  const hydratedReserves = market.reserves.map((res) => {
-    const assetData = config.assets.find((asset) => asset.symbol === res.asset);
-    if (!assetData) {
-      throw new Error(`Could not find asset ${res.asset} in config`);
-    }
-
-    const oracleData = config.oracles.assets.find(
-      (asset) => asset.asset === res.asset
-    );
-    if (!oracleData) {
-      throw new Error(`Could not find oracle data for ${res.asset} in config`);
-    }
-    const { asset: _asset, ...trimmedoracleData } = oracleData;
-
-    return {
-      ...res,
-      ...assetData,
-      ...trimmedoracleData,
-    };
-  });
-  return {
-    ...market,
-    pythProgramID: config.oracles.pythProgramID,
-    switchboardProgramID: config.oracles.switchboardProgramID,
-    programID: config.programID,
-    reserves: hydratedReserves,
-  };
-}
-
 export class SolendMarket {
   private connection: Connection;
+
   reserves: Array<SolendReserve>;
 
-  rewardsData: RewardsData | null;
+  rewardsData: RewardsDataType | null;
 
-  config: MarketConfig;
+  config: MarketConfigType;
+
   programId: PublicKey;
 
   private constructor(
     connection: Connection,
-    config: MarketConfig,
+    config: MarketConfigType,
     reserves: Array<SolendReserve>,
     programId: PublicKey
   ) {
@@ -131,7 +45,7 @@ export class SolendMarket {
   ) {
     const config = (await (
       await axios.get(
-        `${API_ENDPOINT}/v1/markets/configs?deployment=${environment}`
+        `${API_ENDPOINT}/v1/markets/configs?scope=all&deployment=${environment}`
       )
     ).data) as Config;
 
@@ -143,27 +57,19 @@ export class SolendMarket {
         throw `market address not found: ${marketAddress}`;
       }
     } else {
-      marketConfig = config[0];
+      marketConfig = config.find((market) => market.isPrimary) ?? config[0];
     }
 
     const reserves = marketConfig.reserves.map(
       (res) => new SolendReserve(res, connection)
     );
 
-    let programId;
-    switch (environment) {
-      case "production":
-        programId = SOLEND_PRODUCTION_PROGRAM_ID;
-        break;
-      case "devnet":
-        programId = SOLEND_DEVNET_PROGRAM_ID;
-        break;
-      case "beta":
-        programId = SOLEND_BETA_PROGRAM_ID;
-        break;
-    }
-
-    return new SolendMarket(connection, marketConfig, reserves, programId);
+    return new SolendMarket(
+      connection,
+      marketConfig,
+      reserves,
+      getProgramId(environment)
+    );
   }
 
   async fetchObligationByWallet(publicKey: PublicKey) {
@@ -211,18 +117,6 @@ export class SolendMarket {
     const promises = [this.loadReserves(), this.loadRewards()];
 
     await Promise.all(promises);
-  }
-
-  private async loadLMRewardData() {
-    const data = (
-      await axios.get(`${API_ENDPOINT}/liquidity-mining/reward-stats-v2`)
-    ).data as Promise<{
-      [marketAddress: string]: {
-        [mintAddress: string]: RewardResponse;
-      };
-    }>;
-
-    return data;
   }
 
   private async loadExternalRewardData() {
@@ -277,14 +171,11 @@ export class SolendMarket {
     }
 
     const promises = [
-      this.loadLMRewardData(),
       this.loadExternalRewardData(),
       this.connection.getSlot("finalized"),
     ] as const;
 
-    const [lmRewards, externalRewards, currentSlot] = await Promise.all(
-      promises
-    );
+    const [externalRewards, currentSlot] = await Promise.all(promises);
 
     const querySymbols = [
       ...new Set(externalRewards.map((reward) => reward.rewardSymbol)),
@@ -293,25 +184,7 @@ export class SolendMarket {
     const priceData = await this.loadPriceData(querySymbols.concat("SLND"));
 
     this.rewardsData = this.reserves.reduce((acc, reserve) => {
-      const {
-        config: {
-          liquidityToken: { mint: mintAddress },
-        },
-      } = reserve;
-      const lmReward = lmRewards[this.config!.address][mintAddress];
-
       const supply = [
-        lmReward?.supply
-          ? {
-              rewardRate: this.getLatestRewardRate(
-                lmReward.supply.rewardRates,
-                currentSlot
-              ).rewardRate,
-              rewardMint: "SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp",
-              rewardSymbol: "SLND",
-              price: new BigNumber(priceData.SLND).toNumber(),
-            }
-          : null,
         ...externalRewards
           .filter(
             (externalReward) =>
@@ -330,17 +203,6 @@ export class SolendMarket {
       ].filter(Boolean);
 
       const borrow = [
-        lmReward?.borrow
-          ? {
-              rewardRate: this.getLatestRewardRate(
-                lmReward.borrow.rewardRates,
-                currentSlot
-              ).rewardRate,
-              rewardMint: "SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp",
-              rewardSymbol: "SLND",
-              price: new BigNumber(priceData.SLND).toNumber(),
-            }
-          : null,
         ...externalRewards
           .filter(
             (externalReward) =>

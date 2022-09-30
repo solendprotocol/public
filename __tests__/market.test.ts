@@ -34,6 +34,24 @@ describe("calculate", function () {
       await market.loadReserves();
       await market.loadRewards();
       const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'USDC');
+
+      expect(reserve!.stats!.decimals).toEqual(6);
+      expect(reserve!.stats!.protocolTakeRate).toBeLessThanOrEqual(1);
+  });
+
+  it("reads solend devnet", async function () {
+    const connection = new Connection('https://api.devnet.solana.com', {
+      commitment: "finalized",
+    });
+
+      const market = await SolendMarket.initialize(
+        connection,
+        'devnet'
+      );
+      await market.loadReserves();
+      await market.loadRewards();
+      const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'USDC');
+
       expect(reserve!.stats!.decimals).toEqual(6);
       expect(reserve!.stats!.protocolTakeRate).toBeLessThanOrEqual(1);
   });
@@ -51,6 +69,23 @@ describe("calculate", function () {
     await market.loadReserves();
     await market.loadRewards();
     const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'USDC');
+    expect((await reserve!.totalBorrowAPY()).rewards).toEqual([]);
+    expect(reserve!.stats!.optimalUtilizationRate).toEqual(0.8);
+  });
+
+  it("reads permissionless", async function () {
+    const connection = new Connection('https://api.mainnet-beta.solana.com', {
+      commitment: "finalized",
+    });
+
+    const market = await SolendMarket.initialize(
+      connection,
+      'production',
+      'Ckya2fwCXDqTUg9fnWbajR6YLcSfQmPxxy5MyAoZXgyb',
+    );
+    await market.loadReserves();
+    await market.loadRewards();
+    const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'SLND');
     expect((await reserve!.totalBorrowAPY()).rewards).toEqual([]);
     expect(reserve!.stats!.optimalUtilizationRate).toEqual(0.8);
   });
