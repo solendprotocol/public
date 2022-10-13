@@ -20,18 +20,12 @@
   "dependencies": {
     "@mithraic-labs/psy-american": "^0.2.1",
     "@project-serum/anchor": "^0.24.2",
-    "@pythnetwork/client": "^2.5.1",
-    "@solana/buffer-layout": "^4.0.0",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.52.0",
     "axios": "^0.24.0",
     "bignumber.js": "^9.0.2",
     "bn.js": "^5.2.0",
-    "buffer": "^6.0.3",
-    "buffer-layout": "^1.2.0",
-    "isomorphic-fetch": "^3.0.0",
-    "jsbi": "^4.3.0",
-    "typedoc-plugin-cname": "^1.0.1"
+    "buffer-layout": "^1.2.0"
   },
   "devDependencies": {
     "@types/bs58": "^4.0.1",
