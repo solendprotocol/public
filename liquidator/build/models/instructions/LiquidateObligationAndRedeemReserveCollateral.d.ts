@@ -1,3 +1,0 @@
-import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import BN from 'bn.js';
-export declare const LiquidateObligationAndRedeemReserveCollateral: (liquidityAmount: number | BN | string, sourceLiquidity: PublicKey, destinationCollateral: PublicKey, destinationRewardLiquidity: PublicKey, repayReserve: PublicKey, repayReserveLiquiditySupply: PublicKey, withdrawReserve: PublicKey, withdrawReserveCollateralMint: PublicKey, withdrawReserveCollateralSupply: PublicKey, withdrawReserveLiquiditySupply: PublicKey, withdrawReserveFeeReceiver: PublicKey, obligation: PublicKey, lendingMarket: PublicKey, lendingMarketAuthority: PublicKey, transferAuthority: PublicKey) => TransactionInstruction;
