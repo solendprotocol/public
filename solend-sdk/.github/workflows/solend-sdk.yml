@@ -1,4 +1,4 @@
-name: Liquidator CI
+name: Solend SDK CI
 
 on:
   push:
