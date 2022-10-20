@@ -242,6 +242,12 @@ export class SolendReserve {
         .dividedBy(WAD)
         .toNumber(),
       hostFeePercentage: parsedData.config.fees.hostFeePercentage / 100,
+      flashLoanFeePercentage: new BigNumber(
+        parsedData.config.fees.flashLoanFeeWad.toString()
+      )
+        .dividedBy(WAD)
+        .toNumber(),
+
       depositLimit: parsedData.config.depositLimit,
       reserveBorrowLimit: parsedData.config.borrowLimit,
 
