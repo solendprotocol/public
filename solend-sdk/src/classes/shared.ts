@@ -80,6 +80,7 @@ export type ReserveDataType = {
   optimalBorrowRate: number;
   maxBorrowRate: number;
   borrowFeePercentage: number;
+  flashLoanFeePercentage: number;
   hostFeePercentage: number;
   depositLimit: BN;
   reserveBorrowLimit: BN;
