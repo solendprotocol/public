@@ -12,8 +12,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 
-const SOLANA_RPC_ENDPOINT =
-  "https://solend.rpcpool.com/a3e03ba77d5e870c8c694b19d61c";
+const SOLANA_RPC_ENDPOINT = "https://api.devnet.solana.com";
 
 const connection = new Connection(SOLANA_RPC_ENDPOINT);
 
