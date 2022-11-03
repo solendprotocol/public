@@ -18,3 +18,8 @@ a {
 * {
   box-sizing: border-box;
 }
+
+/* example: override wallet button style */
+.wallet-adapter-button:not([disabled]):hover {
+  background-color: #ff5c28 !important;
+}

@@ -16,37 +16,39 @@ module.exports = {
             display: ["PT Mono, monospace"],
             body: ["Inter, sans-serif"],
           },
-          primary: "#000" /* Primary color */,
-          "primary-focus": "#000" /* Primary color - focused */,
+          primary: "#ff5c28" /* Primary color */,
+          "primary-focus": "#ff5c28" /* Primary color - focused */,
           "primary-content":
-            "#ffffff" /* Foreground content color to use on primary color */,
+            "#000" /* Foreground content color to use on primary color */,
 
-          secondary: "#f6d860" /* Secondary color */,
-          "secondary-focus": "#f3cc30" /* Secondary color - focused */,
+          secondary: "#707070" /* Secondary color */,
+          "secondary-focus": "#707070" /* Secondary color - focused */,
           "secondary-content":
-            "#ffffff" /* Foreground content color to use on secondary color */,
+            "#000" /* Foreground content color to use on secondary color */,
 
           accent: "#33a382" /* Accent color */,
           "accent-focus": "#2aa79b" /* Accent color - focused */,
           "accent-content":
             "#ffffff" /* Foreground content color to use on accent color */,
 
-          neutral: "#2b2b2b" /* Neutral color */,
-          "neutral-focus": "#2a2e37" /* Neutral color - focused */,
+          neutral: "#f5f5f5" /* Neutral color */,
+          "neutral-focus": "#f5f5f5" /* Neutral color - focused */,
           "neutral-content":
-            "#ffffff" /* Foreground content color to use on neutral color */,
+            "#707070" /* Foreground content color to use on neutral color */,
 
           "base-100":
-            "#181818" /* Base color of page, used for blank backgrounds */,
-          "base-200": "#35363a" /* Base color, a little darker */,
-          "base-300": "#222222" /* Base color, even more darker */,
+            "#f0f0f0" /* Base color of page, used for blank backgrounds */,
+          "base-200": "#f0f0f0" /* Base color, a little darker */,
+          "base-300": "#f0f0f0" /* Base color, even more darker */,
           "base-content":
-            "#f9fafb" /* Foreground content color to use on base color */,
+            "#707070" /* Foreground content color to use on base color */,
 
           info: "#2094f3" /* Info */,
           success: "#009485" /* Success */,
           warning: "#ff9900" /* Warning */,
           error: "#ff5724" /* Error */,
+
+          "--tab-border-color": "#ff5c28",
         },
       },
 
@@ -56,8 +58,8 @@ module.exports = {
             display: ["PT Mono, monospace"],
             body: ["Inter, sans-serif"],
           },
-          primary: "#fff" /* Primary color */,
-          "primary-focus": "#fff" /* Primary color - focused */,
+          primary: "#ff5c28" /* Primary color */,
+          "primary-focus": "#ff5c28" /* Primary color - focused */,
           "primary-content":
             "#ffffff" /* Foreground content color to use on primary color */,
 
@@ -71,22 +73,26 @@ module.exports = {
           "accent-content":
             "#ffffff" /* Foreground content color to use on accent color */,
 
-          neutral: "#2b2b2b" /* Neutral color */,
-          "neutral-focus": "#2a2e37" /* Neutral color - focused */,
+          neutral: "#1b1d23" /* Neutral color */,
+          neutralAlt: "#1b1d23",
+          "neutral-focus": "#64676d" /* Neutral color - focused */,
           "neutral-content":
-            "#ffffff" /* Foreground content color to use on neutral color */,
+            "#64676d" /* Foreground content color to use on neutral color */,
+          line: " #22252e" /*border lines*/,
 
           "base-100":
-            "#181818" /* Base color of page, used for blank backgrounds */,
-          "base-200": "#35363a" /* Base color, a little darker */,
-          "base-300": "#222222" /* Base color, even more darker */,
+            "#22252e" /* Base color of page, used for blank backgrounds */,
+          "base-200": "#22252e" /* Base color, a little darker */,
+          "base-300": "#22252e" /* Base color, even more darker */,
           "base-content":
-            "#f9fafb" /* Foreground content color to use on base color */,
+            "#64676d" /* Foreground content color to use on base color */,
 
           info: "#2094f3" /* Info */,
           success: "#009485" /* Success */,
           warning: "#ff9900" /* Warning */,
           error: "#ff5724" /* Error */,
+
+          "--tab-border-color": "#ff5c28",
         },
       },
     ],

@@ -20,9 +20,11 @@
     "@tailwindcss/typography": "^0.5.0",
     "daisyui": "^1.24.3",
     "immer": "^9.0.12",
+    "jotai": "^1.9.1",
     "next": "^12.3.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
+    "react-svg": "^15.1.11",
     "zustand": "^3.6.9"
   },
   "devDependencies": {
