@@ -4,6 +4,7 @@ import {
   Connection,
   Keypair,
   PublicKey,
+  sendAndConfirmTransaction,
   Transaction,
 } from '@solana/web3.js';
 import {
@@ -95,19 +96,15 @@ export const checkAndUnwrapXSolTokens = async (
   const unstakeTransaction = await unstakeTx(UNSTAKE_PROGRAM as any, {
     stakeAccount: payer.publicKey,
     poolAccount: UNSTAKE_POOL_ADDRESS,
-    unstaker: UNSTAKE_PROGRAM.provider.publicKey!,
+    unstaker: payer.publicKey,
     protocolFee,
   });
 
   tx.add(unstakeTransaction);
 
-  const txHash = await UNSTAKE_PROGRAM.provider.sendAndConfirm!(
-    tx,
-    [payer, destinationStake],
-    {
-      commitment: 'confirmed',
-    },
-  );
+  const txHash = await sendAndConfirmTransaction(connection, tx, [payer, destinationStake], {
+    commitment: 'confirmed',
+  });
 
   console.log(
     `successfully withdrew ${poolTokens} ${LAINE_ADDRESS_MAP.xSolLabel}: ${txHash}`,
