@@ -1,0 +1,29 @@
+name: Solend SDK CI
+
+on:
+  push:
+    paths:
+      - "solend-sdk/**"
+      - ".github/workflows/solend-sdk.yml"
+  pull_request:
+    paths:
+      - "solend-sdk/**"
+      - ".github/workflows/solend-sdk.yml"
+
+jobs:
+  lint_and_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 16
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Change directory
+        run: cd solend-sdk
+      - name: Install dependencies
+        run: yarn install --immutable --immutable-cache --check-cache
+      - name: Lint
+        run: yarn lint
+      - name: Build
+        run: yarn build

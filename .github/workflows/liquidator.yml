@@ -1,6 +1,14 @@
-name: Solend SDK CI
+name: Liquidator CI
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - "liquidator/**"
+      - ".github/workflows/liquidator.yml"
+  pull_request:
+    paths:
+      - "liquidator/**"
+      - ".github/workflows/liquidator.yml"
 
 jobs:
   lint_and_build:
@@ -11,6 +19,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
+      - name: Change directory
+        run: cd liquidator
       - name: Install dependencies
         run: yarn install --immutable --immutable-cache --check-cache
       - name: Lint
