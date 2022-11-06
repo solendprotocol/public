@@ -27,8 +27,8 @@ const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { networkConfiguration } = useNetworkConfiguration();
   // const network = networkConfiguration as WalletAdapterNetwork;
   // const endpoint = useMemo(() => clusterApiUrl(network), [network]);
-  const network = process.env.REACT_APP_NETWORK as WalletAdapterNetwork;
-  const endpoint = process.env.REACT_APP_SOLANA_RPC_HOST;
+  const network = process.env.NEXT_PUBLIC_REACT_APP_NETWORK as WalletAdapterNetwork;
+  const endpoint = process.env.NEXT_PUBLIC_REACT_APP_SOLANA_RPC_HOST;
   console.log(network);
   const wallets = useMemo(
     () => [
