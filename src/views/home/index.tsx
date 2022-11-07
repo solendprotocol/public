@@ -1,8 +1,10 @@
 import Image from "next/image";
 import { FC, useEffect } from "react";
-import { SbwrModal } from "views/home/components";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { SbwrModal, PoolPositionModal } from "views/home/components";
 
 export const HomeView: FC = ({}) => {
+  const { publicKey, connected } = useWallet();
   const assets = [
     {},
     {},
@@ -25,9 +27,11 @@ export const HomeView: FC = ({}) => {
     {},
     {},
   ];
+  console.log(publicKey, connected, "HERE IS THE CONNECTION");
   return (
     <div className="flex flex-col p-10 py-4 md:py-10 lg:py-10 h-screen gap-4">
       {/* pool title */}
+
       <span className="">
         {" "}
         <h1 className="text-2xl">Main pool</h1>
@@ -58,6 +62,15 @@ export const HomeView: FC = ({}) => {
             <h3>$279282028082</h3>
           </span>
         </div>
+
+        {connected && (
+          <label
+            className="btn bg-base-200 cursor-pointer text-primary-content"
+            htmlFor="pp-modal"
+          >
+            Pool Position
+          </label>
+        )}
       </div>
 
       {/* For larger devices */}
@@ -79,6 +92,14 @@ export const HomeView: FC = ({}) => {
           <h3 className="text-neutral-content">TVL</h3>
           <h3>$279282028082</h3>
         </span>
+        {connected && (
+          <label
+            className="btn bg-base-200 cursor-pointer text-primary-content"
+            htmlFor="pp-modal"
+          >
+            Pool Position
+          </label>
+        )}
       </div>
 
       <div className="divider bg-base-200"></div>
@@ -210,6 +231,7 @@ export const HomeView: FC = ({}) => {
         </table>
       </div>
       <SbwrModal />
+      <PoolPositionModal />
     </div>
   );
 };
