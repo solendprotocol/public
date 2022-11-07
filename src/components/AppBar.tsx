@@ -3,13 +3,13 @@ import { Hambuger } from "../components";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { ReactSVG } from "react-svg";
 import { useAtom } from "jotai";
-import { themeAtom } from "stores/themeStore";
+import { themeAtom, selectedPoolAtom } from "stores/globalStates";
 import Image from "next/image";
 import { usePoolsList } from "hooks/usePoolsList";
 
 const AppBar = ({}) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [selectedPool, setSelectedPool] = useState("main");
+  const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const [theme, setTheme] = useAtom(themeAtom);
   const { poolList, isLoading, isError } = usePoolsList();
 
@@ -18,15 +18,21 @@ const AppBar = ({}) => {
   if (isError) return <div>Error!</div>;
 
   const poolListItems = poolList!.map((p) => (
-    <li key={p.address} className={`${selectedPool == p.name && "bordered"}`}>
+    <li
+      key={p.address}
+      onClick={() => {
+        setSelectedPool({ address: p.address, name: p.name });
+      }}
+      className={`${selectedPool.address == p.address && "bordered"}`}
+    >
       <a className="text-xlg">{p.name ? p.name : p.address}</a>
     </li>
   ));
 
   // TODO: Merge this with Drawer.tsx (so that we have only one component for the sidebar)
+  // check AppBar.tsx and Drawer.tsx
   return (
     <div className="bg-neutral w-full md:w-60 inset-y-0">
-      
       {/* desktop side bar */}
       <aside className="md:w-60 md:flex lg:flex inset-y-0 h-full hidden flex-col border-r-2 border-base-200 gap-6 fixed">
         <span className="flex items-center gap-2 px-6 pt-10">

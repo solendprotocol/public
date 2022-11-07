@@ -1,11 +1,11 @@
 import { FC, useState } from "react";
 import { ReactSVG } from "react-svg";
 import { useAtom } from "jotai";
-import { themeAtom } from "stores/themeStore";
+import { themeAtom, selectedPoolAtom } from "stores/globalStates";
 import { usePoolsList } from "hooks/usePoolsList";
 
 const Drawer: FC = (props) => {
-  const [selectedPool, setSelectedPool] = useState("main");
+  const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const [theme, setTheme] = useAtom(themeAtom);
   const { poolList, isLoading, isError } = usePoolsList();
 
@@ -14,7 +14,13 @@ const Drawer: FC = (props) => {
   if (isError) return <div>Error!</div>;
 
   const poolListItems = poolList!.map((p) => (
-    <li key={p.address} className={`${selectedPool == p.name && "bordered"}`}>
+    <li
+      key={p.address}
+      onClick={() => {
+        setSelectedPool({ address: p.address, name: p.name });
+      }}
+      className={`${selectedPool.address == p.address && "bordered"}`}
+    >
       <a className="text-xlg">{p.name ? p.name : p.address}</a>
     </li>
   ));
