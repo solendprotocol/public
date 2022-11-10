@@ -3,7 +3,7 @@ import { getProgramId, parseReserve, Reserve } from "@solendprotocol/solend-sdk"
 import BigNumber from "bignumber.js";
 import { CONNECTION, ENVIRONMENT } from "common/config";
 
-interface ReserveViewModel {
+export interface ReserveViewModel {
     address: string;
     name: string;
     logo: string;
@@ -37,7 +37,7 @@ const environment = ENVIRONMENT;
 const connection = CONNECTION;
 
 
-async function getReserves(lendingMarketPubkey: PublicKey): Promise<ReserveViewModel[]> {
+export async function getReserves(lendingMarketPubkey: PublicKey): Promise<ReserveViewModel[]> {
     const reserves = await getReservesOfPool(lendingMarketPubkey);
     const parsedReserves = reserves.map((reserve) => getParsedReserve(reserve));
     const reserveViewModels = parsedReserves.map((parsedReserve) => getReserveViewModel(parsedReserve));
