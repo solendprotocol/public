@@ -23,7 +23,7 @@ const AppBar = ({}) => {
       onClick={() => {
         setSelectedPool({ address: p.address, name: p.name });
       }}
-      className={`${selectedPool.address == p.address && "bordered"}`}
+      className={`${selectedPool.address === p.address && "bordered"}`}
     >
       <a className="text-xlg">{p.name ? p.name : p.address}</a>
     </li>
@@ -56,7 +56,7 @@ const AppBar = ({}) => {
         <div className="p-4 h-full flex flex-col justify-end">
           <span className="flex flex-row gap-4">
             <span
-              onClick={() => setTheme(theme == "light" ? "dark" : "light")}
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
               className="cursor-pointer btn bg-base-200"
             >
               <ReactSVG
