@@ -20,7 +20,7 @@ const SbwrModal = () => {
             {tabs.map((tab) => (
               <a
                 className={`tab tab-lg tab-lifted text-primary-content ${
-                  activeTab == tab && "tab-active"
+                  activeTab === tab && "tab-active"
                 }`}
                 onClick={() => setActiveTab(tab)}
               >
@@ -29,13 +29,13 @@ const SbwrModal = () => {
             ))}
           </div>
           {/* This is the body of the tabs */}
-          {activeTab == "Supply" ? (
+          {activeTab === "Supply" ? (
             <Supply />
-          ) : activeTab == "Borrow" ? (
+          ) : activeTab === "Borrow" ? (
             <Borrow />
-          ) : activeTab == "Withdraw" ? (
+          ) : activeTab === "Withdraw" ? (
             <Withdraw />
-          ) : activeTab == "Repay" ? (
+          ) : activeTab === "Repay" ? (
             <Repay />
           ) : (
             ""

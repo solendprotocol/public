@@ -18,6 +18,7 @@
     "@solana/web3.js": "^1.31.0",
     "@solendprotocol/solend-sdk": "^0.7.0",
     "@tailwindcss/typography": "^0.5.0",
+    "bignumber.js": "^9.1.0",
     "daisyui": "^1.24.3",
     "immer": "^9.0.12",
     "jotai": "^1.9.1",
