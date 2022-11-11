@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { PoolViewModel } from "models";
+import { PoolViewModel } from "models/Pools";
 import { getPools } from "../utils/pools";
 
 

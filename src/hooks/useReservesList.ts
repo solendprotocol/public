@@ -1,8 +1,9 @@
-import { PublicKey } from "@solana/web3.js";
-import { useAtom } from "jotai";
 import { useEffect, useState } from "react";
+import { useAtom } from "jotai";
 import { selectedPoolAtom } from "stores/globalStates";
-import { getReserves, ReserveViewModel } from "../functions";
+import { PublicKey } from "@solana/web3.js";
+import { ReserveViewModel } from "models/Reserves";
+import { getReserves } from "../utils/reserves";
 
 
 export function useReservesList(): {
@@ -10,7 +11,7 @@ export function useReservesList(): {
     isLoading: boolean,
     isError: boolean,
 } {
-    const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
+    const [selectedPool] = useAtom(selectedPoolAtom);
     const [reservesList, setReservesList] = useState<ReserveViewModel[] | null>(null);
     const [error, setError] = useState(false);
 

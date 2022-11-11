@@ -1,39 +1,12 @@
 import { AccountInfo, GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
-import { getProgramId, parseReserve, Reserve } from "@solendprotocol/solend-sdk";
+import { parseReserve, Reserve } from "@solendprotocol/solend-sdk";
 import BigNumber from "bignumber.js";
-import { CONNECTION, ENVIRONMENT } from "common/config";
-
-export interface ReserveViewModel {
-    address: string;
-    name: string;
-    logo: string;
-    priceUSD: string;
-    LTV: string;
-    totalSupply: string;
-    totalSupplyUSD: string;
-    totalBorrow: string;
-    totalBorrowUSD: string;
-    supplyAPY: string;
-    borrowAPY: string;
-    supplyAPR: string;
-    borrowAPR: string;
-}
-
-interface ParsedReserve {
-    pubkey: PublicKey;
-    account: {
-        executable: boolean;
-        owner: PublicKey;
-        lamports: number;
-        data: Buffer;
-        rentEpoch?: number | undefined;
-    };
-    info: Reserve;
-}
+import { CONNECTION, PROGRAM_ID } from "common/config";
+import { ReserveViewModel, ParsedReserve } from "models/Reserves";
 
 
 const RESERVE_LEN = 619;
-const environment = ENVIRONMENT;
+const programId = PROGRAM_ID;
 const connection = CONNECTION;
 
 
@@ -45,7 +18,6 @@ export async function getReserves(lendingMarketPubkey: PublicKey): Promise<Reser
 }
 
 async function getReservesOfPool(lendingMarketPubkey: PublicKey) {
-    const programId = getProgramId(environment); // production | devnet | beta
     const filters: GetProgramAccountsFilter[] = [
         { dataSize: RESERVE_LEN },
         { memcmp: { offset: 10, bytes: lendingMarketPubkey.toBase58() } },
@@ -85,6 +57,8 @@ function getReserveViewModel(parsedReserve: ParsedReserve): ReserveViewModel {
     }
     return reserveViewModel;
 }
+
+
 
 function getTotalSupply(reserve: Reserve): string {
     const mintTotalSupply = BigNumber(reserve.collateral.mintTotalSupply.toString());
