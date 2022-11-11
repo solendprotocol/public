@@ -1,19 +1,16 @@
 import { GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
-import { getProgramId, LENDING_MARKET_SIZE, MarketConfigType } from "@solendprotocol/solend-sdk";
-import { CONNECTION, ENVIRONMENT } from "common/config";
+import { LENDING_MARKET_SIZE, MarketConfigType } from "@solendprotocol/solend-sdk";
+import { CONNECTION, ENVIRONMENT, PROGRAM_ID } from "common/config";
+import { PoolViewModel } from "models";
 
-const connection = CONNECTION;
-const environment = ENVIRONMENT;
-const programId = getProgramId(environment);
+
 const lendingMarketOwner = new PublicKey(
     "5pHk2TmnqQzRF9L6egy5FfiyBgS7G9cMZ5RFaJAvghzw"
 );
+const connection = CONNECTION;
+const environment = ENVIRONMENT;
+const programId = PROGRAM_ID;
 
-
-export interface PoolViewModel {
-    name?: string;
-    address: string;
-}
 
 export async function getPools(): Promise<PoolViewModel[]> {
     const configResponse = await fetch(
@@ -37,7 +34,7 @@ export async function getPools(): Promise<PoolViewModel[]> {
     return pools;
 }
 
-export async function getPoolsFromChain() {
+async function getPoolsFromChain() {
     const filters: GetProgramAccountsFilter[] = [
         { dataSize: LENDING_MARKET_SIZE },
         { memcmp: { offset: 2, bytes: lendingMarketOwner.toBase58() } },
@@ -51,7 +48,6 @@ export async function getPoolsFromChain() {
     return pools;
 }
 
-
 function getPoolViewModel(lendingMarket: MarketConfigType): PoolViewModel {
     const PoolViewModel: PoolViewModel = {
         name: lendingMarket.name,
@@ -59,5 +55,3 @@ function getPoolViewModel(lendingMarket: MarketConfigType): PoolViewModel {
     }
     return PoolViewModel;
 }
-
-
