@@ -102,15 +102,16 @@ function getTotalBorrow(reserve: Reserve): string {
 
 function getLoanToValueRatio(reserve: Reserve): string {
     const loanToValueRatio = reserve.config.loanToValueRatio.toString();
-    return loanToValueRatio;
+    return loanToValueRatio + "%";
 }
 
 
 
 // ----- Dummy
 
-function getReserveName(): string {
+function getReserveName(): string | null {
     return "SLND";
+    // return null;
 }
 
 function getReserveLogo(): string {
