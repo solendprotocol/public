@@ -1,33 +1,13 @@
-import Image from "next/image";
-import { FC, useEffect } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { SbwrModal, PoolPositionModal } from "views/home/components";
+import { useReservesList } from "hooks/useReservesList";
+import { FC } from "react";
+import { SbwrModal } from "views/home/components";
 
 export const HomeView: FC = ({}) => {
-  const { publicKey, connected } = useWallet();
-  const assets = [
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-  ];
-  console.log(publicKey, connected, "HERE IS THE CONNECTION");
+  const { reservesList, isLoading, isError } = useReservesList();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error!</div>;
+
   return (
     <div className="flex flex-col p-10 py-4 md:py-10 lg:py-10 h-screen gap-4">
       {/* pool title */}
@@ -74,6 +54,7 @@ export const HomeView: FC = ({}) => {
       </div>
 
       {/* For larger devices */}
+      {/* TODO: Get data about pool (total deposits/ borrows etc.) */}
       <div className="flex-row justify-between w-full hidden md:flex lg:flex">
         {" "}
         <span className="flex flex-col gap-2">
@@ -108,16 +89,22 @@ export const HomeView: FC = ({}) => {
       <div className="md:hidden lg:hidden flex">
         <table className="table w-full">
           <tbody>
-            {assets.map(() => (
-              <tr className="cursor-pointer hover">
+            {reservesList.map((reserve) => (
+              <tr key={reserve.address} className="cursor-pointer hover">
                 <td className="bg-neutral">
                   <div className="flex flex-col gap-4 justify-center align-middle">
                     <span className="w-4 h-full">
-                      <img src="/Group.png" className="rounded object-cover" />
+                      <img src={reserve.logoUri} className="rounded object-cover" />
                     </span>
                     <span className="flex flex-col gap-0">
-                      <h3 className="">SLND</h3>
-                      <h3 className="text-neutral-content text-sm">$902</h3>
+                      <h3 className="">
+                        {reserve.tokenSymbol
+                          ? reserve.tokenSymbol
+                          : reserve.address}
+                      </h3>
+                      <h3 className="text-neutral-content text-sm">
+                        {reserve.priceUSD}
+                      </h3>
                     </span>
                   </div>
                 </td>
@@ -126,35 +113,39 @@ export const HomeView: FC = ({}) => {
                   <span className="flex flex-col">
                     <span className="flex flex-row justify-between align-middle">
                       <h3 className="text-neutral-content text-sm">LTV</h3>
-                      <h3 className="">35%</h3>
+                      <h3 className="">{reserve.LTV}</h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
                       {" "}
                       <h3 className="text-neutral-content text-sm">
                         Total Supply
                       </h3>{" "}
-                      <h3 className="text-neutral-content">6,123,222</h3>
+                      <h3 className="text-neutral-content">
+                        {reserve.totalSupply}
+                      </h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
                       {" "}
                       <h3 className="text-neutral-content text-sm">
                         Total Borrow
                       </h3>
-                      <h3 className="text-neutral-content">41,800</h3>
+                      <h3 className="text-neutral-content">
+                        {reserve.totalBorrow}
+                      </h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
                       {" "}
                       <h3 className="text-neutral-content text-sm">
                         Supply APY
                       </h3>
-                      <h3 className="">11.89%</h3>
+                      <h3 className="">{reserve.supplyAPY}</h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
                       {" "}
                       <h3 className="text-neutral-content text-sm">
                         Borrow APY
                       </h3>
-                      <h3 className="">182.78%</h3>
+                      <h3 className="">{reserve.borrowAPY}</h3>
                     </span>
                   </span>
                 </td>
@@ -179,51 +170,73 @@ export const HomeView: FC = ({}) => {
             </tr>
           </thead>
           <tbody>
-            {assets.map(() => (
-              <tr className="cursor-pointer hover">
+            {reservesList.map((reserve) => (
+              <tr key={reserve.address} className="cursor-pointer hover">
                 <td className="bg-neutral">
                   <label
                     className="flex flex-row gap-4 cursor-pointer"
                     htmlFor="sbwr-modal"
                   >
                     <span className="w-4 h-full">
-                      <img src="/Group.png" className="rounded object-cover" />
+                      <img src={reserve.logoUri} className="rounded object-cover" />
                     </span>
                     <span className="flex flex-col gap-0">
-                      <h3 className="">SLND</h3>
-                      <h3 className="text-neutral-content text-sm">$902</h3>
+                      <h3 className="">
+                        {reserve.tokenSymbol
+                          ? reserve.tokenSymbol
+                          : reserve.address}
+                      </h3>
+                      <h3 className="text-neutral-content text-sm">
+                        {reserve.priceUSD}
+                      </h3>
                     </span>
                   </label>
                 </td>
                 <td className="bg-neutral">
-                  <h3>33%</h3>
+                  <h3>{reserve.LTV}</h3>
                 </td>
                 <td className="bg-neutral">
                   <label
                     className="flex flex-col cursor-pointer"
                     htmlFor="sbwr-modal"
                   >
-                    <h3 className="text-neutral-content">6,122,243</h3>
-                    <h3 className="text-neutral-content">SLND</h3>
-                    <h3 className="text-neutral-content text-sm">$8920220</h3>
+                    <h3 className="text-neutral-content">
+                      {reserve.totalSupply}
+                    </h3>
+                    <h3 className="text-neutral-content">
+                      {reserve.tokenSymbol
+                        ? reserve.tokenSymbol
+                        : reserve.address}
+                    </h3>
+                    <h3 className="text-neutral-content text-sm">
+                      {reserve.totalSupplyUSD}
+                    </h3>
                   </label>
                 </td>
 
                 <td className="bg-neutral">
-                  <h3>33%</h3>
+                  <h3>{reserve.supplyAPY}</h3>
                 </td>
                 <td className="bg-neutral">
                   <label
                     className="flex flex-col cursor-pointer"
                     htmlFor="sbwr-modal"
                   >
-                    <h3 className="text-neutral-content">6,122,243</h3>
-                    <h3 className="text-neutral-content">SLND</h3>
-                    <h3 className="text-neutral-content text-sm">$8920220</h3>
+                    <h3 className="text-neutral-content">
+                      {reserve.totalBorrow}
+                    </h3>
+                    <h3 className="text-neutral-content">
+                      {reserve.tokenSymbol
+                        ? reserve.tokenSymbol
+                        : reserve.address}
+                    </h3>
+                    <h3 className="text-neutral-content text-sm">
+                      {reserve.totalBorrowUSD}
+                    </h3>
                   </label>
                 </td>
                 <td className="bg-neutral">
-                  <h3>33%</h3>
+                  <h3>{reserve.borrowAPY}</h3>
                 </td>
               </tr>
             ))}
