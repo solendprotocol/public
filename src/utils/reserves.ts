@@ -47,13 +47,13 @@ function getParsedReserve(reserve: {
     return ParsedReserve;
 }
 
-function getReserveViewModel(parsedReserve: ParsedReserve, tokens: TokenInfo[]): ReserveViewModel {
+function getReserveViewModel(parsedReserve: ParsedReserve, tokens: {[key: string]: TokenInfo}): ReserveViewModel {
     const { pubkey, info } = parsedReserve;
-    const token = tokens.find((token) => token.mintAddress === info.liquidity.mintPubkey.toBase58());
+    const tokenPubkey = info.liquidity.mintPubkey.toBase58();
     const reserveViewModel = {
         address: pubkey.toBase58(),
-        tokenSymbol: token.tokenSymbol,
-        logoUri: token.logoUri,
+        tokenSymbol: tokens[tokenPubkey].tokenSymbol,
+        logoUri: tokens[tokenPubkey].logoUri,
         priceUSD: getPriceInUSD(), //TODO: get price from oracle
         LTV: getLoanToValueRatio(info),
         totalSupply: getTotalSupply(info),
