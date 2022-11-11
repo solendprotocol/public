@@ -23,7 +23,6 @@ export function usePoolsList(): {
         getPoolList();
     }, []);
 
-
     return {
         poolList: poolList ? poolList : null,
         isLoading: !error && !poolList,

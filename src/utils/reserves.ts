@@ -3,6 +3,7 @@ import { parseReserve, Reserve } from "@solendprotocol/solend-sdk";
 import BigNumber from "bignumber.js";
 import { CONNECTION, PROGRAM_ID } from "common/config";
 import { ReserveViewModel, ParsedReserve } from "models/Reserves";
+import { getTokensInfo, TokenInfo } from "./tokens";
 
 
 const RESERVE_LEN = 619;
@@ -13,7 +14,15 @@ const connection = CONNECTION;
 export async function getReserves(lendingMarketPubkey: PublicKey): Promise<ReserveViewModel[]> {
     const reserves = await getReservesOfPool(lendingMarketPubkey);
     const parsedReserves = reserves.map((reserve) => getParsedReserve(reserve));
-    const reserveViewModels = parsedReserves.map((parsedReserve) => getReserveViewModel(parsedReserve));
+    
+    const mints: PublicKey[] = [];
+    for (var reserve of parsedReserves) {
+        const { info } = reserve;
+        mints.push(info.liquidity.mintPubkey);
+    }
+    const tokens = await getTokensInfo(mints);
+
+    const reserveViewModels = parsedReserves.map((parsedReserve) => getReserveViewModel(parsedReserve, tokens));
     return reserveViewModels;
 }
 
@@ -38,26 +47,26 @@ function getParsedReserve(reserve: {
     return ParsedReserve;
 }
 
-function getReserveViewModel(parsedReserve: ParsedReserve): ReserveViewModel {
-    const { pubkey, account, info } = parsedReserve;
+function getReserveViewModel(parsedReserve: ParsedReserve, tokens: TokenInfo[]): ReserveViewModel {
+    const { pubkey, info } = parsedReserve;
+    const token = tokens.find((token) => token.mintAddress === info.liquidity.mintPubkey.toBase58());
     const reserveViewModel = {
         address: pubkey.toBase58(),
-        name: getReserveName(), //TODO:
-        logo: getReserveLogo(), //TODO:
-        priceUSD: getPriceInUSD(), //TODO:
+        tokenSymbol: token.tokenSymbol,
+        logoUri: token.logoUri,
+        priceUSD: getPriceInUSD(), //TODO: get price from oracle
         LTV: getLoanToValueRatio(info),
         totalSupply: getTotalSupply(info),
-        totalSupplyUSD: getTotalSupplyUSD(info), //TODO:
+        totalSupplyUSD: getTotalSupplyUSD(info), //TODO: calculate price from (priceUSD, totalSupply)
         totalBorrow: getTotalBorrow(info),
-        totalBorrowUSD: getTotalBorrowUSD(info), //TODO:
+        totalBorrowUSD: getTotalBorrowUSD(info), //TODO: calculate price from (priceUSD, totalBorrow)
         supplyAPY: getSupplyAPY(), //TODO:
         borrowAPY: getBorrowAPY(), //TODO:
-        supplyAPR: getSupplyAPR(), //TODO:
-        borrowAPR: getBorrowAPR(), //TODO:
+        supplyAPR: getSupplyAPR(), //TODO: calculate from (supplyAPY, totalSupply)
+        borrowAPR: getBorrowAPR(), //TODO: calculate from (borrowAPY, totalBorrow)
     }
     return reserveViewModel;
 }
-
 
 
 function getTotalSupply(reserve: Reserve): string {
@@ -82,15 +91,6 @@ function getLoanToValueRatio(reserve: Reserve): string {
 
 
 // ----- Dummy
-
-function getReserveName(): string | null {
-    return "SLND";
-    // return null;
-}
-
-function getReserveLogo(): string {
-    return "logo_url";
-}
 
 function getPriceInUSD(): string {
     const price = "0.37"

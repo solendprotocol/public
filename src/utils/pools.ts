@@ -1,7 +1,7 @@
 import { GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
 import { LENDING_MARKET_SIZE, MarketConfigType } from "@solendprotocol/solend-sdk";
 import { CONNECTION, ENVIRONMENT, PROGRAM_ID } from "common/config";
-import { PoolViewModel } from "models";
+import { PoolViewModel } from "models/Pools";
 
 
 const lendingMarketOwner = new PublicKey(
