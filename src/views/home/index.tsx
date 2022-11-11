@@ -43,14 +43,14 @@ export const HomeView: FC = ({}) => {
           </span>
         </div>
 
-        {connected && (
+        {/* {connected && (
           <label
             className="btn bg-base-200 cursor-pointer text-primary-content"
             htmlFor="pp-modal"
           >
             Pool Position
           </label>
-        )}
+        )} */}
       </div>
 
       {/* For larger devices */}
@@ -73,14 +73,14 @@ export const HomeView: FC = ({}) => {
           <h3 className="text-neutral-content">TVL</h3>
           <h3>$279282028082</h3>
         </span>
-        {connected && (
+        {/* {connected && (
           <label
             className="btn bg-base-200 cursor-pointer text-primary-content"
             htmlFor="pp-modal"
           >
             Pool Position
           </label>
-        )}
+        )} */}
       </div>
 
       <div className="divider bg-base-200"></div>
@@ -244,7 +244,7 @@ export const HomeView: FC = ({}) => {
         </table>
       </div>
       <SbwrModal />
-      <PoolPositionModal />
+      {/* <PoolPositionModal /> */}
     </div>
   );
 };
