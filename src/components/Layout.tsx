@@ -5,7 +5,7 @@ import { AppBar, Drawer } from "../components";
 import { useAtom } from "jotai";
 
 import Notifications from "../components/Notification";
-import { themeAtom } from "stores/themeStore";
+import { themeAtom } from "stores/globalStates";
 
 const Layout = ({ children }) => {
   const [theme] = useAtom(themeAtom);
