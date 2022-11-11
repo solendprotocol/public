@@ -1,6 +1,5 @@
 import { useReservesList } from "hooks/useReservesList";
-import Image from "next/image";
-import { FC, useEffect } from "react";
+import { FC } from "react";
 import { SbwrModal } from "views/home/components";
 
 export const HomeView: FC = ({}) => {
@@ -77,12 +76,13 @@ export const HomeView: FC = ({}) => {
                 <td className="bg-neutral">
                   <div className="flex flex-col gap-4 justify-center align-middle">
                     <span className="w-4 h-full">
-                      {/* TODO: get image from url */}
-                      <img src="/Group.png" className="rounded object-cover" />
+                      <img src={reserve.logoUri} className="rounded object-cover" />
                     </span>
                     <span className="flex flex-col gap-0">
                       <h3 className="">
-                        {reserve.name ? reserve.name : reserve.address}
+                        {reserve.tokenSymbol
+                          ? reserve.tokenSymbol
+                          : reserve.address}
                       </h3>
                       <h3 className="text-neutral-content text-sm">
                         {reserve.priceUSD}
@@ -102,14 +102,18 @@ export const HomeView: FC = ({}) => {
                       <h3 className="text-neutral-content text-sm">
                         Total Supply
                       </h3>{" "}
-                      <h3 className="text-neutral-content">{reserve.totalSupply}</h3>
+                      <h3 className="text-neutral-content">
+                        {reserve.totalSupply}
+                      </h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
                       {" "}
                       <h3 className="text-neutral-content text-sm">
                         Total Borrow
                       </h3>
-                      <h3 className="text-neutral-content">{reserve.totalBorrow}</h3>
+                      <h3 className="text-neutral-content">
+                        {reserve.totalBorrow}
+                      </h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
                       {" "}
@@ -156,12 +160,13 @@ export const HomeView: FC = ({}) => {
                     htmlFor="sbwr-modal"
                   >
                     <span className="w-4 h-full">
-                      {/* TODO: get image from url */}
-                      <img src="/Group.png" className="rounded object-cover" />
+                      <img src={reserve.logoUri} className="rounded object-cover" />
                     </span>
                     <span className="flex flex-col gap-0">
                       <h3 className="">
-                        {reserve.name ? reserve.name : reserve.address}
+                        {reserve.tokenSymbol
+                          ? reserve.tokenSymbol
+                          : reserve.address}
                       </h3>
                       <h3 className="text-neutral-content text-sm">
                         {reserve.priceUSD}
@@ -181,7 +186,9 @@ export const HomeView: FC = ({}) => {
                       {reserve.totalSupply}
                     </h3>
                     <h3 className="text-neutral-content">
-                      {reserve.name ? reserve.name : reserve.address}
+                      {reserve.tokenSymbol
+                        ? reserve.tokenSymbol
+                        : reserve.address}
                     </h3>
                     <h3 className="text-neutral-content text-sm">
                       {reserve.totalSupplyUSD}
@@ -201,7 +208,9 @@ export const HomeView: FC = ({}) => {
                       {reserve.totalBorrow}
                     </h3>
                     <h3 className="text-neutral-content">
-                      {reserve.name ? reserve.name : reserve.address}
+                      {reserve.tokenSymbol
+                        ? reserve.tokenSymbol
+                        : reserve.address}
                     </h3>
                     <h3 className="text-neutral-content text-sm">
                       {reserve.totalBorrowUSD}

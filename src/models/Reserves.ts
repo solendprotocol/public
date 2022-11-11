@@ -3,8 +3,8 @@ import { Reserve } from "@solendprotocol/solend-sdk";
 
 export interface ReserveViewModel {
     address: string;
-    name: string;
-    logo: string;
+    tokenSymbol: string;
+    logoUri: string;
     priceUSD: string;
     LTV: string;
     totalSupply: string;

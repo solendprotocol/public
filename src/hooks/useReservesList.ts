@@ -27,7 +27,6 @@ export function useReservesList(): {
         getReservesList();
     }, [selectedPool]);
 
-
     return {
         reservesList: reservesList ? reservesList : null,
         isLoading: !error && !reservesList,
