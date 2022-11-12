@@ -14,7 +14,7 @@ const connection = CONNECTION;
 export async function getReserves(lendingMarketPubkey: PublicKey): Promise<ReserveViewModel[]> {
     const reserves = await getReservesOfPool(lendingMarketPubkey);
     const parsedReserves = reserves.map((reserve) => getParsedReserve(reserve));
-    
+
     const mints: PublicKey[] = [];
     for (var reserve of parsedReserves) {
         const { info } = reserve;
@@ -47,7 +47,7 @@ function getParsedReserve(reserve: {
     return ParsedReserve;
 }
 
-function getReserveViewModel(parsedReserve: ParsedReserve, tokens: {[key: string]: TokenInfo}): ReserveViewModel {
+function getReserveViewModel(parsedReserve: ParsedReserve, tokens: { [key: string]: TokenInfo }): ReserveViewModel {
     const { pubkey, info } = parsedReserve;
     const tokenPubkey = info.liquidity.mintPubkey.toBase58();
     const reserveViewModel = {
@@ -70,9 +70,12 @@ function getReserveViewModel(parsedReserve: ParsedReserve, tokens: {[key: string
 
 
 function getTotalSupply(reserve: Reserve): string {
-    const mintTotalSupply = BigNumber(reserve.collateral.mintTotalSupply.toString());
+    // totalSupply = availableAmount + totalBorrow
+    const availableAmountWads = BigNumber(reserve.liquidity.availableAmount.toString()).multipliedBy(BigNumber(10).pow(18));
+    const borrowedAmountWads = BigNumber(reserve.liquidity.borrowedAmountWads.toString());
+    const supplyAmountWads = availableAmountWads.plus(borrowedAmountWads);
     const decimals = BigNumber(reserve.liquidity.mintDecimals.toString());
-    const totalSupply = mintTotalSupply.dividedBy(BigNumber(10).pow(decimals));
+    const totalSupply = supplyAmountWads.dividedBy(BigNumber(10).pow(decimals.plus(BigNumber(18))));
     return totalSupply.toFixed(0);
 }
 
