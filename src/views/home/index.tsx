@@ -1,3 +1,4 @@
+import BigNumber from "bignumber.js";
 import { useReservesList } from "hooks/useReservesList";
 import { FC } from "react";
 import { SbwrModal } from "views/home/components";
@@ -94,7 +95,10 @@ export const HomeView: FC = ({}) => {
                 <td className="bg-neutral">
                   <div className="flex flex-col gap-4 justify-center align-middle">
                     <span className="w-4 h-full">
-                      <img src={reserve.logoUri} className="rounded object-cover" />
+                      <img
+                        src={reserve.logoUri}
+                        className="rounded object-cover"
+                      />
                     </span>
                     <span className="flex flex-col gap-0">
                       <h3 className="">
@@ -103,6 +107,7 @@ export const HomeView: FC = ({}) => {
                           : reserve.address}
                       </h3>
                       <h3 className="text-neutral-content text-sm">
+                        {/* TODO: FIX */}
                         {reserve.assetPriceUSD}
                       </h3>
                     </span>
@@ -113,7 +118,7 @@ export const HomeView: FC = ({}) => {
                   <span className="flex flex-col">
                     <span className="flex flex-row justify-between align-middle">
                       <h3 className="text-neutral-content text-sm">LTV</h3>
-                      <h3 className="">{reserve.LTV}</h3>
+                      <h3 className="">{reserve.LTV + "%"}</h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
                       {" "}
@@ -121,7 +126,7 @@ export const HomeView: FC = ({}) => {
                         Total Supply
                       </h3>{" "}
                       <h3 className="text-neutral-content">
-                        {reserve.totalSupply}
+                        {formatAmount(reserve.totalSupply)}
                       </h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
@@ -130,7 +135,7 @@ export const HomeView: FC = ({}) => {
                         Total Borrow
                       </h3>
                       <h3 className="text-neutral-content">
-                        {reserve.totalBorrow}
+                        {formatAmount(reserve.totalBorrow)}
                       </h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
@@ -138,14 +143,18 @@ export const HomeView: FC = ({}) => {
                       <h3 className="text-neutral-content text-sm">
                         Supply APY
                       </h3>
-                      <h3 className="">{reserve.supplyAPY}</h3>
+                      <h3 className="">
+                        {formatPercentage(reserve.supplyAPY)}
+                      </h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
                       {" "}
                       <h3 className="text-neutral-content text-sm">
                         Borrow APY
                       </h3>
-                      <h3 className="">{reserve.borrowAPY}</h3>
+                      <h3 className="">
+                        {formatPercentage(reserve.borrowAPY)}
+                      </h3>
                     </span>
                   </span>
                 </td>
@@ -178,7 +187,10 @@ export const HomeView: FC = ({}) => {
                     htmlFor="sbwr-modal"
                   >
                     <span className="w-4 h-full">
-                      <img src={reserve.logoUri} className="rounded object-cover" />
+                      <img
+                        src={reserve.logoUri}
+                        className="rounded object-cover"
+                      />
                     </span>
                     <span className="flex flex-col gap-0">
                       <h3 className="">
@@ -193,7 +205,7 @@ export const HomeView: FC = ({}) => {
                   </label>
                 </td>
                 <td className="bg-neutral">
-                  <h3>{reserve.LTV}</h3>
+                  <h3>{reserve.LTV + "%"}</h3>
                 </td>
                 <td className="bg-neutral">
                   <label
@@ -201,7 +213,7 @@ export const HomeView: FC = ({}) => {
                     htmlFor="sbwr-modal"
                   >
                     <h3 className="text-neutral-content">
-                      {reserve.totalSupply}
+                      {formatAmount(reserve.totalSupply)}
                     </h3>
                     <h3 className="text-neutral-content">
                       {reserve.tokenSymbol
@@ -216,7 +228,7 @@ export const HomeView: FC = ({}) => {
                 </td>
 
                 <td className="bg-neutral">
-                  <h3>{reserve.supplyAPY}</h3>
+                  <h3>{formatPercentage(reserve.supplyAPY)}</h3>
                 </td>
                 <td className="bg-neutral">
                   <label
@@ -224,7 +236,7 @@ export const HomeView: FC = ({}) => {
                     htmlFor="sbwr-modal"
                   >
                     <h3 className="text-neutral-content">
-                      {reserve.totalBorrow}
+                      {formatAmount(reserve.totalBorrow)}
                     </h3>
                     <h3 className="text-neutral-content">
                       {reserve.tokenSymbol
@@ -238,7 +250,7 @@ export const HomeView: FC = ({}) => {
                   </label>
                 </td>
                 <td className="bg-neutral">
-                  <h3>{reserve.borrowAPY}</h3>
+                  <h3>{formatPercentage(reserve.borrowAPY)}</h3>
                 </td>
               </tr>
             ))}
@@ -249,4 +261,15 @@ export const HomeView: FC = ({}) => {
       {/* <PoolPositionModal /> */}
     </div>
   );
+};
+
+const formatPercentage = (num: number) => {
+  return `${(num * 100).toFixed(2)}%`;
+};
+
+const formatAmount = (amount: BigNumber) => {
+  if (amount.isLessThan(1000)) {
+    return amount.toFormat(2);
+  }
+  return amount.integerValue().toFormat();
 };
