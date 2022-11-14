@@ -24,8 +24,7 @@ export async function getPools(): Promise<PoolViewModel[]> {
                 address: pool.pubkey.toBase58(),
             };
             return Pool;
-        }
-        );
+        });
         return poolList;
     }
 
