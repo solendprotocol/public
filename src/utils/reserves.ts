@@ -60,9 +60,9 @@ function getReserveViewModel(parsedReserve: ParsedReserve, tokens: { [key: strin
         totalSupplyUSD: getTotalSupplyUSD(info), //TODO: calculate price from (priceUSD, totalSupply)
         totalBorrow: getTotalBorrow(info),
         totalBorrowUSD: getTotalBorrowUSD(info), //TODO: calculate price from (priceUSD, totalBorrow)
-        supplyAPY: getSupplyAPY(), //TODO:
+        supplyAPY: getSupplyAPY(info), //TODO:
         borrowAPY: getBorrowAPY(info), //TODO:
-        supplyAPR: getSupplyAPR(), //TODO: calculate from (supplyAPY, totalSupply)
+        supplyAPR: calculateSupplyAPR(info), // depends on calculateBorrowAPR
         borrowAPR: calculateBorrowAPR(info),
     }
     return reserveViewModel;
@@ -105,9 +105,8 @@ function getTotalBorrowUSD(reserve: Reserve): string {
     return "1,999,999";
 }
 
-function getSupplyAPY(): string {
-    const supplyAPY = "8.94";
-    return supplyAPY + "%";
+function getSupplyAPY(reserve: Reserve): string {
+    return calculateSupplyAPR(reserve) + "%";
 }
 
 // FIXME: implement this function
@@ -115,13 +114,17 @@ function getBorrowAPY(reserve: Reserve): string {
     return calculateBorrowAPR(reserve) + "%";
 }
 
-function getSupplyAPR(): string {
-    const supplyAPR = "0.04";
-    return supplyAPR + "%";
-}
-
 // ----- Dummy
 
+
+
+const calculateSupplyAPR = (reserve: Reserve) => {
+    const currentUtilization = calculateUtilizationRatio(reserve);
+    const borrowAPR = calculateBorrowAPR(reserve);
+    return (
+        currentUtilization * borrowAPR * (1 - reserve.config.protocolTakeRate / 100)
+    );
+};
 
 
 const calculateBorrowAPR = (reserve: Reserve) => {
