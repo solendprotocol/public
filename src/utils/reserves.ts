@@ -60,7 +60,7 @@ function getReserveViewModel(parsedReserve: ParsedReserve, tokens: { [key: strin
         totalSupplyUSD: getTotalSupplyUSD(info), //TODO: calculate price from (priceUSD, totalSupply)
         totalBorrow: getTotalBorrow(info),
         totalBorrowUSD: getTotalBorrowUSD(info), //TODO: calculate price from (priceUSD, totalBorrow)
-        supplyAPY: getSupplyAPY(info), //TODO:
+        supplyAPY: calculateSupplyAPY(info), //TODO:
         borrowAPY: getBorrowAPY(info), //TODO:
         supplyAPR: calculateSupplyAPR(info), // depends on calculateBorrowAPR
         borrowAPR: calculateBorrowAPR(info),
@@ -105,16 +105,24 @@ function getTotalBorrowUSD(reserve: Reserve): string {
     return "1,999,999";
 }
 
-function getSupplyAPY(reserve: Reserve): string {
-    return calculateSupplyAPR(reserve) + "%";
-}
-
 // FIXME: implement this function
 function getBorrowAPY(reserve: Reserve): string {
     return calculateBorrowAPR(reserve) + "%";
 }
 
 // ----- Dummy
+
+
+
+const SLOTS_PER_YEAR = 63072000;
+
+const calculateSupplyAPY = (reserve: Reserve) => {
+    // APY = [1 + (APR / Number of Periods)] ** (Number of Periods) - 1
+    const apr = calculateSupplyAPR(reserve);
+    const x = BigNumber(apr).dividedBy(BigNumber(SLOTS_PER_YEAR)).toNumber();
+    const apy = (1 + x) ** SLOTS_PER_YEAR - 1;
+    return apy.toString();
+};
 
 
 
@@ -154,7 +162,8 @@ const calculateBorrowAPR = (reserve: Reserve) => {
     }
 
     // TODO: handle this later
-    return borrowAPR * 100;
+    // return borrowAPR * 100;
+    return borrowAPR;
 };
 
 const calculateUtilizationRatio = (reserve: Reserve) => {
