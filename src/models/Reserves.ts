@@ -11,10 +11,10 @@ export interface ReserveViewModel {
     totalSupplyUSD: string;
     totalBorrow: string;
     totalBorrowUSD: string;
-    supplyAPY: string;
-    borrowAPY: string;
-    supplyAPR: string;
-    borrowAPR: string;
+    supplyAPY: string | number;
+    borrowAPY: string | number;
+    supplyAPR: string | number;
+    borrowAPR: string | number;
 }
 
 export interface ParsedReserve {
