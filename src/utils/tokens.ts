@@ -8,7 +8,7 @@ export interface TokenInfo {
 
 const utl = new Client();
 
-export async function getTokensInfo(mints: PublicKey[]): Promise<{[key: string]: TokenInfo}> {
+export const getTokensInfo = async (mints: PublicKey[]) => {
     const tokens: Token[] = await utl.fetchMints(mints);
     const tokenDict: { [key: string]: TokenInfo } = {};
     for (var token of tokens) {
@@ -18,4 +18,5 @@ export async function getTokensInfo(mints: PublicKey[]): Promise<{[key: string]:
         };
     }
     return tokenDict;
-}
+};
+
