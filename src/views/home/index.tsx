@@ -103,7 +103,7 @@ export const HomeView: FC = ({}) => {
                           : reserve.address}
                       </h3>
                       <h3 className="text-neutral-content text-sm">
-                        {reserve.priceUSD}
+                        {reserve.assetPriceUSD}
                       </h3>
                     </span>
                   </div>
@@ -187,7 +187,7 @@ export const HomeView: FC = ({}) => {
                           : reserve.address}
                       </h3>
                       <h3 className="text-neutral-content text-sm">
-                        {reserve.priceUSD}
+                        {reserve.assetPriceUSD}
                       </h3>
                     </span>
                   </label>
@@ -209,7 +209,8 @@ export const HomeView: FC = ({}) => {
                         : reserve.address}
                     </h3>
                     <h3 className="text-neutral-content text-sm">
-                      {reserve.totalSupplyUSD}
+                      {/* TODO: Calculate total supply USD value */}
+                      {reserve.assetPriceUSD}
                     </h3>
                   </label>
                 </td>
@@ -231,7 +232,8 @@ export const HomeView: FC = ({}) => {
                         : reserve.address}
                     </h3>
                     <h3 className="text-neutral-content text-sm">
-                      {reserve.totalBorrowUSD}
+                      {/* TODO: Calculate total borrow USD value here */}
+                      {reserve.assetPriceUSD}
                     </h3>
                   </label>
                 </td>

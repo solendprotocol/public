@@ -5,12 +5,10 @@ export interface ReserveViewModel {
     address: string;
     tokenSymbol: string;
     logoUri: string;
-    priceUSD: string;
+    assetPriceUSD: string; // ReserveDataType.assetPriceUSD
     LTV: string;
     totalSupply: string;
-    totalSupplyUSD: string;
     totalBorrow: string;
-    totalBorrowUSD: string;
     supplyAPY: string | number;
     borrowAPY: string | number;
     supplyAPR: string | number;

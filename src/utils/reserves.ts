@@ -54,14 +54,12 @@ function getReserveViewModel(parsedReserve: ParsedReserve, tokens: { [key: strin
         address: pubkey.toBase58(),
         tokenSymbol: tokens[tokenPubkey].tokenSymbol,
         logoUri: tokens[tokenPubkey].logoUri,
-        priceUSD: getPriceInUSD(), //TODO: get price from oracle
+        assetPriceUSD: getPriceInUSD(), //TODO: get price from oracle
         LTV: getLoanToValueRatio(info),
         totalSupply: getTotalSupply(info),
-        totalSupplyUSD: getTotalSupplyUSD(info), //TODO: calculate price from (priceUSD, totalSupply)
         totalBorrow: getTotalBorrow(info),
-        totalBorrowUSD: getTotalBorrowUSD(info), //TODO: calculate price from (priceUSD, totalBorrow)
-        supplyAPY: calculateSupplyAPY(info), //TODO:
-        borrowAPY: getBorrowAPY(info), //TODO:
+        supplyAPY: calculateSupplyAPY(info),
+        borrowAPY: calculateBorrowAPY(info),
         supplyAPR: calculateSupplyAPR(info), // depends on calculateBorrowAPR
         borrowAPR: calculateBorrowAPR(info),
     }
@@ -90,27 +88,11 @@ function getLoanToValueRatio(reserve: Reserve): string {
 
 
 
-// ----- Dummy
-
+// FIXME: Dummy function
 function getPriceInUSD(): string {
     const price = "0.37"
     return "$" + price;
 }
-
-function getTotalSupplyUSD(reserve: Reserve): string {
-    return "5,447,720";
-}
-
-function getTotalBorrowUSD(reserve: Reserve): string {
-    return "1,999,999";
-}
-
-// FIXME: implement this function
-function getBorrowAPY(reserve: Reserve): string {
-    return calculateBorrowAPR(reserve) + "%";
-}
-
-// ----- Dummy
 
 
 
@@ -124,7 +106,13 @@ const calculateSupplyAPY = (reserve: Reserve) => {
     return apy.toString();
 };
 
-
+const calculateBorrowAPY = (reserve: Reserve) => {
+    // APY = [1 + (APR / Number of Periods)] ** (Number of Periods) - 1
+    const apr = calculateBorrowAPR(reserve);
+    const x = BigNumber(apr).dividedBy(BigNumber(SLOTS_PER_YEAR)).toNumber();
+    const apy = (1 + x) ** SLOTS_PER_YEAR - 1;
+    return apy.toString();
+};
 
 const calculateSupplyAPR = (reserve: Reserve) => {
     const currentUtilization = calculateUtilizationRatio(reserve);
@@ -161,8 +149,6 @@ const calculateBorrowAPR = (reserve: Reserve) => {
             optimalBorrowRate;
     }
 
-    // TODO: handle this later
-    // return borrowAPR * 100;
     return borrowAPR;
 };
 
@@ -172,6 +158,13 @@ const calculateUtilizationRatio = (reserve: Reserve) => {
     const currentUtilization = borrowedAmountWads.dividedBy(supplyAmountWads);
     return parseFloat(currentUtilization.toString());
 };
+
+function calculateSupplyAmountWads(reserve: Reserve) {
+    const availableAmountWads = BigNumber(reserve.liquidity.availableAmount.toString()).multipliedBy(BigNumber(10).pow(18));
+    const borrowedAmountWads = BigNumber(reserve.liquidity.borrowedAmountWads.toString());
+    const supplyAmountWads = availableAmountWads.plus(borrowedAmountWads);
+    return supplyAmountWads;
+}
 
 function computeExtremeRates(configRate: string) {
     let numRate = Number(configRate);
@@ -205,9 +198,3 @@ function computeExtremeRates(configRate: string) {
     }
 }
 
-function calculateSupplyAmountWads(reserve: Reserve) {
-    const availableAmountWads = BigNumber(reserve.liquidity.availableAmount.toString()).multipliedBy(BigNumber(10).pow(18));
-    const borrowedAmountWads = BigNumber(reserve.liquidity.borrowedAmountWads.toString());
-    const supplyAmountWads = availableAmountWads.plus(borrowedAmountWads);
-    return supplyAmountWads;
-}
