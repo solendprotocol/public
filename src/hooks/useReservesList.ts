@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 import { selectedPoolAtom } from "stores/globalStates";
 import { PublicKey } from "@solana/web3.js";
-import { ReserveViewModel } from "models/Reserves";
 import { getReserves } from "../utils/reserves";
 
 

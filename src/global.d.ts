@@ -1,12 +1,13 @@
-import { PublicKey } from "@solana/web3.js";
-import { Reserve } from "@solendprotocol/solend-sdk";
-import BigNumber from "bignumber.js";
+interface PoolViewModel {
+    name?: string;
+    address: string;
+}
 
-export interface ReserveViewModel {
+interface ReserveViewModel {
     address: string;
     tokenSymbol: string;
     logoUri: string;
-    assetPriceUSD: string; // ReserveDataType.assetPriceUSD
+    assetPriceUSD: string;
     totalSupply: BigNumber;
     totalBorrow: BigNumber;
     LTV: number;
@@ -16,7 +17,7 @@ export interface ReserveViewModel {
     borrowAPR: number;
 }
 
-export interface ParsedReserve {
+interface ParsedReserve {
     pubkey: PublicKey;
     account: {
         executable: boolean;
@@ -26,4 +27,9 @@ export interface ParsedReserve {
         rentEpoch?: number | undefined;
     };
     info: Reserve;
+}
+
+interface TokenInfo {
+    tokenSymbol: string;
+    logoUri: string;
 }
