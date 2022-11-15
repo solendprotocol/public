@@ -2,8 +2,7 @@ import { AccountInfo, GetProgramAccountsFilter, PublicKey } from "@solana/web3.j
 import { parseReserve, Reserve } from "@solendprotocol/solend-sdk";
 import BigNumber from "bignumber.js";
 import { CONNECTION, PROGRAM_ID } from "common/config";
-import { ParsedReserve } from "models/Reserves";
-import { getTokensInfo, TokenInfo } from "./tokens";
+import { getTokensInfo } from "./tokens";
 
 const RESERVE_LEN = 619;
 const programId = PROGRAM_ID;

@@ -1,11 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { Client, Token } from '@solflare-wallet/utl-sdk';
 
-export interface TokenInfo {
-    tokenSymbol: string;
-    logoUri: string;
-}
-
 const utl = new Client();
 
 export const getTokensInfo = async (mints: PublicKey[]) => {
