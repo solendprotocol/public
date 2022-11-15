@@ -1,7 +1,7 @@
 import { AccountInfo, GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
 import { parseReserve, Reserve } from "@solendprotocol/solend-sdk";
 import BigNumber from "bignumber.js";
-import { CONNECTION, PROGRAM_ID } from "common/config";
+import { CONNECTION, MAIN_POOL_ADDRESS, MAIN_POOL_RESERVES_ADDRESSES, PROGRAM_ID } from "common/config";
 import { getTokensInfo } from "./tokens";
 
 const RESERVE_LEN = 619;
@@ -10,17 +10,19 @@ const connection = CONNECTION;
 
 
 export const getReserves = async (lendingMarketPubkey: PublicKey) => {
-    const reserves = await getReservesOfPool(lendingMarketPubkey);
+    let reserves = await getReservesOfPool(lendingMarketPubkey);
+    // hardcode the reserves order for main pool
+    if (lendingMarketPubkey.toBase58() === MAIN_POOL_ADDRESS) {
+        reserves = reorderMainPoolReserves(reserves);
+    }
     const parsedReserves = reserves.map((reserve) => getParsedReserve(reserve));
 
     const mints: PublicKey[] = [];
-    for (var reserve of parsedReserves) {
-        const { info } = reserve;
-        mints.push(info.liquidity.mintPubkey);
-    }
+    parsedReserves.map((reserve) => { mints.push(reserve.info.liquidity.mintPubkey) });
     const tokens = await getTokensInfo(mints);
 
     const reserveViewModels = parsedReserves.map((parsedReserve) => getReserveViewModel(parsedReserve, tokens));
+    console.log(reserveViewModels);
     return reserveViewModels;
 };
 
@@ -192,3 +194,18 @@ function computeExtremeRates(configRate: string) {
             return numRate;
     }
 };
+
+const reorderMainPoolReserves = (reserves: { pubkey: PublicKey; account: AccountInfo<Buffer> }[]) => {
+    const reservesMap = new Map<string, { pubkey: PublicKey; account: AccountInfo<Buffer> }>();
+    reserves.forEach((reserve) => {reservesMap.set(reserve.pubkey.toBase58(), reserve)});
+
+    let reorderedReserves: {pubkey: PublicKey; account: AccountInfo<Buffer>}[] = [];
+    MAIN_POOL_RESERVES_ADDRESSES.forEach((reserveAddress) => {
+        const reserve = reservesMap.get(reserveAddress);
+        if (reserve) {
+            reorderedReserves = [...reorderedReserves, reserve];
+        }
+    });
+    return reorderedReserves;
+}
+
