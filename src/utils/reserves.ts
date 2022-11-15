@@ -46,16 +46,16 @@ const getParsedReserve = (reserve: { pubkey: PublicKey; account: AccountInfo<Buf
 };
 
 
-const getReserveViewModel = (parsedReserve: ParsedReserve, tokens: { [key: string]: TokenInfo }) => {
+const getReserveViewModel = (parsedReserve: ParsedReserve, tokens: Map<string, TokenInfo>) => {
     const { pubkey, info } = parsedReserve;
     const tokenPubkey = info.liquidity.mintPubkey.toBase58();
     const [supplyAPR, borrowAPR] = [calculateSupplyAPR(info), calculateBorrowAPR(info)];
     const [supplyAPY, borrowAPY] = [calculateAPY(supplyAPR), calculateAPY(borrowAPR)];
     const reserveViewModel = {
         address: pubkey.toBase58(),
-        tokenSymbol: tokens[tokenPubkey].tokenSymbol,
-        logoUri: tokens[tokenPubkey].logoUri,
-        assetPriceUSD: getAssetPriceUSD(), //TODO: get price from oracle
+        tokenSymbol: tokens.get(tokenPubkey).tokenSymbol,
+        logoUri: tokens.get(tokenPubkey).logoUri,
+        assetPriceUSD: getAssetPriceUSD(),
         totalSupply: calculateTotalSuppliedAmount(info),
         totalBorrow: calculateTotalBorrowedAmount(info),
         LTV: calculateLoanToValueRatio(info),
