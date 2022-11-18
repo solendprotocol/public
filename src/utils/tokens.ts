@@ -1,22 +1,16 @@
 import { PublicKey } from '@solana/web3.js';
 import { Client, Token } from '@solflare-wallet/utl-sdk';
 
-export interface TokenInfo {
-    mintAddress: string;
-    tokenSymbol: string;
-    logoUri: string;
-}
-
 const utl = new Client();
 
-export async function getTokensInfo(mints: PublicKey[]): Promise<TokenInfo[]> {
+export const getTokensInfo = async (mints: PublicKey[]) => {
     const tokens: Token[] = await utl.fetchMints(mints);
-    const tokenInfo = tokens.map((token) => {
-        return {
-            mintAddress: token.address,
+    const tokenMap = new Map<string, TokenInfo>();
+    for (var token of tokens) {
+        tokenMap.set(token.address, {
             tokenSymbol: token.symbol,
             logoUri: token.logoURI,
-        }
-    });
-    return tokenInfo;
-}
+        });
+    }
+    return tokenMap;
+};

@@ -1,32 +1,33 @@
 import { AccountInfo, GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
 import { parseReserve, Reserve } from "@solendprotocol/solend-sdk";
 import BigNumber from "bignumber.js";
-import { CONNECTION, PROGRAM_ID } from "common/config";
-import { ReserveViewModel, ParsedReserve } from "models/Reserves";
-import { getTokensInfo, TokenInfo } from "./tokens";
-
+import { CONNECTION, MAIN_POOL_ADDRESS, MAIN_POOL_RESERVES_ADDRESSES, PROGRAM_ID } from "common/config";
+import { getTokensInfo } from "./tokens";
 
 const RESERVE_LEN = 619;
 const programId = PROGRAM_ID;
 const connection = CONNECTION;
 
 
-export async function getReserves(lendingMarketPubkey: PublicKey): Promise<ReserveViewModel[]> {
-    const reserves = await getReservesOfPool(lendingMarketPubkey);
-    const parsedReserves = reserves.map((reserve) => getParsedReserve(reserve));
-    
-    const mints: PublicKey[] = [];
-    for (var reserve of parsedReserves) {
-        const { info } = reserve;
-        mints.push(info.liquidity.mintPubkey);
+export const getReserves = async (lendingMarketPubkey: PublicKey) => {
+    let reserves = await getReservesOfPool(lendingMarketPubkey);
+    // hardcode the reserves order for main pool
+    if (lendingMarketPubkey.toBase58() === MAIN_POOL_ADDRESS) {
+        reserves = reorderMainPoolReserves(reserves);
     }
+    const parsedReserves = reserves.map((reserve) => getParsedReserve(reserve));
+
+    const mints: PublicKey[] = [];
+    parsedReserves.map((reserve) => { mints.push(reserve.info.liquidity.mintPubkey) });
     const tokens = await getTokensInfo(mints);
 
     const reserveViewModels = parsedReserves.map((parsedReserve) => getReserveViewModel(parsedReserve, tokens));
+    console.log(reserveViewModels);
     return reserveViewModels;
-}
+};
 
-async function getReservesOfPool(lendingMarketPubkey: PublicKey) {
+
+const getReservesOfPool = async (lendingMarketPubkey: PublicKey) => {
     const filters: GetProgramAccountsFilter[] = [
         { dataSize: RESERVE_LEN },
         { memcmp: { offset: 10, bytes: lendingMarketPubkey.toBase58() } },
@@ -37,100 +38,174 @@ async function getReservesOfPool(lendingMarketPubkey: PublicKey) {
         encoding: "base64",
     });
     return reserves;
-}
+};
 
-function getParsedReserve(reserve: {
-    pubkey: PublicKey;
-    account: AccountInfo<Buffer>;
-}): ParsedReserve {
+
+const getParsedReserve = (reserve: { pubkey: PublicKey; account: AccountInfo<Buffer> }) => {
     const ParsedReserve = parseReserve(reserve.pubkey, reserve.account);
     return ParsedReserve;
-}
+};
 
-function getReserveViewModel(parsedReserve: ParsedReserve, tokens: TokenInfo[]): ReserveViewModel {
+
+const getReserveViewModel = (parsedReserve: ParsedReserve, tokens: Map<string, TokenInfo>) => {
     const { pubkey, info } = parsedReserve;
-    const token = tokens.find((token) => token.mintAddress === info.liquidity.mintPubkey.toBase58());
+    const tokenPubkey = info.liquidity.mintPubkey.toBase58();
+    const [supplyAPR, borrowAPR] = [calculateSupplyAPR(info), calculateBorrowAPR(info)];
+    const [supplyAPY, borrowAPY] = [calculateAPY(supplyAPR), calculateAPY(borrowAPR)];
     const reserveViewModel = {
         address: pubkey.toBase58(),
-        tokenSymbol: token.tokenSymbol,
-        logoUri: token.logoUri,
-        priceUSD: getPriceInUSD(), //TODO: get price from oracle
-        LTV: getLoanToValueRatio(info),
-        totalSupply: getTotalSupply(info),
-        totalSupplyUSD: getTotalSupplyUSD(info), //TODO: calculate price from (priceUSD, totalSupply)
-        totalBorrow: getTotalBorrow(info),
-        totalBorrowUSD: getTotalBorrowUSD(info), //TODO: calculate price from (priceUSD, totalBorrow)
-        supplyAPY: getSupplyAPY(), //TODO:
-        borrowAPY: getBorrowAPY(), //TODO:
-        supplyAPR: getSupplyAPR(), //TODO: calculate from (supplyAPY, totalSupply)
-        borrowAPR: getBorrowAPR(), //TODO: calculate from (borrowAPY, totalBorrow)
+        tokenSymbol: tokens.get(tokenPubkey).tokenSymbol,
+        logoUri: tokens.get(tokenPubkey).logoUri,
+        assetPriceUSD: getAssetPriceUSD(),
+        totalSupply: calculateTotalSuppliedAmount(info),
+        totalBorrow: calculateTotalBorrowedAmount(info),
+        LTV: calculateLoanToValueRatio(info),
+        supplyAPY: supplyAPY,
+        borrowAPY: borrowAPY,
+        supplyAPR: supplyAPR,
+        borrowAPR: borrowAPR,
     }
     return reserveViewModel;
-}
+};
 
 
-function getTotalSupply(reserve: Reserve): string {
-    const mintTotalSupply = BigNumber(reserve.collateral.mintTotalSupply.toString());
+const calculateTotalSuppliedAmount = (reserve: Reserve) => {
+    const supplyAmountWads = calculateSupplyAmountWads(reserve);
     const decimals = BigNumber(reserve.liquidity.mintDecimals.toString());
-    const totalSupply = mintTotalSupply.dividedBy(BigNumber(10).pow(decimals));
-    return totalSupply.toFixed(0);
-}
+    const totalSupply = supplyAmountWads.dividedBy(BigNumber(10).pow(decimals.plus(BigNumber(18))));
+    return totalSupply;
+};
 
-function getTotalBorrow(reserve: Reserve): string {
+
+const calculateTotalBorrowedAmount = (reserve: Reserve) => {
     const borrowedAmountWads = BigNumber(reserve.liquidity.borrowedAmountWads.toString());
     const decimals = BigNumber(reserve.liquidity.mintDecimals.toString());
     const totalBorrow = borrowedAmountWads.dividedBy(BigNumber(10).pow(decimals.plus(BigNumber(18))));
-    return totalBorrow.toFixed(0);
-}
-
-function getLoanToValueRatio(reserve: Reserve): string {
-    const loanToValueRatio = reserve.config.loanToValueRatio.toString();
-    return loanToValueRatio + "%";
-}
+    return totalBorrow;
+};
 
 
+const calculateLoanToValueRatio = (reserve: Reserve) => {
+    const loanToValueRatio = reserve.config.loanToValueRatio;
+    return loanToValueRatio;
+};
 
-// ----- Dummy
 
-function getPriceInUSD(): string {
-    const price = "0.37"
+// FIXME: Dummy function
+const getAssetPriceUSD = () => {
+    const price = "0.37";
     return "$" + price;
+};
+
+
+const SLOTS_PER_YEAR = 63072000;
+
+const calculateAPY = (apr: number | BigNumber) => {
+    // APY = [1 + (APR / Number of Periods)] ** (Number of Periods) - 1
+    const x = BigNumber(apr).dividedBy(BigNumber(SLOTS_PER_YEAR)).toNumber();
+    const apy = (1 + x) ** SLOTS_PER_YEAR - 1;
+    return apy;
+};
+
+
+const calculateSupplyAPR = (reserve: Reserve) => {
+    const currentUtilization = calculateUtilizationRatio(reserve);
+    const borrowAPR = calculateBorrowAPR(reserve);
+    return (
+        currentUtilization * borrowAPR * (1 - reserve.config.protocolTakeRate / 100)
+    );
+};
+
+
+const calculateBorrowAPR = (reserve: Reserve) => {
+    const currentUtilization = calculateUtilizationRatio(reserve);
+    const optimalUtilization = reserve.config.optimalUtilizationRate / 100;
+
+    let borrowAPR: number;
+    if (optimalUtilization === 1.0 || currentUtilization < optimalUtilization) {
+        const normalizedFactor = currentUtilization / optimalUtilization;
+        const optimalBorrowRate = reserve.config.optimalBorrowRate / 100;
+        const minBorrowRate = reserve.config.minBorrowRate / 100;
+        borrowAPR =
+            normalizedFactor * (optimalBorrowRate - minBorrowRate) + minBorrowRate;
+    } else {
+        if (reserve.config.optimalBorrowRate === reserve.config.maxBorrowRate) {
+            return computeExtremeRates(
+                (reserve.config.maxBorrowRate / 100).toString(),
+            );
+        }
+        const normalizedFactor =
+            (currentUtilization - optimalUtilization) / (1 - optimalUtilization);
+        const optimalBorrowRate = reserve.config.optimalBorrowRate / 100;
+        const maxBorrowRate = reserve.config.maxBorrowRate / 100;
+        borrowAPR =
+            normalizedFactor * (maxBorrowRate - optimalBorrowRate) +
+            optimalBorrowRate;
+    }
+
+    return borrowAPR;
+};
+
+
+const calculateUtilizationRatio = (reserve: Reserve) => {
+    const borrowedAmountWads = BigNumber(reserve.liquidity.borrowedAmountWads.toString());
+    const supplyAmountWads = calculateSupplyAmountWads(reserve);
+    const currentUtilization = borrowedAmountWads.dividedBy(supplyAmountWads);
+    return parseFloat(currentUtilization.toString());
+};
+
+
+function calculateSupplyAmountWads(reserve: Reserve) {
+    const availableAmountWads = BigNumber(reserve.liquidity.availableAmount.toString()).multipliedBy(BigNumber(10).pow(18));
+    const borrowedAmountWads = BigNumber(reserve.liquidity.borrowedAmountWads.toString());
+    const supplyAmountWads = availableAmountWads.plus(borrowedAmountWads);
+    return supplyAmountWads;
+};
+
+
+function computeExtremeRates(configRate: string) {
+    let numRate = Number(configRate);
+    const rate = 0.5;
+
+    if (numRate >= 2.47) {
+        numRate = Number(configRate.replace('.', ''));
+    }
+
+    switch (numRate) {
+        case 251:
+            return rate * 6;
+        case 252:
+            return rate * 7;
+        case 253:
+            return rate * 8;
+        case 254:
+            return rate * 10;
+        case 255:
+            return rate * 12;
+        case 250:
+            return rate * 20;
+        case 249:
+            return rate * 30;
+        case 248:
+            return rate * 40;
+        case 247:
+            return rate * 50;
+        default:
+            return numRate;
+    }
+};
+
+const reorderMainPoolReserves = (reserves: { pubkey: PublicKey; account: AccountInfo<Buffer> }[]) => {
+    const reservesMap = new Map<string, { pubkey: PublicKey; account: AccountInfo<Buffer> }>();
+    reserves.forEach((reserve) => {reservesMap.set(reserve.pubkey.toBase58(), reserve)});
+
+    let reorderedReserves: {pubkey: PublicKey; account: AccountInfo<Buffer>}[] = [];
+    MAIN_POOL_RESERVES_ADDRESSES.forEach((reserveAddress) => {
+        const reserve = reservesMap.get(reserveAddress);
+        if (reserve) {
+            reorderedReserves = [...reorderedReserves, reserve];
+        }
+    });
+    return reorderedReserves;
 }
 
-function getTotalSupplyUSD(reserve: Reserve): string {
-    // const totalSupply = getTotalSupply(reserve);
-    // const price = getPriceInUSD();
-    // const totalSupplyUSD = BigNumber(totalSupply).multipliedBy(price);
-    // return totalSupplyUSD.toFixed(0);
-    return "5,447,720";
-}
-
-function getTotalBorrowUSD(reserve: Reserve): string {
-    // const totalBorrow = getTotalBorrow(reserve);
-    // const price = getPriceInUSD();
-    // const totalBorrowUSD = BigNumber(totalBorrow).multipliedBy(price);
-    // return totalBorrowUSD.toFixed(0);
-    return "1,999,999";
-}
-
-function getSupplyAPY(): string {
-    const supplyAPY = "8.94";
-    return supplyAPY + "%";
-}
-
-function getBorrowAPY(): string {
-    const borrowAPY = "26.12";
-    return borrowAPY + "%";
-}
-
-function getSupplyAPR(): string {
-    const supplyAPR = "0.04";
-    return supplyAPR + "%";
-}
-
-function getBorrowAPR(): string {
-    const borrowAPR = "1.37";
-    return borrowAPR + "%";
-}
-
-// ----- Dummy
