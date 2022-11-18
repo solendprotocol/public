@@ -12,7 +12,7 @@ const environment = ENVIRONMENT;
 const programId = PROGRAM_ID;
 
 
-export async function getPools(): Promise<PoolViewModel[]> {
+export const getPools = async () => {
     const configResponse = await fetch(
         `https://api.solend.fi/v1/markets?scope=all&deployment=${environment}`,
     );
@@ -24,17 +24,17 @@ export async function getPools(): Promise<PoolViewModel[]> {
                 address: pool.pubkey.toBase58(),
             };
             return Pool;
-        }
-        );
+        });
         return poolList;
     }
 
     const configData = await configResponse.json();
     const pools = configData.results.map(getPoolViewModel);
     return pools;
-}
+};
 
-async function getPoolsFromChain() {
+
+const getPoolsFromChain = async () => {
     const filters: GetProgramAccountsFilter[] = [
         { dataSize: LENDING_MARKET_SIZE },
         { memcmp: { offset: 2, bytes: lendingMarketOwner.toBase58() } },
@@ -46,12 +46,13 @@ async function getPoolsFromChain() {
         encoding: "base64",
     });
     return pools;
-}
+};
 
-function getPoolViewModel(lendingMarket: MarketConfigType): PoolViewModel {
+
+const getPoolViewModel = (lendingMarket: MarketConfigType) => {
     const PoolViewModel: PoolViewModel = {
         name: lendingMarket.name,
         address: lendingMarket.address,
     }
     return PoolViewModel;
-}
+};
