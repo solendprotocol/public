@@ -12,6 +12,7 @@ import {
   GetMultipleAccountsConfig,
   GetProgramAccountsConfig,
   GetSlotConfig,
+  GetTransactionConfig,
   GetVersionedTransactionConfig,
   PublicKey,
   RpcResponseAndContext,
@@ -19,6 +20,7 @@ import {
   SimulatedTransactionResponse,
   SimulateTransactionConfig,
   TokenAmount,
+  TransactionResponse,
   TransactionSignature,
   Version,
   VersionedTransaction,
@@ -70,13 +72,16 @@ export interface SolendRPCConnection {
   ): Promise<RpcResponseAndContext<TokenAmount>>;
   getTransaction(
     signature: string,
+    rawConfig?: GetTransactionConfig
+  ): Promise<TransactionResponse | null>;
+  getTransaction(
+    signature: string,
     rawConfig: GetVersionedTransactionConfig
   ): Promise<VersionedTransactionResponse | null>;
   sendTransaction(
     transaction: Version,
     options?: SendOptions
   ): Promise<TransactionSignature>;
-
   simulateTransaction(
     transaction: VersionedTransaction,
     config?: SimulateTransactionConfig
@@ -169,7 +174,6 @@ export class MultiConnection {
       )
     );
   }
-
   getTokenSupply(
     tokenMintAddress: PublicKey,
     commitment?: Commitment
@@ -180,7 +184,10 @@ export class MultiConnection {
       )
     );
   }
-
+  getTransaction(
+    signature: string,
+    rawConfig?: GetTransactionConfig
+  ): Promise<TransactionResponse | null>;
   getTransaction(
     signature: string,
     rawConfig: GetVersionedTransactionConfig
@@ -189,7 +196,6 @@ export class MultiConnection {
       this.connections.map((c) => c.getTransaction(signature, rawConfig))
     );
   }
-
   // Does it make sense to do multiple instances of this?
   sendTransaction(
     transaction: Version,
@@ -305,7 +311,6 @@ export class InstrumentedConnection {
       "getTokenAccountBalance"
     );
   }
-
   getTokenSupply(
     tokenMintAddress: PublicKey,
     commitment?: Commitment
@@ -315,6 +320,10 @@ export class InstrumentedConnection {
       "getTokenSupply"
     );
   }
+  getTransaction(
+    signature: string,
+    rawConfig?: GetTransactionConfig
+  ): Promise<TransactionResponse | null>;
   getTransaction(
     signature: string,
     rawConfig: GetVersionedTransactionConfig
@@ -342,7 +351,6 @@ export class InstrumentedConnection {
       "simulateTransaction"
     );
   }
-
   async withStats(fn: Promise<any>, fnName: string) {
     this.statsd.increment(this.prefix + "_" + fnName);
     const start = Date.now();
@@ -436,7 +444,6 @@ export class RetryConnection {
       this.connection.getTokenAccountBalance(tokenAddress, commitment)
     );
   }
-
   getTokenSupply(
     tokenMintAddress: PublicKey,
     commitment?: Commitment
@@ -445,6 +452,10 @@ export class RetryConnection {
       this.connection.getTokenSupply(tokenMintAddress, commitment)
     );
   }
+  getTransaction(
+    signature: string,
+    rawConfig?: GetTransactionConfig
+  ): Promise<TransactionResponse | null>;
   getTransaction(
     signature: string,
     rawConfig: GetVersionedTransactionConfig
@@ -469,7 +480,6 @@ export class RetryConnection {
       this.connection.simulateTransaction(transaction, config)
     );
   }
-
   async withRetries(fn: Promise<any>) {
     let numTries = 0;
     let lastException;
