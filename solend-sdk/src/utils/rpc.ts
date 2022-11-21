@@ -1,5 +1,6 @@
 import {
   AccountInfo,
+  AddressLookupTableAccount,
   Blockhash,
   BlockhashWithExpiryBlockHeight,
   Commitment,
@@ -85,6 +86,10 @@ export interface SolendRPCConnection {
     transaction: VersionedTransaction,
     config?: SimulateTransactionConfig
   ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>>;
+  getAddressLookupTable(
+    accountKey: PublicKey,
+    config?: GetAccountInfoConfig
+  ): Promise<RpcResponseAndContext<AddressLookupTableAccount | null>>;
 }
 
 // MultiConnection implements SolendRPCConnection
@@ -210,6 +215,14 @@ export class MultiConnection {
   ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>> {
     return Promise.race(
       this.connections.map((c) => c.simulateTransaction(transaction, config))
+    );
+  }
+  getAddressLookupTable(
+    accountKey: PublicKey,
+    config?: GetAccountInfoConfig
+  ): Promise<RpcResponseAndContext<AddressLookupTableAccount | null>> {
+    return Promise.race(
+      this.connections.map((c) => c.getAddressLookupTable(accountKey, config))
     );
   }
 }
@@ -350,6 +363,15 @@ export class InstrumentedConnection {
       "simulateTransaction"
     );
   }
+  getAddressLookupTable(
+    accountKey: PublicKey,
+    config?: GetAccountInfoConfig
+  ): Promise<RpcResponseAndContext<AddressLookupTableAccount | null>> {
+    return this.withStats(
+      this.connection.getAddressLookupTable(accountKey, config),
+      "getAddressLookupTable"
+    );
+  }
   async withStats(fn: Promise<any>, fnName: string) {
     this.statsd.increment(this.prefix + "_" + fnName);
     const start = Date.now();
@@ -477,6 +499,14 @@ export class RetryConnection {
   ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>> {
     return this.withRetries(
       this.connection.simulateTransaction(transaction, config)
+    );
+  }
+  getAddressLookupTable(
+    accountKey: PublicKey,
+    config?: GetAccountInfoConfig
+  ): Promise<RpcResponseAndContext<AddressLookupTableAccount | null>> {
+    return this.withRetries(
+      this.connection.getAddressLookupTable(accountKey, config)
     );
   }
   async withRetries(fn: Promise<any>) {
