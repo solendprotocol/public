@@ -12,22 +12,24 @@ import {
   GetMultipleAccountsConfig,
   GetProgramAccountsConfig,
   GetSlotConfig,
-  GetTransactionConfig,
-  Message,
+  GetVersionedTransactionConfig,
   PublicKey,
   RpcResponseAndContext,
   SendOptions,
-  Signer,
   SimulatedTransactionResponse,
+  SimulateTransactionConfig,
   TokenAmount,
-  Transaction,
-  TransactionResponse,
   TransactionSignature,
+  Version,
+  VersionedTransaction,
+  VersionedTransactionResponse,
 } from "@solana/web3.js";
 import { StatsD } from "hot-shots";
 
 // Connection and MultiConnection should both implement SolendRPCConnection
 export interface SolendRPCConnection {
+  rpcEndpoint: string;
+
   getAccountInfo(
     publicKey: PublicKey,
     commitmentOrConfig?: Commitment | GetAccountInfoConfig
@@ -68,25 +70,27 @@ export interface SolendRPCConnection {
   ): Promise<RpcResponseAndContext<TokenAmount>>;
   getTransaction(
     signature: string,
-    rawConfig?: GetTransactionConfig
-  ): Promise<TransactionResponse | null>;
+    rawConfig: GetVersionedTransactionConfig
+  ): Promise<VersionedTransactionResponse | null>;
   sendTransaction(
-    transaction: Transaction,
-    signers: Array<Signer>,
+    transaction: Version,
     options?: SendOptions
   ): Promise<TransactionSignature>;
+
   simulateTransaction(
-    transactionOrMessage: Transaction | Message,
-    signers?: Array<Signer>,
-    includeAccounts?: boolean | Array<PublicKey>
+    transaction: VersionedTransaction,
+    config?: SimulateTransactionConfig
   ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>>;
 }
 
 // MultiConnection implements SolendRPCConnection
 export class MultiConnection {
   connections: SolendRPCConnection[];
+  public rpcEndpoint: string;
+
   constructor(connections: SolendRPCConnection[]) {
     this.connections = connections;
+    this.rpcEndpoint = this.connections[0].rpcEndpoint;
   }
 
   getAccountInfo(
@@ -176,35 +180,31 @@ export class MultiConnection {
       )
     );
   }
+
   getTransaction(
     signature: string,
-    rawConfig?: GetTransactionConfig
-  ): Promise<TransactionResponse | null> {
+    rawConfig: GetVersionedTransactionConfig
+  ): Promise<VersionedTransactionResponse | null> {
     return Promise.race(
       this.connections.map((c) => c.getTransaction(signature, rawConfig))
     );
   }
+
   // Does it make sense to do multiple instances of this?
   sendTransaction(
-    transaction: Transaction,
-    signers: Array<Signer>,
+    transaction: Version,
     options?: SendOptions
   ): Promise<TransactionSignature> {
     return Promise.race(
-      this.connections.map((c) =>
-        c.sendTransaction(transaction, signers, options)
-      )
+      this.connections.map((c) => c.sendTransaction(transaction, options))
     );
   }
   simulateTransaction(
-    transactionOrMessage: Transaction | Message,
-    signers?: Array<Signer>,
-    includeAccounts?: boolean | Array<PublicKey>
+    transaction: VersionedTransaction,
+    config?: SimulateTransactionConfig
   ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>> {
     return Promise.race(
-      this.connections.map((c) =>
-        c.simulateTransaction(transactionOrMessage, signers, includeAccounts)
-      )
+      this.connections.map((c) => c.simulateTransaction(transaction, config))
     );
   }
 }
@@ -214,6 +214,8 @@ export class InstrumentedConnection {
   connection: SolendRPCConnection;
   statsd: StatsD;
   prefix: string;
+  public rpcEndpoint: string;
+
   constructor(
     connection: SolendRPCConnection,
     statsd: StatsD,
@@ -222,6 +224,7 @@ export class InstrumentedConnection {
     this.connection = connection;
     this.statsd = statsd;
     this.prefix = prefix;
+    this.rpcEndpoint = this.connection.rpcEndpoint;
   }
 
   async getAccountInfo(
@@ -314,34 +317,28 @@ export class InstrumentedConnection {
   }
   getTransaction(
     signature: string,
-    rawConfig?: GetTransactionConfig
-  ): Promise<TransactionResponse | null> {
+    rawConfig: GetVersionedTransactionConfig
+  ): Promise<VersionedTransactionResponse | null> {
     return this.withStats(
       this.connection.getTransaction(signature, rawConfig),
       "getTransaction"
     );
   }
   sendTransaction(
-    transaction: Transaction,
-    signers: Array<Signer>,
+    transaction: Version,
     options?: SendOptions
   ): Promise<TransactionSignature> {
     return this.withStats(
-      this.connection.sendTransaction(transaction, signers, options),
+      this.connection.sendTransaction(transaction, options),
       "sendTransaction"
     );
   }
   simulateTransaction(
-    transactionOrMessage: Transaction | Message,
-    signers?: Array<Signer>,
-    includeAccounts?: boolean | Array<PublicKey>
+    transaction: VersionedTransaction,
+    config?: SimulateTransactionConfig
   ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>> {
     return this.withStats(
-      this.connection.simulateTransaction(
-        transactionOrMessage,
-        signers,
-        includeAccounts
-      ),
+      this.connection.simulateTransaction(transaction, config),
       "simulateTransaction"
     );
   }
@@ -366,9 +363,11 @@ export class InstrumentedConnection {
 export class RetryConnection {
   connection: SolendRPCConnection;
   maxRetries: number;
+  public rpcEndpoint: string;
   constructor(connection: SolendRPCConnection, maxRetries: number = 3) {
     this.connection = connection;
     this.maxRetries = maxRetries;
+    this.rpcEndpoint = this.connection.rpcEndpoint;
   }
 
   async getAccountInfo(
@@ -448,32 +447,26 @@ export class RetryConnection {
   }
   getTransaction(
     signature: string,
-    rawConfig?: GetTransactionConfig
-  ): Promise<TransactionResponse | null> {
+    rawConfig: GetVersionedTransactionConfig
+  ): Promise<VersionedTransactionResponse | null> {
     return this.withRetries(
       this.connection.getTransaction(signature, rawConfig)
     );
   }
   sendTransaction(
-    transaction: Transaction,
-    signers: Array<Signer>,
+    transaction: Version,
     options?: SendOptions
   ): Promise<TransactionSignature> {
     return this.withRetries(
-      this.connection.sendTransaction(transaction, signers, options)
+      this.connection.sendTransaction(transaction, options)
     );
   }
   simulateTransaction(
-    transactionOrMessage: Transaction | Message,
-    signers?: Array<Signer>,
-    includeAccounts?: boolean | Array<PublicKey>
+    transaction: VersionedTransaction,
+    config?: SimulateTransactionConfig
   ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>> {
     return this.withRetries(
-      this.connection.simulateTransaction(
-        transactionOrMessage,
-        signers,
-        includeAccounts
-      )
+      this.connection.simulateTransaction(transaction, config)
     );
   }
 
