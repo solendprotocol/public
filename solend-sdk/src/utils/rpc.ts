@@ -22,7 +22,6 @@ import {
   TokenAmount,
   TransactionResponse,
   TransactionSignature,
-  Version,
   VersionedTransaction,
   VersionedTransactionResponse,
 } from "@solana/web3.js";
@@ -79,7 +78,7 @@ export interface SolendRPCConnection {
     rawConfig: GetVersionedTransactionConfig
   ): Promise<VersionedTransactionResponse | null>;
   sendTransaction(
-    transaction: Version,
+    transaction: VersionedTransaction,
     options?: SendOptions
   ): Promise<TransactionSignature>;
   simulateTransaction(
@@ -198,7 +197,7 @@ export class MultiConnection {
   }
   // Does it make sense to do multiple instances of this?
   sendTransaction(
-    transaction: Version,
+    transaction: VersionedTransaction,
     options?: SendOptions
   ): Promise<TransactionSignature> {
     return Promise.race(
@@ -334,7 +333,7 @@ export class InstrumentedConnection {
     );
   }
   sendTransaction(
-    transaction: Version,
+    transaction: VersionedTransaction,
     options?: SendOptions
   ): Promise<TransactionSignature> {
     return this.withStats(
@@ -465,7 +464,7 @@ export class RetryConnection {
     );
   }
   sendTransaction(
-    transaction: Version,
+    transaction: VersionedTransaction,
     options?: SendOptions
   ): Promise<TransactionSignature> {
     return this.withRetries(
