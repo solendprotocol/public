@@ -373,17 +373,18 @@ export class InstrumentedConnection {
     );
   }
   async withStats(fn: Promise<any>, fnName: string) {
-    this.statsd.increment(this.prefix + "_" + fnName);
+    const tags = [`rpc:${this.prefix}`, `function:${fnName}`];
+    this.statsd.increment("rpc_method_call", tags);
     const start = Date.now();
     let result;
     try {
       result = await fn;
     } catch (e: any) {
-      this.statsd.increment(this.prefix + "_" + fnName + "_error");
+      this.statsd.increment("rpc_method_error", tags);
       throw e;
     }
     const duration = Date.now() - start;
-    this.statsd.gauge(this.prefix + "_" + fnName + "_duration", duration);
+    this.statsd.gauge("rpc_method_duration", duration, tags);
     return result;
   }
 }
