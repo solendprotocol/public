@@ -1,11 +1,24 @@
 import { Connection, Keypair, Transaction, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import * as anchor from '@project-serum/anchor';
-import { SolendAction, SolendMarket, SolendWallet } from "../src";
+import { parseReserve, SolendAction, SolendMarket, SolendWallet } from "../src";
 
 jest.setTimeout(50_000);
 
 describe("calculate", function () {
+  it ('parses reserves', async function() {
+
+    const connection = new Connection('https://api.mainnet-beta.solana.com', {
+      commitment: "finalized",
+    });
+
+    const reserve = await connection.getAccountInfo(new PublicKey('CCpirWrgNuBVLdkP2haxLTbD6XqEgaYuVXixbbpxUB6'));
+
+    const parsedReserveData = parseReserve(new PublicKey('CCpirWrgNuBVLdkP2haxLTbD6XqEgaYuVXixbbpxUB6'), reserve!);
+    expect(parsedReserveData!.info.liquidity.pythOracle).not.toBeUndefined();
+    expect(parsedReserveData!.info.liquidity.switchboardOracle).not.toBeUndefined();
+  });
+
   it("reads wallet", async function () {
     const connection = new Connection('https://api.mainnet-beta.solana.com', {
       commitment: "finalized",
