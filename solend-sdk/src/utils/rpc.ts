@@ -28,7 +28,8 @@ import {
 } from "@solana/web3.js";
 import { StatsD } from "hot-shots";
 
-// Connection and MultiConnection should both implement SolendRPCConnection
+// Connection and and all *Connection classes should implement
+// SolendRPCConnection
 export interface SolendRPCConnection {
   rpcEndpoint: string;
 
@@ -93,13 +94,19 @@ export interface SolendRPCConnection {
 }
 
 // MultiConnection implements SolendRPCConnection
+// The default connection is index 0, the rest are backups.
+// The default connection's result gets returned as soon as possible
+// If the default connection takes longer than backupDelay ms to return,
+// the first backup connection to return gets returned.
 export class MultiConnection {
-  connections: SolendRPCConnection[];
   public rpcEndpoint: string;
+  delay: number;
+  connections: SolendRPCConnection[];
 
-  constructor(connections: SolendRPCConnection[]) {
+  constructor(connections: SolendRPCConnection[], backupDelay: number = 500) {
     this.connections = connections;
     this.rpcEndpoint = this.connections[0].rpcEndpoint;
+    this.delay = backupDelay;
   }
 
   getAccountInfo(
@@ -107,8 +114,11 @@ export class MultiConnection {
     commitmentOrConfig?: Commitment | GetAccountInfoConfig
   ): Promise<AccountInfo<Buffer> | null> {
     return Promise.race(
-      this.connections.map((c) =>
-        c.getAccountInfo(publicKey, commitmentOrConfig)
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getAccountInfo(publicKey, commitmentOrConfig)
+        )
       )
     );
   }
@@ -118,8 +128,11 @@ export class MultiConnection {
     commitment?: Finality
   ): Promise<Array<ConfirmedSignatureInfo>> {
     return Promise.race(
-      this.connections.map((c) =>
-        c.getConfirmedSignaturesForAddress2(address, options, commitment)
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getConfirmedSignaturesForAddress2(address, options, commitment)
+        )
       )
     );
   }
@@ -127,7 +140,12 @@ export class MultiConnection {
     commitmentOrConfig?: Commitment | GetLatestBlockhashConfig
   ): Promise<BlockhashWithExpiryBlockHeight> {
     return Promise.race(
-      this.connections.map((c) => c.getLatestBlockhash(commitmentOrConfig))
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getLatestBlockhash(commitmentOrConfig)
+        )
+      )
     );
   }
   getMultipleAccountsInfo(
@@ -135,8 +153,11 @@ export class MultiConnection {
     commitmentOrConfig?: Commitment | GetMultipleAccountsConfig
   ): Promise<(AccountInfo<Buffer> | null)[]> {
     return Promise.race(
-      this.connections.map((c) =>
-        c.getMultipleAccountsInfo(publicKeys, commitmentOrConfig)
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getMultipleAccountsInfo(publicKeys, commitmentOrConfig)
+        )
       )
     );
   }
@@ -150,8 +171,11 @@ export class MultiConnection {
     }>
   > {
     return Promise.race(
-      this.connections.map((c) =>
-        c.getProgramAccounts(programId, configOrCommitment)
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getProgramAccounts(programId, configOrCommitment)
+        )
       )
     );
   }
@@ -160,12 +184,16 @@ export class MultiConnection {
     feeCalculator: FeeCalculator;
   }> {
     return Promise.race(
-      this.connections.map((c) => c.getRecentBlockhash(commitment))
+      this.connections.map((c, index) =>
+        delayed(index === 0 ? 0 : this.delay, c.getRecentBlockhash(commitment))
+      )
     );
   }
   getSlot(commitmentOrConfig?: Commitment | GetSlotConfig): Promise<number> {
     return Promise.race(
-      this.connections.map((c) => c.getSlot(commitmentOrConfig))
+      this.connections.map((c, index) =>
+        delayed(index === 0 ? 0 : this.delay, c.getSlot(commitmentOrConfig))
+      )
     );
   }
   getTokenAccountBalance(
@@ -173,8 +201,11 @@ export class MultiConnection {
     commitment?: Commitment
   ): Promise<RpcResponseAndContext<TokenAmount>> {
     return Promise.race(
-      this.connections.map((c) =>
-        c.getTokenAccountBalance(tokenAddress, commitment)
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getTokenAccountBalance(tokenAddress, commitment)
+        )
       )
     );
   }
@@ -183,8 +214,11 @@ export class MultiConnection {
     commitment?: Commitment
   ): Promise<RpcResponseAndContext<TokenAmount>> {
     return Promise.race(
-      this.connections.map((c) =>
-        c.getTokenSupply(tokenMintAddress, commitment)
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getTokenSupply(tokenMintAddress, commitment)
+        )
       )
     );
   }
@@ -197,7 +231,12 @@ export class MultiConnection {
     rawConfig: GetVersionedTransactionConfig
   ): Promise<VersionedTransactionResponse | null> {
     return Promise.race(
-      this.connections.map((c) => c.getTransaction(signature, rawConfig))
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getTransaction(signature, rawConfig)
+        )
+      )
     );
   }
   // Does it make sense to do multiple instances of this?
@@ -206,7 +245,12 @@ export class MultiConnection {
     options?: SendOptions
   ): Promise<TransactionSignature> {
     return Promise.race(
-      this.connections.map((c) => c.sendTransaction(transaction, options))
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.sendTransaction(transaction, options)
+        )
+      )
     );
   }
   simulateTransaction(
@@ -214,7 +258,12 @@ export class MultiConnection {
     config?: SimulateTransactionConfig
   ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>> {
     return Promise.race(
-      this.connections.map((c) => c.simulateTransaction(transaction, config))
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.simulateTransaction(transaction, config)
+        )
+      )
     );
   }
   getAddressLookupTable(
@@ -222,7 +271,12 @@ export class MultiConnection {
     config?: GetAccountInfoConfig
   ): Promise<RpcResponseAndContext<AddressLookupTableAccount | null>> {
     return Promise.race(
-      this.connections.map((c) => c.getAddressLookupTable(accountKey, config))
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getAddressLookupTable(accountKey, config)
+        )
+      )
     );
   }
 }
@@ -523,4 +577,11 @@ export class RetryConnection {
     }
     throw lastException;
   }
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function delayed(ms: number, promise: any) {
+  const promises = [promise, sleep(ms)];
+  return (await Promise.all(promises))[0];
 }
