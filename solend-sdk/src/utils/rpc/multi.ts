@@ -33,7 +33,7 @@ import { SolendRPCConnection } from "./interface";
 // The default connection's result gets returned as soon as possible
 // If the default connection takes longer than backupDelay ms to return,
 // the first backup connection to return gets returned.
-export class MultiConnection {
+export class MultiConnection implements SolendRPCConnection {
   public rpcEndpoint: string;
   delay: number;
   connections: SolendRPCConnection[];
@@ -57,6 +57,7 @@ export class MultiConnection {
       )
     );
   }
+
   getConfirmedSignaturesForAddress2(
     address: PublicKey,
     options?: ConfirmedSignaturesForAddress2Options,
@@ -71,6 +72,7 @@ export class MultiConnection {
       )
     );
   }
+
   getLatestBlockhash(
     commitmentOrConfig?: Commitment | GetLatestBlockhashConfig
   ): Promise<BlockhashWithExpiryBlockHeight> {
@@ -83,6 +85,7 @@ export class MultiConnection {
       )
     );
   }
+
   getMultipleAccountsInfo(
     publicKeys: PublicKey[],
     commitmentOrConfig?: Commitment | GetMultipleAccountsConfig
@@ -96,6 +99,7 @@ export class MultiConnection {
       )
     );
   }
+
   getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
@@ -114,6 +118,7 @@ export class MultiConnection {
       )
     );
   }
+
   getRecentBlockhash(commitment?: Commitment): Promise<{
     blockhash: Blockhash;
     feeCalculator: FeeCalculator;
@@ -124,6 +129,7 @@ export class MultiConnection {
       )
     );
   }
+
   getSlot(commitmentOrConfig?: Commitment | GetSlotConfig): Promise<number> {
     return Promise.race(
       this.connections.map((c, index) =>
@@ -131,6 +137,7 @@ export class MultiConnection {
       )
     );
   }
+
   getTokenAccountBalance(
     tokenAddress: PublicKey,
     commitment?: Commitment
@@ -144,6 +151,7 @@ export class MultiConnection {
       )
     );
   }
+
   getTokenSupply(
     tokenMintAddress: PublicKey,
     commitment?: Commitment
@@ -157,6 +165,7 @@ export class MultiConnection {
       )
     );
   }
+
   getTransaction(
     signature: string,
     rawConfig?: GetTransactionConfig
@@ -174,6 +183,7 @@ export class MultiConnection {
       )
     );
   }
+
   // Does it make sense to do multiple instances of this?
   sendTransaction(
     transaction: VersionedTransaction,
@@ -188,6 +198,7 @@ export class MultiConnection {
       )
     );
   }
+
   simulateTransaction(
     transaction: VersionedTransaction,
     config?: SimulateTransactionConfig
@@ -201,6 +212,7 @@ export class MultiConnection {
       )
     );
   }
+
   getAddressLookupTable(
     accountKey: PublicKey,
     config?: GetAccountInfoConfig
