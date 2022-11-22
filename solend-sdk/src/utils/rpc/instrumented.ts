@@ -30,7 +30,7 @@ import { StatsD } from "hot-shots";
 import { SolendRPCConnection } from "./interface";
 
 // Adds statsd metrics to RPC calls
-export class InstrumentedConnection {
+export class InstrumentedConnection implements SolendRPCConnection {
   connection: SolendRPCConnection;
   statsd: StatsD;
   prefix: string;
@@ -47,7 +47,7 @@ export class InstrumentedConnection {
     this.rpcEndpoint = this.connection.rpcEndpoint;
   }
 
-  async getAccountInfo(
+  getAccountInfo(
     publicKey: PublicKey,
     commitmentOrConfig?: Commitment | GetAccountInfoConfig
   ): Promise<AccountInfo<Buffer> | null> {
@@ -56,7 +56,8 @@ export class InstrumentedConnection {
       "getAccountInfo"
     );
   }
-  async getConfirmedSignaturesForAddress2(
+
+  getConfirmedSignaturesForAddress2(
     address: PublicKey,
     options?: ConfirmedSignaturesForAddress2Options,
     commitment?: Finality
@@ -70,6 +71,7 @@ export class InstrumentedConnection {
       "getConfirmedSignaturesForAddress2"
     );
   }
+
   getLatestBlockhash(
     commitmentOrConfig?: Commitment | GetLatestBlockhashConfig
   ): Promise<BlockhashWithExpiryBlockHeight> {
@@ -78,6 +80,7 @@ export class InstrumentedConnection {
       "getLatestBlockhash"
     );
   }
+
   getMultipleAccountsInfo(
     publicKeys: PublicKey[],
     commitmentOrConfig?: Commitment | GetMultipleAccountsConfig
@@ -87,6 +90,7 @@ export class InstrumentedConnection {
       "getMultipleAccountsInfo"
     );
   }
+
   getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
@@ -101,6 +105,7 @@ export class InstrumentedConnection {
       "getProgramAccounts"
     );
   }
+
   getRecentBlockhash(commitment?: Commitment): Promise<{
     blockhash: Blockhash;
     feeCalculator: FeeCalculator;
@@ -110,12 +115,14 @@ export class InstrumentedConnection {
       "getRecentBlockhash"
     );
   }
+
   getSlot(commitmentOrConfig?: Commitment | GetSlotConfig): Promise<number> {
     return this.withStats(
       this.connection.getSlot(commitmentOrConfig),
       "getSlot"
     );
   }
+
   getTokenAccountBalance(
     tokenAddress: PublicKey,
     commitment?: Commitment
@@ -125,6 +132,7 @@ export class InstrumentedConnection {
       "getTokenAccountBalance"
     );
   }
+
   getTokenSupply(
     tokenMintAddress: PublicKey,
     commitment?: Commitment
@@ -134,10 +142,12 @@ export class InstrumentedConnection {
       "getTokenSupply"
     );
   }
+
   getTransaction(
     signature: string,
     rawConfig?: GetTransactionConfig
   ): Promise<TransactionResponse | null>;
+
   getTransaction(
     signature: string,
     rawConfig: GetVersionedTransactionConfig
@@ -147,6 +157,7 @@ export class InstrumentedConnection {
       "getTransaction"
     );
   }
+
   sendTransaction(
     transaction: VersionedTransaction,
     options?: SendOptions
@@ -156,6 +167,7 @@ export class InstrumentedConnection {
       "sendTransaction"
     );
   }
+
   simulateTransaction(
     transaction: VersionedTransaction,
     config?: SimulateTransactionConfig
@@ -165,6 +177,7 @@ export class InstrumentedConnection {
       "simulateTransaction"
     );
   }
+
   getAddressLookupTable(
     accountKey: PublicKey,
     config?: GetAccountInfoConfig
@@ -174,6 +187,7 @@ export class InstrumentedConnection {
       "getAddressLookupTable"
     );
   }
+
   async withStats(fn: Promise<any>, fnName: string) {
     const tags = [`rpc:${this.prefix}`, `function:${fnName}`];
     this.statsd.increment("rpc_method_call", tags);

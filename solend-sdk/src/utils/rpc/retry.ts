@@ -29,7 +29,7 @@ import {
 import { SolendRPCConnection } from "./interface";
 
 // Adds retries to RPC Calls
-export class RetryConnection {
+export class RetryConnection implements SolendRPCConnection {
   connection: SolendRPCConnection;
   maxRetries: number;
   public rpcEndpoint: string;
@@ -39,7 +39,7 @@ export class RetryConnection {
     this.rpcEndpoint = this.connection.rpcEndpoint;
   }
 
-  async getAccountInfo(
+  getAccountInfo(
     publicKey: PublicKey,
     commitmentOrConfig?: Commitment | GetAccountInfoConfig
   ): Promise<AccountInfo<Buffer> | null> {
@@ -47,7 +47,8 @@ export class RetryConnection {
       this.connection.getAccountInfo(publicKey, commitmentOrConfig)
     );
   }
-  async getConfirmedSignaturesForAddress2(
+
+  getConfirmedSignaturesForAddress2(
     address: PublicKey,
     options?: ConfirmedSignaturesForAddress2Options,
     commitment?: Finality
@@ -60,6 +61,7 @@ export class RetryConnection {
       )
     );
   }
+
   getLatestBlockhash(
     commitmentOrConfig?: Commitment | GetLatestBlockhashConfig
   ): Promise<BlockhashWithExpiryBlockHeight> {
@@ -67,6 +69,7 @@ export class RetryConnection {
       this.connection.getLatestBlockhash(commitmentOrConfig)
     );
   }
+
   getMultipleAccountsInfo(
     publicKeys: PublicKey[],
     commitmentOrConfig?: Commitment | GetMultipleAccountsConfig
@@ -75,6 +78,7 @@ export class RetryConnection {
       this.connection.getMultipleAccountsInfo(publicKeys, commitmentOrConfig)
     );
   }
+
   getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
@@ -88,15 +92,18 @@ export class RetryConnection {
       this.connection.getProgramAccounts(programId, configOrCommitment)
     );
   }
+
   getRecentBlockhash(commitment?: Commitment): Promise<{
     blockhash: Blockhash;
     feeCalculator: FeeCalculator;
   }> {
     return this.withRetries(this.connection.getRecentBlockhash(commitment));
   }
+
   getSlot(commitmentOrConfig?: Commitment | GetSlotConfig): Promise<number> {
     return this.withRetries(this.connection.getSlot(commitmentOrConfig));
   }
+
   getTokenAccountBalance(
     tokenAddress: PublicKey,
     commitment?: Commitment
@@ -105,6 +112,7 @@ export class RetryConnection {
       this.connection.getTokenAccountBalance(tokenAddress, commitment)
     );
   }
+
   getTokenSupply(
     tokenMintAddress: PublicKey,
     commitment?: Commitment
@@ -113,6 +121,7 @@ export class RetryConnection {
       this.connection.getTokenSupply(tokenMintAddress, commitment)
     );
   }
+
   getTransaction(
     signature: string,
     rawConfig?: GetTransactionConfig
@@ -125,6 +134,7 @@ export class RetryConnection {
       this.connection.getTransaction(signature, rawConfig)
     );
   }
+
   sendTransaction(
     transaction: VersionedTransaction,
     options?: SendOptions
@@ -133,6 +143,7 @@ export class RetryConnection {
       this.connection.sendTransaction(transaction, options)
     );
   }
+
   simulateTransaction(
     transaction: VersionedTransaction,
     config?: SimulateTransactionConfig
@@ -141,6 +152,7 @@ export class RetryConnection {
       this.connection.simulateTransaction(transaction, config)
     );
   }
+
   getAddressLookupTable(
     accountKey: PublicKey,
     config?: GetAccountInfoConfig
@@ -149,6 +161,7 @@ export class RetryConnection {
       this.connection.getAddressLookupTable(accountKey, config)
     );
   }
+
   async withRetries(fn: Promise<any>) {
     let numTries = 0;
     let lastException;
