@@ -83,21 +83,21 @@ export class CachedConnection implements SolendRPCConnection {
     this.cache = cache;
   }
 
-  getAccountInfo(
+  async getAccountInfo(
     publicKey: PublicKey,
     commitmentOrConfig?: Commitment | GetAccountInfoConfig
   ): Promise<AccountInfo<Buffer> | null> {
     const key = `getAccountInfo_${publicKey.toBase58()}_${commitmentOrConfig}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
         key,
         this.connection.getAccountInfo(publicKey, commitmentOrConfig)
-      )
+      ))
     );
   }
 
-  getConfirmedSignaturesForAddress2(
+  async getConfirmedSignaturesForAddress2(
     address: PublicKey,
     options?: ConfirmedSignaturesForAddress2Options,
     commitment?: Finality
@@ -106,32 +106,32 @@ export class CachedConnection implements SolendRPCConnection {
       options
     )}_${commitment}}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
         key,
         this.connection.getConfirmedSignaturesForAddress2(
           address,
           options,
           commitment
         )
-      )
+      ))
     );
   }
 
-  getLatestBlockhash(
+  async getLatestBlockhash(
     commitmentOrConfig?: Commitment | GetLatestBlockhashConfig
   ): Promise<BlockhashWithExpiryBlockHeight> {
     const key = `getLatestBlockhash_${commitmentOrConfig}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
         key,
         this.connection.getLatestBlockhash(commitmentOrConfig)
-      )
+      ))
     );
   }
 
-  getMultipleAccountsInfo(
+  async getMultipleAccountsInfo(
     publicKeys: PublicKey[],
     commitmentOrConfig?: Commitment | GetMultipleAccountsConfig
   ): Promise<(AccountInfo<Buffer> | null)[]> {
@@ -139,15 +139,15 @@ export class CachedConnection implements SolendRPCConnection {
       .map((pk) => pk.toBase58)
       .join("_")}_${JSON.stringify(commitmentOrConfig)}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
         key,
         this.connection.getMultipleAccountsInfo(publicKeys, commitmentOrConfig)
-      )
+      ))
     );
   }
 
-  getProgramAccounts(
+  async getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
   ): Promise<
@@ -160,86 +160,94 @@ export class CachedConnection implements SolendRPCConnection {
       configOrCommitment
     )}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
         key,
         this.connection.getProgramAccounts(programId, configOrCommitment)
-      )
+      ))
     );
   }
 
-  getRecentBlockhash(commitment?: Commitment): Promise<{
+  async getRecentBlockhash(commitment?: Commitment): Promise<{
     blockhash: Blockhash;
     feeCalculator: FeeCalculator;
   }> {
     const key = `getRecentBlockhash_${commitment}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(key, this.connection.getRecentBlockhash(commitment))
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
+        key,
+        this.connection.getRecentBlockhash(commitment)
+      ))
     );
   }
 
-  getSlot(commitmentOrConfig?: Commitment | GetSlotConfig): Promise<number> {
+  async getSlot(
+    commitmentOrConfig?: Commitment | GetSlotConfig
+  ): Promise<number> {
     const key = `getSlot_${commitmentOrConfig}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(key, this.connection.getSlot(commitmentOrConfig))
+      (await this.cache.get(key)) ||
+      (await this.cache.set(key, this.connection.getSlot(commitmentOrConfig)))
     );
   }
 
-  getTokenAccountBalance(
+  async getTokenAccountBalance(
     tokenAddress: PublicKey,
     commitment?: Commitment
   ): Promise<RpcResponseAndContext<TokenAmount>> {
     const key = `getTokenAccountBalance_${tokenAddress.toBase58()}_${commitment}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
         key,
         this.connection.getTokenAccountBalance(tokenAddress, commitment)
-      )
+      ))
     );
   }
 
-  getTokenSupply(
+  async getTokenSupply(
     tokenMintAddress: PublicKey,
     commitment?: Commitment
   ): Promise<RpcResponseAndContext<TokenAmount>> {
     const key = `getTokenSupply_${tokenMintAddress.toBase58()}_${commitment}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
         key,
         this.connection.getTokenSupply(tokenMintAddress, commitment)
-      )
+      ))
     );
   }
 
-  getTransaction(
+  async getTransaction(
     signature: string,
     rawConfig?: GetTransactionConfig
   ): Promise<TransactionResponse | null>;
 
-  getTransaction(
+  async getTransaction(
     signature: string,
     rawConfig: GetVersionedTransactionConfig
   ): Promise<VersionedTransactionResponse | null> {
     const key = `getTransaction_${signature}_${JSON.stringify(rawConfig)}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(key, this.connection.getTransaction(signature, rawConfig))
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
+        key,
+        this.connection.getTransaction(signature, rawConfig)
+      ))
     );
   }
 
   // This does not make sense to cache, so we don't
-  sendTransaction(
+  async sendTransaction(
     transaction: VersionedTransaction,
     options?: SendOptions
   ): Promise<TransactionSignature> {
-    return this.connection.sendTransaction(transaction, options);
+    return await this.connection.sendTransaction(transaction, options);
   }
 
-  simulateTransaction(
+  async simulateTransaction(
     transaction: VersionedTransaction,
     config?: SimulateTransactionConfig
   ): Promise<RpcResponseAndContext<SimulatedTransactionResponse>> {
@@ -247,15 +255,15 @@ export class CachedConnection implements SolendRPCConnection {
       transaction
     )}_${JSON.stringify(config)}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
         key,
         this.connection.simulateTransaction(transaction, config)
-      )
+      ))
     );
   }
 
-  getAddressLookupTable(
+  async getAddressLookupTable(
     accountKey: PublicKey,
     config?: GetAccountInfoConfig
   ): Promise<RpcResponseAndContext<AddressLookupTableAccount | null>> {
@@ -263,11 +271,11 @@ export class CachedConnection implements SolendRPCConnection {
       config
     )}`;
     return (
-      this.cache.get(key) ||
-      this.cache.set(
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
         key,
         this.connection.getAddressLookupTable(accountKey, config)
-      )
+      ))
     );
   }
 }
