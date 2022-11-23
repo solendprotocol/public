@@ -40,10 +40,12 @@ type CachedObject = {
 
 export class InMemoryCache implements RPCCacheInterface {
   expireMS: number;
+  maxCacheSize: number | null;
   data: { [key: string]: CachedObject | null };
 
-  constructor(expireMS: number) {
+  constructor(expireMS: number, maxCacheSize: number | null = null) {
     this.expireMS = expireMS;
+    this.maxCacheSize = maxCacheSize;
     this.data = {};
   }
 
@@ -66,6 +68,14 @@ export class InMemoryCache implements RPCCacheInterface {
       timestamp: Date.now(),
       value: value,
     };
+    // We don't want to let the cache get infinitely big
+    // so we just discard all of the cached data if it gets sufficiently big.
+    if (
+      this.maxCacheSize !== null &&
+      Object.keys(this.data).length > this.maxCacheSize
+    ) {
+      this.data = {};
+    }
     return value;
   }
 }
