@@ -69,12 +69,12 @@ export class InMemoryCache implements RPCCacheInterface {
       value: value,
     };
     // We don't want to let the cache get infinitely big
-    // so we just discard all of the cached data if it gets sufficiently big.
+    // so we just discard the oldest item
     if (
       this.maxCacheSize !== null &&
-      Object.keys(this.data).length > this.maxCacheSize
+      Object.keys(this.data).length === this.maxCacheSize
     ) {
-      this.data = {};
+      delete this.data[Object.keys(this.data)[0]];
     }
     return value;
   }
