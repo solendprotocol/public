@@ -9,7 +9,7 @@ const programId = PROGRAM_ID;
 const connection = CONNECTION;
 
 
-export const getReserves = async (lendingMarketPubkey: PublicKey) => {
+export const getReserves = async (lendingMarketPubkey: PublicKey): Promise<ReserveViewModel[]> => {
     let reserves = await getReservesOfPool(lendingMarketPubkey);
     // hardcode the reserves order for main pool
     if (lendingMarketPubkey.toBase58() === MAIN_POOL_ADDRESS) {
@@ -22,7 +22,6 @@ export const getReserves = async (lendingMarketPubkey: PublicKey) => {
     const tokens = await getTokensInfo(mints);
 
     const reserveViewModels = parsedReserves.map((parsedReserve) => getReserveViewModel(parsedReserve, tokens));
-    console.log(reserveViewModels);
     return reserveViewModels;
 };
 
@@ -43,6 +42,9 @@ const getReservesOfPool = async (lendingMarketPubkey: PublicKey) => {
 
 const getParsedReserve = (reserve: { pubkey: PublicKey; account: AccountInfo<Buffer> }) => {
     const ParsedReserve = parseReserve(reserve.pubkey, reserve.account);
+    if (!ParsedReserve) {
+        throw new Error("Failed to parse reserve");
+    }
     return ParsedReserve;
 };
 
@@ -52,11 +54,18 @@ const getReserveViewModel = (parsedReserve: ParsedReserve, tokens: Map<string, T
     const tokenPubkey = info.liquidity.mintPubkey.toBase58();
     const [supplyAPR, borrowAPR] = [calculateSupplyAPR(info), calculateBorrowAPR(info)];
     const [supplyAPY, borrowAPY] = [calculateAPY(supplyAPR), calculateAPY(borrowAPR)];
+    let tokenInfo = tokens.get(tokenPubkey);
+    if (!tokenInfo) {
+        tokenInfo = {
+            tokenSymbol: "Unknown",
+            logoUri: null
+        } as TokenInfo;
+    }
     const reserveViewModel = {
         address: pubkey.toBase58(),
-        tokenSymbol: tokens.get(tokenPubkey).tokenSymbol,
-        logoUri: tokens.get(tokenPubkey).logoUri,
-        assetPriceUSD: getAssetPriceUSD(),
+        tokenSymbol: tokenInfo.tokenSymbol,
+        logoUri: tokenInfo.logoUri,
+        assetPriceUSD: getAssetPriceUSD(info.liquidity.pythOracle, info.liquidity.switchboardOracle),
         totalSupply: calculateTotalSuppliedAmount(info),
         totalBorrow: calculateTotalBorrowedAmount(info),
         LTV: calculateLoanToValueRatio(info),
@@ -64,7 +73,7 @@ const getReserveViewModel = (parsedReserve: ParsedReserve, tokens: Map<string, T
         borrowAPY: borrowAPY,
         supplyAPR: supplyAPR,
         borrowAPR: borrowAPR,
-    }
+    };
     return reserveViewModel;
 };
 
@@ -92,9 +101,16 @@ const calculateLoanToValueRatio = (reserve: Reserve) => {
 
 
 // FIXME: Dummy function
-const getAssetPriceUSD = () => {
-    const price = "0.37";
-    return "$" + price;
+const getAssetPriceUSD = (pythOracle: PublicKey | null, sbOracle: PublicKey | null) => {
+    if (pythOracle) {
+        // return pyth price
+    }
+    if (sbOracle) {
+        // return sb price
+    }
+    return '0'; // return default price
+    // const price = "0.37";
+    // return "$" + price;
 };
 
 
