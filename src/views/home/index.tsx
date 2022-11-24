@@ -90,13 +90,13 @@ export const HomeView: FC = ({}) => {
       <div className="md:hidden lg:hidden flex">
         <table className="table w-full">
           <tbody>
-            {reservesList.map((reserve) => (
+            {reservesList!.map((reserve) => (
               <tr key={reserve.address} className="cursor-pointer hover">
                 <td className="bg-neutral">
                   <div className="flex flex-col gap-4 justify-center align-middle">
                     <span className="w-4 h-full">
                       <img
-                        src={reserve.logoUri}
+                        src={reserve.logoUri? reserve.logoUri : "https://via.placeholder.com/150"}
                         className="rounded object-cover"
                       />
                     </span>
@@ -179,7 +179,7 @@ export const HomeView: FC = ({}) => {
             </tr>
           </thead>
           <tbody>
-            {reservesList.map((reserve) => (
+            {reservesList!.map((reserve) => (
               <tr key={reserve.address} className="cursor-pointer hover">
                 <td className="bg-neutral">
                   <label
@@ -188,7 +188,7 @@ export const HomeView: FC = ({}) => {
                   >
                     <span className="w-4 h-full">
                       <img
-                        src={reserve.logoUri}
+                        src={reserve.logoUri? reserve.logoUri : "https://via.placeholder.com/150"}
                         className="rounded object-cover"
                       />
                     </span>

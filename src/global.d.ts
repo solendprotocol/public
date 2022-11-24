@@ -6,7 +6,7 @@ interface PoolViewModel {
 interface ReserveViewModel {
     address: string;
     tokenSymbol: string;
-    logoUri: string;
+    logoUri: string | null;
     assetPriceUSD: string;
     totalSupply: BigNumber;
     totalBorrow: BigNumber;
@@ -31,5 +31,5 @@ interface ParsedReserve {
 
 interface TokenInfo {
     tokenSymbol: string;
-    logoUri: string;
+    logoUri: string | null;
 }
