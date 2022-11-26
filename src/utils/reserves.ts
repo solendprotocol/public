@@ -2,6 +2,7 @@ import { AccountInfo, GetProgramAccountsFilter, PublicKey } from "@solana/web3.j
 import { parseReserve, Reserve } from "@solendprotocol/solend-sdk";
 import BigNumber from "bignumber.js";
 import { CONNECTION, MAIN_POOL_ADDRESS, MAIN_POOL_RESERVES_ADDRESSES, PROGRAM_ID } from "common/config";
+import { getOracleAddresses, getPriceFromPyth, getPythAccountsInfo } from "./oracle";
 import { getTokensInfo } from "./tokens";
 
 const RESERVE_LEN = 619;
@@ -17,11 +18,16 @@ export const getReserves = async (lendingMarketPubkey: PublicKey): Promise<Reser
     }
     const parsedReserves = reserves.map((reserve) => getParsedReserve(reserve));
 
+    const oracles = getOracleAddresses(parsedReserves);
+    const oraclePrices = await getAssetPrices(oracles);
+
     const mints: PublicKey[] = [];
     parsedReserves.map((reserve) => { mints.push(reserve.info.liquidity.mintPubkey) });
     const tokens = await getTokensInfo(mints);
 
-    const reserveViewModels = parsedReserves.map((parsedReserve) => getReserveViewModel(parsedReserve, tokens));
+    const reserveViewModels = parsedReserves.map((parsedReserve) => 
+        getReserveViewModel(parsedReserve, tokens, oraclePrices)
+    );
     return reserveViewModels;
 };
 
@@ -49,11 +55,16 @@ const getParsedReserve = (reserve: { pubkey: PublicKey; account: AccountInfo<Buf
 };
 
 
-const getReserveViewModel = (parsedReserve: ParsedReserve, tokens: Map<string, TokenInfo>) => {
+const getReserveViewModel = (
+    parsedReserve: ParsedReserve,
+    tokens: Map<string, TokenInfo>,
+    oraclePrices: Map<string, number>) => {
+
     const { pubkey, info } = parsedReserve;
     const tokenPubkey = info.liquidity.mintPubkey.toBase58();
     const [supplyAPR, borrowAPR] = [calculateSupplyAPR(info), calculateBorrowAPR(info)];
     const [supplyAPY, borrowAPY] = [calculateAPY(supplyAPR), calculateAPY(borrowAPR)];
+    // FIXME: Try to find a better way to handle this
     let tokenInfo = tokens.get(tokenPubkey);
     if (!tokenInfo) {
         tokenInfo = {
@@ -65,7 +76,7 @@ const getReserveViewModel = (parsedReserve: ParsedReserve, tokens: Map<string, T
         address: pubkey.toBase58(),
         tokenSymbol: tokenInfo.tokenSymbol,
         logoUri: tokenInfo.logoUri,
-        assetPriceUSD: getAssetPriceUSD(info.liquidity.pythOracle, info.liquidity.switchboardOracle),
+        assetPriceUSD: oraclePrices.get(pubkey.toBase58()) || 0,
         totalSupply: calculateTotalSuppliedAmount(info),
         totalBorrow: calculateTotalBorrowedAmount(info),
         LTV: calculateLoanToValueRatio(info),
@@ -100,17 +111,30 @@ const calculateLoanToValueRatio = (reserve: Reserve) => {
 };
 
 
-// FIXME: Dummy function
-const getAssetPriceUSD = (pythOracle: PublicKey | null, sbOracle: PublicKey | null) => {
-    if (pythOracle) {
-        // return pyth price
+const getAssetPrices = async (oracles: Map<string, { pyth: string; sb: string; }>) => {
+    const prices = new Map<string, number>();
+    const pythAccountsInfo = await getPythAccountsInfo(oracles);
+
+    for (const [reserveAddress, { pyth, sb }] of oracles) {
+        if (pyth) {
+            try {
+                const pythAccountInfo = pythAccountsInfo.get(reserveAddress);
+                if (pythAccountInfo) {
+                    const price = getPriceFromPyth(pythAccountInfo);
+                    prices.set(reserveAddress, price);
+                    continue;
+                }
+            } catch { }
+        }
+        if (sb) {
+            prices.set(reserveAddress, 111);
+            continue;
+        }
+
+        prices.set(reserveAddress, 0);
     }
-    if (sbOracle) {
-        // return sb price
-    }
-    return '0'; // return default price
-    // const price = "0.37";
-    // return "$" + price;
+
+    return prices;
 };
 
 
@@ -213,9 +237,9 @@ function computeExtremeRates(configRate: string) {
 
 const reorderMainPoolReserves = (reserves: { pubkey: PublicKey; account: AccountInfo<Buffer> }[]) => {
     const reservesMap = new Map<string, { pubkey: PublicKey; account: AccountInfo<Buffer> }>();
-    reserves.forEach((reserve) => {reservesMap.set(reserve.pubkey.toBase58(), reserve)});
+    reserves.forEach((reserve) => { reservesMap.set(reserve.pubkey.toBase58(), reserve) });
 
-    let reorderedReserves: {pubkey: PublicKey; account: AccountInfo<Buffer>}[] = [];
+    let reorderedReserves: { pubkey: PublicKey; account: AccountInfo<Buffer> }[] = [];
     MAIN_POOL_RESERVES_ADDRESSES.forEach((reserveAddress) => {
         const reserve = reservesMap.get(reserveAddress);
         if (reserve) {

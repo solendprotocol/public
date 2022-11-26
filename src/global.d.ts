@@ -7,7 +7,7 @@ interface ReserveViewModel {
     address: string;
     tokenSymbol: string;
     logoUri: string | null;
-    assetPriceUSD: string;
+    assetPriceUSD: number;
     totalSupply: BigNumber;
     totalBorrow: BigNumber;
     LTV: number;
