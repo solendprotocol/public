@@ -108,7 +108,7 @@ export const HomeView: FC = ({}) => {
                       </h3>
                       <h3 className="text-neutral-content text-sm">
                         {/* TODO: FIX */}
-                        {reserve.assetPriceUSD}
+                        {formatAssetPrice(reserve.assetPriceUSD)}
                       </h3>
                     </span>
                   </div>
@@ -199,7 +199,7 @@ export const HomeView: FC = ({}) => {
                           : reserve.address}
                       </h3>
                       <h3 className="text-neutral-content text-sm">
-                        {reserve.assetPriceUSD}
+                        {formatAssetPrice(reserve.assetPriceUSD)}
                       </h3>
                     </span>
                   </label>
@@ -222,7 +222,7 @@ export const HomeView: FC = ({}) => {
                     </h3>
                     <h3 className="text-neutral-content text-sm">
                       {/* TODO: Calculate total supply USD value */}
-                      {reserve.assetPriceUSD}
+                      {formatAssetPrice(reserve.assetPriceUSD)}
                     </h3>
                   </label>
                 </td>
@@ -245,7 +245,7 @@ export const HomeView: FC = ({}) => {
                     </h3>
                     <h3 className="text-neutral-content text-sm">
                       {/* TODO: Calculate total borrow USD value here */}
-                      {reserve.assetPriceUSD}
+                      {formatAssetPrice(reserve.assetPriceUSD)}
                     </h3>
                   </label>
                 </td>
@@ -272,4 +272,8 @@ const formatAmount = (amount: BigNumber) => {
     return amount.toFormat(2);
   }
   return amount.integerValue().toFormat();
+};
+
+const formatAssetPrice = (price: number) => {
+  return "$" + BigNumber(price).toFormat(2);
 };
