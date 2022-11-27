@@ -1,13 +1,28 @@
 import BigNumber from "bignumber.js";
 import { useReservesList } from "hooks/useReservesList";
+import { useAtom } from "jotai";
 import { FC } from "react";
+import { selectedPoolAtom } from "stores/globalStates";
 import { SbwrModal } from "views/home/components";
 
 export const HomeView: FC = ({}) => {
+  const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const { reservesList, isLoading, isError } = useReservesList();
 
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error!</div>;
+
+
+  const poolTotalSupply = reservesList!.reduce(
+    (acc, curr) => acc.plus(curr.totalSupply * curr.assetPriceUSD),
+    new BigNumber(0)
+  );
+  const poolTotalBorrow = reservesList!.reduce(
+    (acc, curr) => acc.plus(curr.totalBorrow * curr.assetPriceUSD),
+    new BigNumber(0)
+  );
+  const poolLtv = poolTotalSupply.minus(poolTotalBorrow);
+
 
   return (
     <div className="flex flex-col p-10 py-4 md:py-10 lg:py-10 h-screen gap-4">
@@ -15,7 +30,8 @@ export const HomeView: FC = ({}) => {
 
       <span className="">
         {" "}
-        <h1 className="text-2xl">Main pool</h1>
+        {/* TODO: Handle null name and address, proper formatting */}
+        <h1 className="text-2xl">{selectedPool.name}</h1>
       </span>
       {/* pool details starting here */}
       <div className="divider bg-base-200"></div>
@@ -25,22 +41,22 @@ export const HomeView: FC = ({}) => {
           {" "}
           <span className="flex flex-col gap-2">
             <h3 className="text-neutral-content">Creator</h3>
-            <h3>Solend</h3>
+            <h3>Solend</h3> {/* TODO: Get creator name/address */}
           </span>
           <span className="flex flex-col gap-2">
             <h3 className="text-neutral-content">Total Supply</h3>
-            <h3>$279282028082</h3>
+            <h3>{formatPoolValue(poolTotalSupply)}</h3>
           </span>
         </div>
         <div className="flex flex-row justify-between">
           {" "}
           <span className="flex flex-col gap-2">
             <h3 className="text-neutral-content">Total Borrow</h3>
-            <h3>$279282028082</h3>
+            <h3>{formatPoolValue(poolTotalBorrow)}</h3>
           </span>
           <span className="flex flex-col gap-2">
             <h3 className="text-neutral-content">TVL</h3>
-            <h3>$279282028082</h3>
+            <h3>{formatPoolValue(poolLtv)}</h3>
           </span>
         </div>
 
@@ -55,24 +71,23 @@ export const HomeView: FC = ({}) => {
       </div>
 
       {/* For larger devices */}
-      {/* TODO: Get data about pool (total deposits/ borrows etc.) */}
       <div className="flex-row justify-between w-full hidden md:flex lg:flex">
         {" "}
         <span className="flex flex-col gap-2">
           <h3 className="text-neutral-content">Creator</h3>
-          <h3>Solend</h3>
+          <h3>Solend</h3> {/* TODO: Get creator name/address */}
         </span>
         <span className="flex flex-col gap-2">
           <h3 className="text-neutral-content">Total Supply</h3>
-          <h3>$279282028082</h3>
+          <h3>{formatPoolValue(poolTotalSupply)}</h3>
         </span>{" "}
         <span className="flex flex-col gap-2">
           <h3 className="text-neutral-content">Total Borrow</h3>
-          <h3>$279282028082</h3>
+          <h3>{formatPoolValue(poolTotalBorrow)}</h3>
         </span>
         <span className="flex flex-col gap-2">
           <h3 className="text-neutral-content">TVL</h3>
-          <h3>$279282028082</h3>
+          <h3>{formatPoolValue(poolLtv)}</h3>
         </span>
         {/* {connected && (
           <label
@@ -107,7 +122,6 @@ export const HomeView: FC = ({}) => {
                           : reserve.address}
                       </h3>
                       <h3 className="text-neutral-content text-sm">
-                        {/* TODO: FIX */}
                         {formatAssetPrice(reserve.assetPriceUSD)}
                       </h3>
                     </span>
@@ -221,8 +235,7 @@ export const HomeView: FC = ({}) => {
                         : reserve.address}
                     </h3>
                     <h3 className="text-neutral-content text-sm">
-                      {/* TODO: Calculate total supply USD value */}
-                      {formatAssetPrice(reserve.assetPriceUSD)}
+                      {formatAssetPrice(calculateValueinUSD(reserve.totalSupply, reserve.assetPriceUSD).toNumber())}
                     </h3>
                   </label>
                 </td>
@@ -244,8 +257,7 @@ export const HomeView: FC = ({}) => {
                         : reserve.address}
                     </h3>
                     <h3 className="text-neutral-content text-sm">
-                      {/* TODO: Calculate total borrow USD value here */}
-                      {formatAssetPrice(reserve.assetPriceUSD)}
+                      {formatAssetPrice(calculateValueinUSD(reserve.totalBorrow, reserve.assetPriceUSD).toNumber())}
                     </h3>
                   </label>
                 </td>
@@ -275,5 +287,31 @@ const formatAmount = (amount: BigNumber) => {
 };
 
 const formatAssetPrice = (price: number) => {
+  if (price < 1) {
+    return "$" + BigNumber(price).toFormat(4);
+  }
   return "$" + BigNumber(price).toFormat(2);
 };
+
+const calculateValueinUSD = (amount: BigNumber, price: number) => {
+  return amount.multipliedBy(price);
+};
+
+const formatPoolValue = (amount: BigNumber) => {
+  if (amount.isGreaterThan(10000000)) {
+    return `$${amount.dividedBy(1000000).toFormat(1)}M`;
+  }
+  if (amount.isGreaterThan(1000000)) {
+    return `$${amount.dividedBy(1000000).toFormat(2)}M`;
+  }
+  if (amount.isGreaterThan(100000)) {
+    return `$${amount.dividedBy(1000).toFormat(0)}K`;
+  }
+  if (amount.isGreaterThan(10000)) {
+    return `$${amount.dividedBy(1000).toFormat(1)}K`;
+  }
+  if (amount.isGreaterThan(1000)) {
+    return `$${amount.dividedBy(1000).toFormat(2)}K`;
+  }
+  return `$${amount.toFormat(2)}`;
+}

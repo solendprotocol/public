@@ -13,7 +13,7 @@ const programId = PROGRAM_ID;
 
 export const getPools = async () => {
     const configResponse = await fetch(
-        `https://api.solend.fi/v1/config?deployment=${environment}`,
+        `https://api.solend.fi/v1/markets/configs?scope=all&deployment=${environment}`,
     );
     if (!configResponse.ok) {
         // fallback
@@ -28,7 +28,7 @@ export const getPools = async () => {
     }
 
     const configData = await configResponse.json();
-    const pools = configData.markets.map(getPoolViewModel);
+    const pools = configData.map(getPoolViewModel);
     return pools;
 };
 
