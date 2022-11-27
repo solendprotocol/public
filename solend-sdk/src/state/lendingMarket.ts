@@ -4,9 +4,12 @@ import * as Layout from "../utils/layout";
 
 export interface LendingMarket {
   version: number;
-  isInitialized: boolean;
+  bumpSeed: number;
+  owner: PublicKey;
   quoteTokenMint: PublicKey;
   tokenProgramId: PublicKey;
+  oracleProgramId: PublicKey;
+  switchboardOracleProgramId: PublicKey;
 }
 
 export const LendingMarketLayout: typeof BufferLayout.Structure =
