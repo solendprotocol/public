@@ -1,31 +1,13 @@
 import { parsePriceData, PythHttpClient } from "@pythnetwork/client";
+import SwitchboardProgram from "@switchboard-xyz/sbv2-lite/";
+import { AggregatorState } from "@switchboard-xyz/switchboard-api/lib/compiled";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import { CONNECTION } from "common/config";
 
+
 const connection = CONNECTION;
-
-// const MAINNET_PYTH_PROGRAM = new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH');
-// const DEVNET_PYTH_PROGRAM = new PublicKey('gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s');
-// const MAINNET_SWITCHBOARD_PROGRAM = new PublicKey('DtmE9D2CSB4L5D6A15mraeEjrGMm6auWVzgaD8hK2tZM');
-// const DEVNET_SWITCHBOARD_PROGRAM = new PublicKey('7azgmy1pFXHikv36q1zZASvFq5vFa39TT9NweVugKKTU');
-
-// const getPythOracleProgram = () => {
-//     if (ENVIRONMENT === "devnet") {
-//         return DEVNET_PYTH_PROGRAM;
-//     }
-//     return MAINNET_PYTH_PROGRAM;
-// }
-
-// const getSwitchboardOracleProgram = () => {
-//     if (ENVIRONMENT === "devnet") {
-//         return DEVNET_SWITCHBOARD_PROGRAM;
-//     }
-//     return MAINNET_SWITCHBOARD_PROGRAM;
-// }
-
-// const pythPublicKey = getPythOracleProgram();
-// const switchboardPublicKey = getSwitchboardOracleProgram();
-
+const SBV1_MAINNET = 'DtmE9D2CSB4L5D6A15mraeEjrGMm6auWVzgaD8hK2tZM';
+const SBV2_MAINNET = 'SW1TCH7qEPTdLsDHRgPuMQjbQxKdH2aBStViMFnt64f';
 
 
 export const getOracleAddresses = (parsedReserves: ParsedReserve[]) => {
@@ -39,6 +21,21 @@ export const getOracleAddresses = (parsedReserves: ParsedReserve[]) => {
     return oracles;
 }
 
+export const getPythAccountsInfo = async (oracles: Map<string, { pyth: string, sb: string }>) => {
+    const accountsInfo = new Map<string, AccountInfo<Buffer> | null>();
+    const promises = new Set<Promise<void>>();
+
+    const setAccountsInfo = async (reserveAddress: string, pythAddress: string) => {
+        const pythAccountInfo = await connection.getAccountInfo(new PublicKey(pythAddress));
+        accountsInfo.set(reserveAddress, pythAccountInfo);
+    };
+
+    for (const [reserveAddress, { pyth }] of oracles) {
+        promises.add(setAccountsInfo(reserveAddress, pyth));
+    }
+    await Promise.all(promises);
+    return accountsInfo;
+};
 
 export const getPriceFromPyth = (accountInfo: AccountInfo<Buffer> | null) => {
     if (!accountInfo) {
@@ -51,19 +48,44 @@ export const getPriceFromPyth = (accountInfo: AccountInfo<Buffer> | null) => {
     return priceData.price;
 };
 
-
-export const getPythAccountsInfo = async (oracles: Map<string, { pyth: string, sb: string }>) => {
+export const getSbAccountsInfo = async (oracles: Map<string, { pyth: string, sb: string }>) => {
     const accountsInfo = new Map<string, AccountInfo<Buffer> | null>();
     const promises = new Set<Promise<void>>();
 
-    const setAccountsInfo = async (reserveAddress: string, pythAddress: string) => {
-        const pythAccountInfo = await connection.getAccountInfo(new PublicKey(pythAddress));
-        accountsInfo.set(reserveAddress, pythAccountInfo);
+    const setAccountsInfo = async (reserveAddress: string, sbAddress: string) => {
+        const sbAccountInfo = await connection.getAccountInfo(new PublicKey(sbAddress));
+        accountsInfo.set(reserveAddress, sbAccountInfo);
     };
-    
-    for (const [reserveAddress, { pyth }] of oracles) {
-        promises.add(setAccountsInfo(reserveAddress, pyth));
+
+    for (const [reserveAddress, { sb }] of oracles) {
+        promises.add(setAccountsInfo(reserveAddress, sb));
     }
     await Promise.all(promises);
     return accountsInfo;
+};
+
+export const getPriceFromSb = async (accountInfo: AccountInfo<Buffer> | null, sbv2: SwitchboardProgram) => {
+    if (!accountInfo) {
+        throw new Error("Failed to get price account info");
+    }
+    const owner = accountInfo.owner.toBase58();
+
+    if (owner === SBV1_MAINNET) {
+        const sbData = (accountInfo.data as Buffer)?.slice(1);
+        const result = AggregatorState.decodeDelimited(sbData);
+        const price = result.lastRoundResult?.result;
+        if (!price) {
+            throw new Error("Failed to parse price data");
+        }
+        return price;
+    }
+    else if (owner === SBV2_MAINNET) {
+        const latestResult = sbv2.decodeLatestAggregatorValue(accountInfo);
+        if (!latestResult) {
+            throw new Error(`failed to fetch latest result for aggregator`);
+        }
+        return latestResult.toNumber();
+    }
+
+    throw Error(`Unrecognized switchboard oracle.`);
 };
