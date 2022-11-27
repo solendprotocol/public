@@ -1,5 +1,5 @@
 import { AccountInfo, GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
-import { parseReserve, Reserve } from "@solendprotocol/solend-sdk";
+import { parseReserve, Reserve } from "@solendprotocol/solend-sdk/dist/state/reserve";
 import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
 import BigNumber from "bignumber.js";
 import {
@@ -9,12 +9,12 @@ import {
     MAIN_POOL_RESERVES_ADDRESSES
 } from "common/config";
 import {
-    getOracleAddresses,
-    getPriceFromPyth,
-    getPriceFromSb,
-    getPythAccountsInfo,
-    getSbAccountsInfo
-} from "./oracle";
+    calculateAPY,
+    calculateSupplyAPR,
+    calculateBorrowAPR,
+    calculateSupplyAmountWads
+} from "./annualRates";
+import { getAssetPrices, getOracleAddresses } from "./assetPrices";
 import { getTokensInfo } from "./tokens";
 
 
@@ -22,7 +22,12 @@ const RESERVE_LEN = 619;
 const programId = PROGRAM_ID;
 const connection = CONNECTION;
 
-export const getReserves = async (lendingMarketPubkey: PublicKey, sbv2: SwitchboardProgram): Promise<ReserveViewModel[]> => {
+
+export const getReserves = async (
+    lendingMarketPubkey: PublicKey,
+    sbv2: SwitchboardProgram)
+    : Promise<ReserveViewModel[]> => {
+
     let reserves = await getReservesOfPool(lendingMarketPubkey);
     // hardcode the reserves order for main pool
     if (lendingMarketPubkey.toBase58() === MAIN_POOL_ADDRESS) {
@@ -122,136 +127,6 @@ const calculateLoanToValueRatio = (reserve: Reserve) => {
     return loanToValueRatio;
 };
 
-
-const getAssetPrices = async (oracles: Map<string, { pyth: string; sb: string; }>, sbv2Program: SwitchboardProgram) => {
-    const prices = new Map<string, number>();
-    const pythAccountsInfo = await getPythAccountsInfo(oracles);
-    const sbAccountsInfo = await getSbAccountsInfo(oracles);
-
-    for (const [reserveAddress, { pyth, sb }] of oracles) {
-        if (pyth) {
-            try {
-                const pythAccountInfo = pythAccountsInfo.get(reserveAddress);
-                if (pythAccountInfo) {
-                    const price = getPriceFromPyth(pythAccountInfo);
-                    prices.set(reserveAddress, price);
-                    continue;
-                }
-            } catch { }
-        }
-        if (sb) {
-            try {
-                const sbAccountInfo = sbAccountsInfo.get(reserveAddress);
-                if (sbAccountInfo) {
-                    const price = await getPriceFromSb(sbAccountInfo, sbv2Program);
-                    prices.set(reserveAddress, price);
-                    continue;
-                }
-            } catch { }
-        }
-        prices.set(reserveAddress, 0);
-    }
-
-    return prices;
-};
-
-
-const SLOTS_PER_YEAR = 63072000;
-
-const calculateAPY = (apr: number | BigNumber) => {
-    // APY = [1 + (APR / Number of Periods)] ** (Number of Periods) - 1
-    const x = BigNumber(apr).dividedBy(BigNumber(SLOTS_PER_YEAR)).toNumber();
-    const apy = (1 + x) ** SLOTS_PER_YEAR - 1;
-    return apy;
-};
-
-
-const calculateSupplyAPR = (reserve: Reserve) => {
-    const currentUtilization = calculateUtilizationRatio(reserve);
-    const borrowAPR = calculateBorrowAPR(reserve);
-    return (
-        currentUtilization * borrowAPR * (1 - reserve.config.protocolTakeRate / 100)
-    );
-};
-
-
-const calculateBorrowAPR = (reserve: Reserve) => {
-    const currentUtilization = calculateUtilizationRatio(reserve);
-    const optimalUtilization = reserve.config.optimalUtilizationRate / 100;
-
-    let borrowAPR: number;
-    if (optimalUtilization === 1.0 || currentUtilization < optimalUtilization) {
-        const normalizedFactor = currentUtilization / optimalUtilization;
-        const optimalBorrowRate = reserve.config.optimalBorrowRate / 100;
-        const minBorrowRate = reserve.config.minBorrowRate / 100;
-        borrowAPR =
-            normalizedFactor * (optimalBorrowRate - minBorrowRate) + minBorrowRate;
-    } else {
-        if (reserve.config.optimalBorrowRate === reserve.config.maxBorrowRate) {
-            return computeExtremeRates(
-                (reserve.config.maxBorrowRate / 100).toString(),
-            );
-        }
-        const normalizedFactor =
-            (currentUtilization - optimalUtilization) / (1 - optimalUtilization);
-        const optimalBorrowRate = reserve.config.optimalBorrowRate / 100;
-        const maxBorrowRate = reserve.config.maxBorrowRate / 100;
-        borrowAPR =
-            normalizedFactor * (maxBorrowRate - optimalBorrowRate) +
-            optimalBorrowRate;
-    }
-
-    return borrowAPR;
-};
-
-
-const calculateUtilizationRatio = (reserve: Reserve) => {
-    const borrowedAmountWads = BigNumber(reserve.liquidity.borrowedAmountWads.toString());
-    const supplyAmountWads = calculateSupplyAmountWads(reserve);
-    const currentUtilization = borrowedAmountWads.dividedBy(supplyAmountWads);
-    return parseFloat(currentUtilization.toString());
-};
-
-
-function calculateSupplyAmountWads(reserve: Reserve) {
-    const availableAmountWads = BigNumber(reserve.liquidity.availableAmount.toString()).multipliedBy(BigNumber(10).pow(18));
-    const borrowedAmountWads = BigNumber(reserve.liquidity.borrowedAmountWads.toString());
-    const supplyAmountWads = availableAmountWads.plus(borrowedAmountWads);
-    return supplyAmountWads;
-};
-
-
-function computeExtremeRates(configRate: string) {
-    let numRate = Number(configRate);
-    const rate = 0.5;
-
-    if (numRate >= 2.47) {
-        numRate = Number(configRate.replace('.', ''));
-    }
-
-    switch (numRate) {
-        case 251:
-            return rate * 6;
-        case 252:
-            return rate * 7;
-        case 253:
-            return rate * 8;
-        case 254:
-            return rate * 10;
-        case 255:
-            return rate * 12;
-        case 250:
-            return rate * 20;
-        case 249:
-            return rate * 30;
-        case 248:
-            return rate * 40;
-        case 247:
-            return rate * 50;
-        default:
-            return numRate;
-    }
-};
 
 const reorderMainPoolReserves = (reserves: { pubkey: PublicKey; account: AccountInfo<Buffer> }[]) => {
     const reservesMap = new Map<string, { pubkey: PublicKey; account: AccountInfo<Buffer> }>();
