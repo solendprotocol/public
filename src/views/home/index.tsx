@@ -4,6 +4,13 @@ import { useAtom } from "jotai";
 import { FC } from "react";
 import { selectedPoolAtom } from "stores/globalStates";
 import { SbwrModal } from "views/home/components";
+import {
+  formatPoolValue,
+  formatAssetPrice,
+  formatAmount,
+  formatPercentage,
+  calculateValueinUSD,
+} from "utils/formatUtils";
 
 export const HomeView: FC = ({}) => {
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
@@ -11,7 +18,6 @@ export const HomeView: FC = ({}) => {
 
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error!</div>;
-
 
   const poolTotalSupply = reservesList!.reduce(
     (acc, curr) => acc.plus(curr.totalSupply * curr.assetPriceUSD),
@@ -22,7 +28,6 @@ export const HomeView: FC = ({}) => {
     new BigNumber(0)
   );
   const poolLtv = poolTotalSupply.minus(poolTotalBorrow);
-
 
   return (
     <div className="flex flex-col p-10 py-4 md:py-10 lg:py-10 h-screen gap-4">
@@ -111,7 +116,11 @@ export const HomeView: FC = ({}) => {
                   <div className="flex flex-col gap-4 justify-center align-middle">
                     <span className="w-4 h-full">
                       <img
-                        src={reserve.logoUri? reserve.logoUri : "https://via.placeholder.com/150"}
+                        src={
+                          reserve.logoUri
+                            ? reserve.logoUri
+                            : "https://via.placeholder.com/150"
+                        }
                         className="rounded object-cover"
                       />
                     </span>
@@ -202,7 +211,11 @@ export const HomeView: FC = ({}) => {
                   >
                     <span className="w-4 h-full">
                       <img
-                        src={reserve.logoUri? reserve.logoUri : "https://via.placeholder.com/150"}
+                        src={
+                          reserve.logoUri
+                            ? reserve.logoUri
+                            : "https://via.placeholder.com/150"
+                        }
                         className="rounded object-cover"
                       />
                     </span>
@@ -235,7 +248,12 @@ export const HomeView: FC = ({}) => {
                         : reserve.address}
                     </h3>
                     <h3 className="text-neutral-content text-sm">
-                      {formatAssetPrice(calculateValueinUSD(reserve.totalSupply, reserve.assetPriceUSD).toNumber())}
+                      {formatAssetPrice(
+                        calculateValueinUSD(
+                          reserve.totalSupply,
+                          reserve.assetPriceUSD
+                        ).toNumber()
+                      )}
                     </h3>
                   </label>
                 </td>
@@ -257,7 +275,12 @@ export const HomeView: FC = ({}) => {
                         : reserve.address}
                     </h3>
                     <h3 className="text-neutral-content text-sm">
-                      {formatAssetPrice(calculateValueinUSD(reserve.totalBorrow, reserve.assetPriceUSD).toNumber())}
+                      {formatAssetPrice(
+                        calculateValueinUSD(
+                          reserve.totalBorrow,
+                          reserve.assetPriceUSD
+                        ).toNumber()
+                      )}
                     </h3>
                   </label>
                 </td>
@@ -274,44 +297,3 @@ export const HomeView: FC = ({}) => {
     </div>
   );
 };
-
-const formatPercentage = (num: number) => {
-  return `${(num * 100).toFixed(2)}%`;
-};
-
-const formatAmount = (amount: BigNumber) => {
-  if (amount.isLessThan(1000)) {
-    return amount.toFormat(2);
-  }
-  return amount.integerValue().toFormat();
-};
-
-const formatAssetPrice = (price: number) => {
-  if (price < 1) {
-    return "$" + BigNumber(price).toFormat(4);
-  }
-  return "$" + BigNumber(price).toFormat(2);
-};
-
-const calculateValueinUSD = (amount: BigNumber, price: number) => {
-  return amount.multipliedBy(price);
-};
-
-const formatPoolValue = (amount: BigNumber) => {
-  if (amount.isGreaterThan(10000000)) {
-    return `$${amount.dividedBy(1000000).toFormat(1)}M`;
-  }
-  if (amount.isGreaterThan(1000000)) {
-    return `$${amount.dividedBy(1000000).toFormat(2)}M`;
-  }
-  if (amount.isGreaterThan(100000)) {
-    return `$${amount.dividedBy(1000).toFormat(0)}K`;
-  }
-  if (amount.isGreaterThan(10000)) {
-    return `$${amount.dividedBy(1000).toFormat(1)}K`;
-  }
-  if (amount.isGreaterThan(1000)) {
-    return `$${amount.dividedBy(1000).toFormat(2)}K`;
-  }
-  return `$${amount.toFormat(2)}`;
-}
