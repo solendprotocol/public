@@ -13,7 +13,6 @@ import {
   LedgerWalletAdapter,
   SlopeWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import { Cluster, clusterApiUrl } from "@solana/web3.js";
 import { FC, ReactNode, useCallback, useMemo } from "react";
 import { AutoConnectProvider, useAutoConnect } from "./AutoConnectProvider";
 import { notify } from "../utils/notifications";
@@ -21,14 +20,15 @@ import {
   NetworkConfigurationProvider,
   useNetworkConfiguration,
 } from "./NetworkConfigurationProvider";
+import { ENVIRONMENT, RPC_ENDPOINT } from "common/config";
 
 const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { autoConnect } = useAutoConnect();
   const { networkConfiguration } = useNetworkConfiguration();
   // const network = networkConfiguration as WalletAdapterNetwork;
   // const endpoint = useMemo(() => clusterApiUrl(network), [network]);
-  const network = process.env.NEXT_PUBLIC_REACT_APP_NETWORK as WalletAdapterNetwork;
-  const endpoint = process.env.NEXT_PUBLIC_REACT_APP_SOLANA_RPC_HOST;
+  const network = ENVIRONMENT as WalletAdapterNetwork;
+  const endpoint = RPC_ENDPOINT;
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
