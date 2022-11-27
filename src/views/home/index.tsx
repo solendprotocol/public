@@ -1,13 +1,33 @@
 import BigNumber from "bignumber.js";
 import { useReservesList } from "hooks/useReservesList";
+import { useAtom } from "jotai";
 import { FC } from "react";
+import { selectedPoolAtom } from "stores/globalStates";
 import { SbwrModal } from "views/home/components";
+import {
+  formatPoolValue,
+  formatAssetPrice,
+  formatAmount,
+  formatPercentage,
+  calculateValueinUSD,
+} from "utils/formatUtils";
 
 export const HomeView: FC = ({}) => {
+  const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const { reservesList, isLoading, isError } = useReservesList();
 
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error!</div>;
+
+  const poolTotalSupply = reservesList!.reduce(
+    (acc, curr) => acc.plus(curr.totalSupply * curr.assetPriceUSD),
+    new BigNumber(0)
+  );
+  const poolTotalBorrow = reservesList!.reduce(
+    (acc, curr) => acc.plus(curr.totalBorrow * curr.assetPriceUSD),
+    new BigNumber(0)
+  );
+  const poolLtv = poolTotalSupply.minus(poolTotalBorrow);
 
   return (
     <div className="flex flex-col p-10 py-4 md:py-10 lg:py-10 h-screen gap-4">
@@ -15,7 +35,8 @@ export const HomeView: FC = ({}) => {
 
       <span className="">
         {" "}
-        <h1 className="text-2xl">Main pool</h1>
+        {/* TODO: Handle null name and address, proper formatting */}
+        <h1 className="text-2xl">{selectedPool.name}</h1>
       </span>
       {/* pool details starting here */}
       <div className="divider bg-base-200"></div>
@@ -25,22 +46,22 @@ export const HomeView: FC = ({}) => {
           {" "}
           <span className="flex flex-col gap-2">
             <h3 className="text-neutral-content">Creator</h3>
-            <h3>Solend</h3>
+            <h3>Solend</h3> {/* TODO: Get creator name/address */}
           </span>
           <span className="flex flex-col gap-2">
             <h3 className="text-neutral-content">Total Supply</h3>
-            <h3>$279282028082</h3>
+            <h3>{formatPoolValue(poolTotalSupply)}</h3>
           </span>
         </div>
         <div className="flex flex-row justify-between">
           {" "}
           <span className="flex flex-col gap-2">
             <h3 className="text-neutral-content">Total Borrow</h3>
-            <h3>$279282028082</h3>
+            <h3>{formatPoolValue(poolTotalBorrow)}</h3>
           </span>
           <span className="flex flex-col gap-2">
             <h3 className="text-neutral-content">TVL</h3>
-            <h3>$279282028082</h3>
+            <h3>{formatPoolValue(poolLtv)}</h3>
           </span>
         </div>
 
@@ -55,24 +76,23 @@ export const HomeView: FC = ({}) => {
       </div>
 
       {/* For larger devices */}
-      {/* TODO: Get data about pool (total deposits/ borrows etc.) */}
       <div className="flex-row justify-between w-full hidden md:flex lg:flex">
         {" "}
         <span className="flex flex-col gap-2">
           <h3 className="text-neutral-content">Creator</h3>
-          <h3>Solend</h3>
+          <h3>Solend</h3> {/* TODO: Get creator name/address */}
         </span>
         <span className="flex flex-col gap-2">
           <h3 className="text-neutral-content">Total Supply</h3>
-          <h3>$279282028082</h3>
+          <h3>{formatPoolValue(poolTotalSupply)}</h3>
         </span>{" "}
         <span className="flex flex-col gap-2">
           <h3 className="text-neutral-content">Total Borrow</h3>
-          <h3>$279282028082</h3>
+          <h3>{formatPoolValue(poolTotalBorrow)}</h3>
         </span>
         <span className="flex flex-col gap-2">
           <h3 className="text-neutral-content">TVL</h3>
-          <h3>$279282028082</h3>
+          <h3>{formatPoolValue(poolLtv)}</h3>
         </span>
         {/* {connected && (
           <label
@@ -90,13 +110,17 @@ export const HomeView: FC = ({}) => {
       <div className="md:hidden lg:hidden flex">
         <table className="table w-full">
           <tbody>
-            {reservesList.map((reserve) => (
+            {reservesList!.map((reserve) => (
               <tr key={reserve.address} className="cursor-pointer hover">
                 <td className="bg-neutral">
                   <div className="flex flex-col gap-4 justify-center align-middle">
                     <span className="w-4 h-full">
                       <img
-                        src={reserve.logoUri}
+                        src={
+                          reserve.logoUri
+                            ? reserve.logoUri
+                            : "https://via.placeholder.com/150"
+                        }
                         className="rounded object-cover"
                       />
                     </span>
@@ -107,8 +131,7 @@ export const HomeView: FC = ({}) => {
                           : reserve.address}
                       </h3>
                       <h3 className="text-neutral-content text-sm">
-                        {/* TODO: FIX */}
-                        {reserve.assetPriceUSD}
+                        {formatAssetPrice(reserve.assetPriceUSD)}
                       </h3>
                     </span>
                   </div>
@@ -179,7 +202,7 @@ export const HomeView: FC = ({}) => {
             </tr>
           </thead>
           <tbody>
-            {reservesList.map((reserve) => (
+            {reservesList!.map((reserve) => (
               <tr key={reserve.address} className="cursor-pointer hover">
                 <td className="bg-neutral">
                   <label
@@ -188,7 +211,11 @@ export const HomeView: FC = ({}) => {
                   >
                     <span className="w-4 h-full">
                       <img
-                        src={reserve.logoUri}
+                        src={
+                          reserve.logoUri
+                            ? reserve.logoUri
+                            : "https://via.placeholder.com/150"
+                        }
                         className="rounded object-cover"
                       />
                     </span>
@@ -199,7 +226,7 @@ export const HomeView: FC = ({}) => {
                           : reserve.address}
                       </h3>
                       <h3 className="text-neutral-content text-sm">
-                        {reserve.assetPriceUSD}
+                        {formatAssetPrice(reserve.assetPriceUSD)}
                       </h3>
                     </span>
                   </label>
@@ -221,8 +248,12 @@ export const HomeView: FC = ({}) => {
                         : reserve.address}
                     </h3>
                     <h3 className="text-neutral-content text-sm">
-                      {/* TODO: Calculate total supply USD value */}
-                      {reserve.assetPriceUSD}
+                      {formatAssetPrice(
+                        calculateValueinUSD(
+                          reserve.totalSupply,
+                          reserve.assetPriceUSD
+                        ).toNumber()
+                      )}
                     </h3>
                   </label>
                 </td>
@@ -244,8 +275,12 @@ export const HomeView: FC = ({}) => {
                         : reserve.address}
                     </h3>
                     <h3 className="text-neutral-content text-sm">
-                      {/* TODO: Calculate total borrow USD value here */}
-                      {reserve.assetPriceUSD}
+                      {formatAssetPrice(
+                        calculateValueinUSD(
+                          reserve.totalBorrow,
+                          reserve.assetPriceUSD
+                        ).toNumber()
+                      )}
                     </h3>
                   </label>
                 </td>
@@ -261,15 +296,4 @@ export const HomeView: FC = ({}) => {
       {/* <PoolPositionModal /> */}
     </div>
   );
-};
-
-const formatPercentage = (num: number) => {
-  return `${(num * 100).toFixed(2)}%`;
-};
-
-const formatAmount = (amount: BigNumber) => {
-  if (amount.isLessThan(1000)) {
-    return amount.toFormat(2);
-  }
-  return amount.integerValue().toFormat();
 };
