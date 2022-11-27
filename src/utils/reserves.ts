@@ -1,16 +1,28 @@
 import { AccountInfo, GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
 import { parseReserve, Reserve } from "@solendprotocol/solend-sdk";
+import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
 import BigNumber from "bignumber.js";
-import { CONNECTION, MAIN_POOL_ADDRESS, MAIN_POOL_RESERVES_ADDRESSES, PROGRAM_ID } from "common/config";
-import { getOracleAddresses, getPriceFromPyth, getPythAccountsInfo } from "./oracle";
+import {
+    CONNECTION,
+    PROGRAM_ID,
+    MAIN_POOL_ADDRESS,
+    MAIN_POOL_RESERVES_ADDRESSES
+} from "common/config";
+import {
+    getOracleAddresses,
+    getPriceFromPyth,
+    getPriceFromSb,
+    getPythAccountsInfo,
+    getSbAccountsInfo
+} from "./oracle";
 import { getTokensInfo } from "./tokens";
+
 
 const RESERVE_LEN = 619;
 const programId = PROGRAM_ID;
 const connection = CONNECTION;
 
-
-export const getReserves = async (lendingMarketPubkey: PublicKey): Promise<ReserveViewModel[]> => {
+export const getReserves = async (lendingMarketPubkey: PublicKey, sbv2: SwitchboardProgram): Promise<ReserveViewModel[]> => {
     let reserves = await getReservesOfPool(lendingMarketPubkey);
     // hardcode the reserves order for main pool
     if (lendingMarketPubkey.toBase58() === MAIN_POOL_ADDRESS) {
@@ -19,13 +31,13 @@ export const getReserves = async (lendingMarketPubkey: PublicKey): Promise<Reser
     const parsedReserves = reserves.map((reserve) => getParsedReserve(reserve));
 
     const oracles = getOracleAddresses(parsedReserves);
-    const oraclePrices = await getAssetPrices(oracles);
+    const oraclePrices = await getAssetPrices(oracles, sbv2);
 
     const mints: PublicKey[] = [];
     parsedReserves.map((reserve) => { mints.push(reserve.info.liquidity.mintPubkey) });
     const tokens = await getTokensInfo(mints);
 
-    const reserveViewModels = parsedReserves.map((parsedReserve) => 
+    const reserveViewModels = parsedReserves.map((parsedReserve) =>
         getReserveViewModel(parsedReserve, tokens, oraclePrices)
     );
     return reserveViewModels;
@@ -111,9 +123,10 @@ const calculateLoanToValueRatio = (reserve: Reserve) => {
 };
 
 
-const getAssetPrices = async (oracles: Map<string, { pyth: string; sb: string; }>) => {
+const getAssetPrices = async (oracles: Map<string, { pyth: string; sb: string; }>, sbv2Program: SwitchboardProgram) => {
     const prices = new Map<string, number>();
     const pythAccountsInfo = await getPythAccountsInfo(oracles);
+    const sbAccountsInfo = await getSbAccountsInfo(oracles);
 
     for (const [reserveAddress, { pyth, sb }] of oracles) {
         if (pyth) {
@@ -127,10 +140,15 @@ const getAssetPrices = async (oracles: Map<string, { pyth: string; sb: string; }
             } catch { }
         }
         if (sb) {
-            prices.set(reserveAddress, 111);
-            continue;
+            try {
+                const sbAccountInfo = sbAccountsInfo.get(reserveAddress);
+                if (sbAccountInfo) {
+                    const price = await getPriceFromSb(sbAccountInfo, sbv2Program);
+                    prices.set(reserveAddress, price);
+                    continue;
+                }
+            } catch { }
         }
-
         prices.set(reserveAddress, 0);
     }
 
