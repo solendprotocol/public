@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import { useReservesList } from "hooks/useReservesList";
 import { useAtom } from "jotai";
-import { FC } from "react";
+import { FC, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { selectedPoolAtom } from "stores/globalStates";
 import { SbwrModal, PoolPositionModal } from "views/home/components";
@@ -17,6 +17,7 @@ export const HomeView: FC = ({}) => {
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const { reservesList, isLoading, isError } = useReservesList();
   const { connected } = useWallet();
+  const [showAPY, setShowAPY] = useState(true);
   if (isError) return <Error />;
   if (isLoading) return <Loader />;
 
@@ -104,7 +105,21 @@ export const HomeView: FC = ({}) => {
           </label>
         )}
       </div>
+      <div className="flex flex-row justify-between pt-6">
+        <h2 className="text-lg">All Assets</h2>
 
+        <span className="flex align-middle gap-2">
+          <input
+            type="checkbox"
+            className="toggle"
+            checked={showAPY}
+            onChange={() => setShowAPY(!showAPY)}
+          />
+          <small className="text-neutral-content">
+            {showAPY ? "APY" : "APR"}
+          </small>
+        </span>
+      </div>
       <div className="divider bg-base-200"></div>
 
       {/* Pool assets for mobile  */}
@@ -165,19 +180,23 @@ export const HomeView: FC = ({}) => {
                     <span className="flex flex-row justify-between align-middle">
                       {" "}
                       <h3 className="text-neutral-content text-sm">
-                        Supply APY
+                        Supply {showAPY ? "APY" : "APR"}
                       </h3>
                       <h3 className="">
-                        {formatPercentage(reserve.supplyAPY)}
+                        {formatPercentage(
+                          showAPY ? reserve.supplyAPY : reserve.supplyAPR
+                        )}
                       </h3>
                     </span>
                     <span className="flex flex-row justify-between align-middle">
                       {" "}
                       <h3 className="text-neutral-content text-sm">
-                        Borrow APY
+                        Borrow {showAPY ? "APY" : "APR"}
                       </h3>
                       <h3 className="">
-                        {formatPercentage(reserve.borrowAPY)}
+                        {formatPercentage(
+                          showAPY ? reserve.borrowAPY : reserve.borrowAPR
+                        )}
                       </h3>
                     </span>
                   </span>
@@ -197,9 +216,15 @@ export const HomeView: FC = ({}) => {
               <th className="text-primary-content bg-base-200">Asset Name</th>
               <th className="text-primary-content bg-base-200">LTV</th>
               <th className="text-primary-content bg-base-200">Total Supply</th>
-              <th className="text-primary-content bg-base-200">Supply APY</th>
+              <th className="text-primary-content bg-base-200">
+                {" "}
+                Supply {showAPY ? "APY" : "APR"}
+              </th>
               <th className="text-primary-content bg-base-200">Total borrow</th>
-              <th className="text-primary-content bg-base-200">Borrow APY</th>
+              <th className="text-primary-content bg-base-200">
+                {" "}
+                Borrow {showAPY ? "APY" : "APR"}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -260,7 +285,12 @@ export const HomeView: FC = ({}) => {
                 </td>
 
                 <td className="bg-neutral">
-                  <h3>{formatPercentage(reserve.supplyAPY)}</h3>
+                  <h3>
+                    {" "}
+                    {formatPercentage(
+                      showAPY ? reserve.supplyAPY : reserve.supplyAPR
+                    )}
+                  </h3>
                 </td>
                 <td className="bg-neutral">
                   <label
@@ -286,7 +316,12 @@ export const HomeView: FC = ({}) => {
                   </label>
                 </td>
                 <td className="bg-neutral">
-                  <h3>{formatPercentage(reserve.borrowAPY)}</h3>
+                  <h3>
+                    {" "}
+                    {formatPercentage(
+                      showAPY ? reserve.borrowAPY : reserve.borrowAPR
+                    )}
+                  </h3>
                 </td>
               </tr>
             ))}
