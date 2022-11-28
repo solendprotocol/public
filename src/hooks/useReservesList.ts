@@ -29,6 +29,7 @@ export function useReservesList(): {
     }, []);
 
     useEffect(() => {
+        setReservesList(null);
         async function getReservesList() {
             try {
                 if (!sbv2Program) { return; }
