@@ -50,7 +50,7 @@ export const HomeView: FC = ({}) => {
             <h3 className="text-neutral-content">Creator</h3>
             <h3>Solend</h3> {/* TODO: Get creator name/address */}
           </span>
-          <span className="flex flex-col gap-2">
+          <span className="flex flex-col gap-2 w-28">
             <h3 className="text-neutral-content">Total Supply</h3>
             <h3>{formatPoolValue(poolTotalSupply)}</h3>
           </span>
@@ -61,7 +61,7 @@ export const HomeView: FC = ({}) => {
             <h3 className="text-neutral-content">Total Borrow</h3>
             <h3>{formatPoolValue(poolTotalBorrow)}</h3>
           </span>
-          <span className="flex flex-col gap-2">
+          <span className="flex flex-col gap-2 w-28">
             <h3 className="text-neutral-content">TVL</h3>
             <h3>{formatPoolValue(poolLtv)}</h3>
           </span>
