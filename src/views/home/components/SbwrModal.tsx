@@ -7,8 +7,12 @@ const SbwrModal = () => {
     <>
       <input type="checkbox" id="sbwr-modal" className="modal-toggle" />
 
-      <label id="sbwr-modal" className="modal cursor-pointer">
-        <label className="modal-box relative">
+      <label
+        id="sbwr-modal"
+        className="modal cursor-pointer"
+        htmlFor="sbwr-modal"
+      >
+        <label className="modal-box relative" htmlFor="">
           <label
             htmlFor="sbwr-modal"
             className="btn btn-sm btn-circle absolute right-2 top-2"
