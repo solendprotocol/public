@@ -11,13 +11,12 @@ import {
   formatPercentage,
   calculateValueinUSD,
 } from "utils/formatUtils";
-
+import { Error, Loader } from "components";
 export const HomeView: FC = ({}) => {
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const { reservesList, isLoading, isError } = useReservesList();
-
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error!</div>;
+  if (isError) return <Error />;
+  if (isLoading) return <Loader />;
 
   const poolTotalSupply = reservesList!.reduce(
     (acc, curr) => acc.plus(curr.totalSupply * curr.assetPriceUSD),
@@ -113,8 +112,8 @@ export const HomeView: FC = ({}) => {
             {reservesList!.map((reserve) => (
               <tr key={reserve.address} className="cursor-pointer hover">
                 <td className="bg-neutral">
-                  <div className="flex flex-col gap-4 justify-center align-middle">
-                    <span className="w-4 h-full">
+                  <div className="flex flex-col gap-4 justify-center">
+                    <span className="w-8 h-full">
                       <img
                         src={
                           reserve.logoUri
@@ -206,10 +205,10 @@ export const HomeView: FC = ({}) => {
               <tr key={reserve.address} className="cursor-pointer hover">
                 <td className="bg-neutral">
                   <label
-                    className="flex flex-row gap-4 cursor-pointer"
+                    className="flex flex-row gap-4 cursor-pointer items-center"
                     htmlFor="sbwr-modal"
                   >
-                    <span className="w-4 h-full">
+                    <span className="w-10 h-full">
                       <img
                         src={
                           reserve.logoUri
