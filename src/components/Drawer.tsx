@@ -4,7 +4,7 @@ import { useAtom } from "jotai";
 import { themeAtom, selectedPoolAtom } from "stores/globalStates";
 import { usePoolsList } from "hooks/usePoolsList";
 import { useMediaQuery } from "react-responsive";
-
+import { RpcSwitcher } from "../components";
 const Drawer: FC = (props) => {
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const [theme, setTheme] = useAtom(themeAtom);
@@ -42,6 +42,10 @@ const Drawer: FC = (props) => {
         <div className="drawer-side">
           <label htmlFor="my-drawer" className="drawer-overlay"></label>
           <div className="p-4 overflow-y-auto menu w-80 bg-neutral">
+            <span className="pb-2">
+              {" "}
+              <RpcSwitcher />
+            </span>
             {poolListItems}
             <span className="flex flex-row gap-4 p-2">
               <span
