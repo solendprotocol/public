@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Hambuger } from "../components";
+import { Hambuger, RpcSwitcher } from "../components";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { ReactSVG } from "react-svg";
 import { useAtom } from "jotai";
@@ -54,6 +54,7 @@ const AppBar = ({}) => {
         {/* desktop footer */}
         <div className="p-4 h-full flex flex-col justify-end">
           <span className="flex flex-row gap-4">
+            <RpcSwitcher />
             <span
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
               className="cursor-pointer btn bg-base-200"
