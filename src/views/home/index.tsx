@@ -2,8 +2,9 @@ import BigNumber from "bignumber.js";
 import { useReservesList } from "hooks/useReservesList";
 import { useAtom } from "jotai";
 import { FC } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { selectedPoolAtom } from "stores/globalStates";
-import { SbwrModal } from "views/home/components";
+import { SbwrModal, PoolPositionModal } from "views/home/components";
 import {
   formatPoolValue,
   formatAssetPrice,
@@ -15,6 +16,7 @@ import { Error, Loader } from "components";
 export const HomeView: FC = ({}) => {
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const { reservesList, isLoading, isError } = useReservesList();
+  const { connected } = useWallet();
   if (isError) return <Error />;
   if (isLoading) return <Loader />;
 
@@ -64,14 +66,14 @@ export const HomeView: FC = ({}) => {
           </span>
         </div>
 
-        {/* {connected && (
+        {connected && (
           <label
             className="btn bg-base-200 cursor-pointer text-primary-content"
             htmlFor="pp-modal"
           >
             Pool Position
           </label>
-        )} */}
+        )}
       </div>
 
       {/* For larger devices */}
@@ -93,14 +95,14 @@ export const HomeView: FC = ({}) => {
           <h3 className="text-neutral-content">TVL</h3>
           <h3>{formatPoolValue(poolLtv)}</h3>
         </span>
-        {/* {connected && (
+        {connected && (
           <label
             className="btn bg-base-200 cursor-pointer text-primary-content"
             htmlFor="pp-modal"
           >
             Pool Position
           </label>
-        )} */}
+        )}
       </div>
 
       <div className="divider bg-base-200"></div>
@@ -292,7 +294,7 @@ export const HomeView: FC = ({}) => {
         </table>
       </div>
       <SbwrModal />
-      {/* <PoolPositionModal /> */}
+      <PoolPositionModal />
     </div>
   );
 };
