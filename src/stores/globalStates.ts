@@ -18,3 +18,5 @@ export const rpcAtom = atomWithStorage("rpc", {
   name: "RPCPool",
   endpoint: RPC_ENDPOINT,
 });
+
+export const isDrawerOpenAtom = atom(false);
