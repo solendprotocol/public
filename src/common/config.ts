@@ -30,3 +30,34 @@ export const MAIN_POOL_RESERVES_ADDRESSES = [
     "Ab48bKsiEzdm481mGaNVmv9m9DmXsWWxcYHM588M59Yd", // UST (Portal)
     "GYzjMCXTDue12eUGKKWAqtF5jcBYNmewr6Db6LaguEaX"  // soBTC (Sollet)
 ];
+
+
+export const ENDPOINTS = [
+    {
+      key: "solend",
+      name: "RPCPool",
+      endpoint: process.env.NEXT_PUBLIC_REACT_APP_SOLANA_RPC_HOST as string,
+      adapterNetwork: "Mainnet",
+    },
+  
+    {
+      key: "alchemy",
+      name: "Alchemy",
+      endpoint:
+        "https://solana-mainnet.g.alchemy.com/v2/ZT3c4pYf1inIrB0GVDNR7nx4LwyED5Ci",
+      adapterNetwork: "Mainnet",
+    },
+    {
+      key: "public",
+      name: "Public Solana",
+      endpoint: "https://api.mainnet-beta.solana.com",
+      adapterNetwork: "Mainnet",
+    },
+    {
+      key: "serum",
+      name: "Public Serum",
+      endpoint: "https://solana-api.projectserum.com",
+      adapterNetwork: "Mainnet",
+    },
+  ];
+  
