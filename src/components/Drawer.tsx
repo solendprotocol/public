@@ -3,15 +3,16 @@ import { ReactSVG } from "react-svg";
 import { useAtom } from "jotai";
 import { themeAtom, selectedPoolAtom } from "stores/globalStates";
 import { usePoolsList } from "hooks/usePoolsList";
+import { useMediaQuery } from "react-responsive";
 
 const Drawer: FC = (props) => {
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const [theme, setTheme] = useAtom(themeAtom);
   const { poolList, isLoading, isError } = usePoolsList();
-
+  const isMobile = useMediaQuery({ query: `(max-width: 760px)` });
   // TODO: return proper loading and error here
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error!</div>;
+  if (isLoading) return <div></div>;
+  if (isError) return <div></div>;
 
   const poolListItems = poolList!.map((p) => (
     <li
@@ -21,7 +22,12 @@ const Drawer: FC = (props) => {
       }}
       className={`${selectedPool.address === p.address && "bordered"}`}
     >
-      <a className="text-xlg">{p.name ? p.name : p.address}</a>
+      <a className="text-xlg">
+        {" "}
+        <label htmlFor="my-drawer" className="w-full">
+          {p.name ? p.name : p.address}{" "}
+        </label>
+      </a>
     </li>
   ));
 
@@ -32,23 +38,25 @@ const Drawer: FC = (props) => {
       <div className="items-center  drawer-content">{props.children}</div>
 
       {/* SideBar / Drawer */}
-      <div className="drawer-side">
-        <label htmlFor="my-drawer" className="drawer-overlay"></label>
-        <div className="p-4 overflow-y-auto menu w-80 bg-neutral">
-          {poolListItems}
-          <span className="flex flex-row gap-4 p-2">
-            <span
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="cursor-pointer btn bg-base-200"
-            >
-              <ReactSVG
-                wrapper="span"
-                src={theme == "dark" ? "/icons/sun.svg" : "/icons/moon.svg"}
-              />
+      {isMobile && (
+        <div className="drawer-side">
+          <label htmlFor="my-drawer" className="drawer-overlay"></label>
+          <div className="p-4 overflow-y-auto menu w-80 bg-neutral">
+            {poolListItems}
+            <span className="flex flex-row gap-4 p-2">
+              <span
+                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                className="cursor-pointer btn bg-base-200"
+              >
+                <ReactSVG
+                  wrapper="span"
+                  src={theme == "dark" ? "/icons/sun.svg" : "/icons/moon.svg"}
+                />
+              </span>
             </span>
-          </span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
