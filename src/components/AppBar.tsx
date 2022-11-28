@@ -14,9 +14,8 @@ const AppBar = ({}) => {
   const { poolList, isLoading, isError } = usePoolsList();
 
   // TODO: return proper loading and error here
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error!</div>;
-
+  if (isLoading) return <div></div>;
+  if (isError) return <div></div>;
   const poolListItems = poolList!.map((p) => (
     <li
       key={p.address}
