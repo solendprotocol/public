@@ -22,7 +22,12 @@ const Drawer: FC = (props) => {
       }}
       className={`${selectedPool.address === p.address && "bordered"}`}
     >
-      <a className="text-xlg">{p.name ? p.name : p.address}</a>
+      <a className="text-xlg">
+        {" "}
+        <label htmlFor="my-drawer" className="w-full">
+          {p.name ? p.name : p.address}{" "}
+        </label>
+      </a>
     </li>
   ));
 
