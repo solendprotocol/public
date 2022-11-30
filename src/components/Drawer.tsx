@@ -40,9 +40,7 @@ const Drawer: FC = (props) => {
       </a>
     </li>
   ));
-  const checking = (e) => {
-    console.log("checking th");
-  };
+
   return (
     <div className="flex-1 drawer">
       {/* <div className="h-screen drawer drawer-mobile w-full"> */}
