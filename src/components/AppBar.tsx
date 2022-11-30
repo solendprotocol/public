@@ -45,7 +45,7 @@ const AppBar = ({}) => {
           <h1 className="text-xl bold md:text-2xl lg:text-2xl">Solend Lite</h1>
         </span>
         <span className="px-4">
-          <WalletMultiButton className="btn btn-primary w-full" />
+          <WalletMultiButton className="btn btn-primary w-40" />
         </span>
         <div className="h-4/6  flex flex-col">
           <ul className="menu overflow-y-scroll ">{poolListItems}</ul>
@@ -85,7 +85,7 @@ const AppBar = ({}) => {
           <h1 className="text-2xl bold">Solend Lite</h1>
         </span>
         <span className="pl-4">
-          <WalletMultiButton className="btn btn-primary" />
+          <WalletMultiButton className="btn btn-primary w-35" />
         </span>
       </nav>
     </div>
