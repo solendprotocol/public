@@ -47,8 +47,8 @@ const PoolPositionModal = () => {
     <>
       <input type="checkbox" id="pp-modal" className="modal-toggle" />
 
-      <label id="pp-modal" className="modal cursor-pointer">
-        <label className="modal-box relative flex flex-col gap-2">
+      <label id="pp-modal" className="modal cursor-pointer" htmlFor="pp-modal">
+        <label className="modal-box relative flex flex-col gap-2" htmlFor="">
           {/* title and close button */}
           <span className="flex justify-between">
             <span className="absolute left-4 top-4">
