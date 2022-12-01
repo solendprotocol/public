@@ -15,6 +15,7 @@ import {
     calculateSupplyAmountWads
 } from "./annualRates";
 import { getAssetPrices, getOracleAddresses } from "./assetPrices";
+import { dummy } from "./obligation";
 import { getTokensInfo } from "./tokens";
 
 
@@ -81,14 +82,15 @@ const getReserveViewModel = (
     const tokenPubkey = info.liquidity.mintPubkey.toBase58();
     const [supplyAPR, borrowAPR] = [calculateSupplyAPR(info), calculateBorrowAPR(info)];
     const [supplyAPY, borrowAPY] = [calculateAPY(supplyAPR), calculateAPY(borrowAPR)];
-    // FIXME: Try to find a better way to handle this
+
     let tokenInfo = tokens.get(tokenPubkey);
     if (!tokenInfo) {
         tokenInfo = {
-            tokenSymbol: "Unknown",
+            tokenSymbol: `${tokenPubkey.slice(0, 4)}...${tokenPubkey.slice(-4)}`,
             logoUri: null
         } as TokenInfo;
     }
+
     const reserveViewModel = {
         address: pubkey.toBase58(),
         tokenSymbol: tokenInfo.tokenSymbol,
