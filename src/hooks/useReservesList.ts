@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
-import { selectedPoolAtom } from "stores/globalStates";
+import { sbv2ProgramAtom, selectedPoolAtom } from "stores/globalStates";
 import { PublicKey } from "@solana/web3.js";
 import { getReserves } from "../utils/reserves";
-import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
 import { CONNECTION } from "common/config";
 
 const connection = CONNECTION;
@@ -14,19 +13,9 @@ export function useReservesList(): {
     isError: boolean,
 } {
     const [selectedPool] = useAtom(selectedPoolAtom);
+    const [sbv2Program] = useAtom(sbv2ProgramAtom);
     const [reservesList, setReservesList] = useState<ReserveViewModel[] | null>(null);
     const [error, setError] = useState(false);
-
-    const [sbv2Program, setSbv2Program] = useState<SwitchboardProgram | null>(null);
-
-    useEffect(() => {
-        // load sbv2Program once on mount
-        async function loadSbv2Program() {
-            const sbv2 = await SwitchboardProgram.loadMainnet(connection);
-            setSbv2Program(sbv2);
-        }
-        loadSbv2Program();
-    }, []);
 
     useEffect(() => {
         setReservesList(null);

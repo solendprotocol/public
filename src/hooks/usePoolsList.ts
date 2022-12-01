@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { getPools } from "../utils/pools";
 
-
 export function usePoolsList(): {
     poolList: PoolViewModel[] | null,
     isLoading: boolean,
