@@ -6,5 +6,8 @@ module.exports = {
   webpack: (config) => {
     config.resolve.fallback = { fs: false, path: false };
     return config;
-  }
-}
+  },
+  images: {
+    domains: ["assets.coingecko.com", "raw.githubusercontent.com"],
+  },
+};
