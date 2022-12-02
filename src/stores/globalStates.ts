@@ -20,3 +20,16 @@ export const rpcAtom = atomWithStorage("rpc", {
 });
 
 export const isDrawerOpenAtom = atom(false);
+
+interface ReserveAtomType {
+  address: string;
+  tokenSymbol: string;
+  logoUri: string | null;
+  assetPriceUSD: number;
+  LTV: number;
+  supplyAPY: number;
+  borrowAPY: number;
+  supplyAPR: number;
+  borrowAPR: number;
+}
+export const selectedReserveAtom: PrimitiveAtom<ReserveAtomType> = atom({});

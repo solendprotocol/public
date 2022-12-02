@@ -2,8 +2,9 @@ import BigNumber from "bignumber.js";
 import { useReservesList } from "hooks/useReservesList";
 import { useAtom } from "jotai";
 import { FC, useState } from "react";
+import Image from "next/image";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { selectedPoolAtom } from "stores/globalStates";
+import { selectedPoolAtom, selectedReserveAtom } from "stores/globalStates";
 import { SbwrModal, PoolPositionModal } from "views/home/components";
 import {
   formatPoolValue,
@@ -13,8 +14,10 @@ import {
   calculateValueinUSD,
 } from "utils/formatUtils";
 import { Error, Loader } from "components";
+
 export const HomeView: FC = ({}) => {
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
+  const [selectedReserve, setSelectedReserve] = useAtom(selectedReserveAtom);
   const { reservesList, isLoading, isError } = useReservesList();
   const { connected } = useWallet();
   const [showAPY, setShowAPY] = useState(true);
@@ -31,6 +34,9 @@ export const HomeView: FC = ({}) => {
   );
   const poolLtv = poolTotalSupply.minus(poolTotalBorrow);
 
+  const handleSelectReserve = (reserve) => {
+    setSelectedReserve(reserve);
+  };
   return (
     <div className="flex flex-col p-10 py-4 md:py-10 lg:py-10 h-screen gap-4">
       {/* pool title */}
@@ -127,16 +133,22 @@ export const HomeView: FC = ({}) => {
         <table className="table w-full">
           <tbody>
             {reservesList!.map((reserve) => (
-              <tr key={reserve.address} className="cursor-pointer hover">
-                <td className="bg-neutral">
-                  <div className="flex flex-col gap-4 justify-center">
+              <tr key={reserve.address} className="cursor-pointer hover ">
+                <td className="bg-neutral w-1/5">
+                  <label
+                    className="flex flex-col gap-4 justify-center"
+                    htmlFor="sbwr-modal"
+                    onClick={() => handleSelectReserve(reserve)}
+                  >
                     <span className="w-8 h-full">
-                      <img
+                      <Image
                         src={
                           reserve.logoUri
                             ? reserve.logoUri
                             : "https://via.placeholder.com/150"
                         }
+                        width="100%"
+                        height="100%"
                         className="rounded object-cover"
                       />
                     </span>
@@ -150,12 +162,16 @@ export const HomeView: FC = ({}) => {
                         {formatAssetPrice(reserve.assetPriceUSD)}
                       </h3>
                     </span>
-                  </div>
+                  </label>
                 </td>
 
-                <td className="bg-neutral">
-                  <span className="flex flex-col">
-                    <span className="flex flex-row justify-between align-middle">
+                <td className="bg-neutral w-4/5">
+                  <label
+                    className="flex flex-col"
+                    htmlFor="sbwr-modal"
+                    onClick={() => handleSelectReserve(reserve)}
+                  >
+                    <span className="flex flex-row justify-between align-middle ">
                       <h3 className="text-neutral-content text-sm">LTV</h3>
                       <h3 className="">{reserve.LTV + "%"}</h3>
                     </span>
@@ -199,7 +215,7 @@ export const HomeView: FC = ({}) => {
                         )}
                       </h3>
                     </span>
-                  </span>
+                  </label>
                 </td>
               </tr>
             ))}
@@ -234,14 +250,17 @@ export const HomeView: FC = ({}) => {
                   <label
                     className="flex flex-row gap-4 cursor-pointer items-center"
                     htmlFor="sbwr-modal"
+                    onClick={() => handleSelectReserve(reserve)}
                   >
                     <span className="w-10 h-full">
-                      <img
+                      <Image
                         src={
                           reserve.logoUri
                             ? reserve.logoUri
                             : "https://via.placeholder.com/150"
                         }
+                        width="100%"
+                        height="100%"
                         className="rounded object-cover"
                       />
                     </span>
@@ -264,6 +283,7 @@ export const HomeView: FC = ({}) => {
                   <label
                     className="flex flex-col cursor-pointer"
                     htmlFor="sbwr-modal"
+                    onClick={() => handleSelectReserve(reserve)}
                   >
                     <h3 className="text-neutral-content">
                       {formatAmount(reserve.totalSupply)}
@@ -296,6 +316,7 @@ export const HomeView: FC = ({}) => {
                   <label
                     className="flex flex-col cursor-pointer"
                     htmlFor="sbwr-modal"
+                    onClick={() => handleSelectReserve(reserve)}
                   >
                     <h3 className="text-neutral-content">
                       {formatAmount(reserve.totalBorrow)}
