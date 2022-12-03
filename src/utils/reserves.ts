@@ -15,7 +15,6 @@ import {
     calculateSupplyAmountWads
 } from "./annualRates";
 import { getAssetPrices, getOracleAddresses } from "./assetPrices";
-import { dummy } from "./obligation";
 import { getTokensInfo } from "./tokens";
 
 

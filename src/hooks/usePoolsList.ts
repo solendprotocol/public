@@ -22,7 +22,7 @@ export function usePoolsList(): {
     }, []);
 
     return {
-        poolList: poolList ? poolList : null,
+        poolList,
         isLoading: !error && !poolList,
         isError: error,
     };
