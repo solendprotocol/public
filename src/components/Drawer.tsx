@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC } from "react";
 import { ReactSVG } from "react-svg";
 import { useAtom } from "jotai";
 import { themeAtom, selectedPoolAtom } from "stores/globalStates";

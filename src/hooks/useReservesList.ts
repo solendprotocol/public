@@ -32,7 +32,7 @@ export function useReservesList(): {
     }, [selectedPool, sbv2Program]);
 
     return {
-        reservesList: reservesList ? reservesList : null,
+        reservesList,
         isLoading: !error && !reservesList,
         isError: error,
     };

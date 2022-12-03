@@ -4,10 +4,8 @@ import { useAtom } from "jotai";
 import Notifications from "../components/Notification";
 import { themeAtom, sbv2ProgramAtom } from "stores/globalStates";
 import { useEffect } from "react";
-import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
-import { CONNECTION } from "common/config";
+import { getSbv2Program } from "utils/assetPrices";
 
-const connection = CONNECTION;
 
 const Layout = ({ children }) => {
   const [theme] = useAtom(themeAtom);
@@ -16,7 +14,7 @@ const Layout = ({ children }) => {
   // Initialize the Switchboard-v2 Program on mount
   useEffect(() => {
     async function loadSbv2Program() {
-      const sbv2 = await SwitchboardProgram.loadMainnet(connection);
+      const sbv2 = await getSbv2Program();
       setSbv2Program(sbv2);
     }
     loadSbv2Program();

@@ -14,7 +14,7 @@ import {
 } from "utils/formatUtils";
 import { Error, Loader } from "components";
 export const HomeView: FC = ({}) => {
-  const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
+  const [selectedPool] = useAtom(selectedPoolAtom);
   const { reservesList, isLoading, isError } = useReservesList();
   const { connected } = useWallet();
   const [showAPY, setShowAPY] = useState(true);
