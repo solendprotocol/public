@@ -1,11 +1,10 @@
 import { Connection } from "@solana/web3.js";
 import { getProgramId } from "@solendprotocol/solend-sdk";
 
-
 export const ENVIRONMENT = process.env.NEXT_PUBLIC_REACT_APP_NETWORK as string || "production";
-export const RPC_ENDPOINT = process.env.NEXT_PUBLIC_REACT_APP_SOLANA_RPC_HOST as string;
-export const CONNECTION = new Connection(RPC_ENDPOINT, "confirmed");
 export const PROGRAM_ID = getProgramId(ENVIRONMENT);
+export const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPCPOOL_RPC as string;
+export const CONNECTION = new Connection(RPC_ENDPOINT, "confirmed");
 
 export const MAIN_POOL_ADDRESS = "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtfpks7FatyKvdY";
 export const MAIN_POOL_RESERVES_ADDRESSES = [
@@ -34,30 +33,24 @@ export const MAIN_POOL_RESERVES_ADDRESSES = [
 
 export const ENDPOINTS = [
     {
-      key: "solend",
+      key: "rpcpool",
       name: "RPCPool",
-      endpoint: process.env.NEXT_PUBLIC_REACT_APP_SOLANA_RPC_HOST as string,
-      adapterNetwork: "Mainnet",
+      endpoint: process.env.NEXT_PUBLIC_RPCPOOL_RPC as string,
     },
-  
     {
       key: "alchemy",
       name: "Alchemy",
-      endpoint:
-        "https://solana-mainnet.g.alchemy.com/v2/ZT3c4pYf1inIrB0GVDNR7nx4LwyED5Ci",
-      adapterNetwork: "Mainnet",
+      endpoint: process.env.NEXT_PUBLIC_ALCHEMY_RPC as string,
     },
     {
       key: "public",
       name: "Public Solana",
       endpoint: "https://api.mainnet-beta.solana.com",
-      adapterNetwork: "Mainnet",
     },
     {
       key: "serum",
       name: "Public Serum",
       endpoint: "https://solana-api.projectserum.com",
-      adapterNetwork: "Mainnet",
     },
   ];
   

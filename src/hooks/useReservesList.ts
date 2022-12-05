@@ -3,9 +3,6 @@ import { useAtom } from "jotai";
 import { sbv2ProgramAtom, selectedPoolAtom } from "stores/globalStates";
 import { PublicKey } from "@solana/web3.js";
 import { getReserves } from "../utils/reserves";
-import { CONNECTION } from "common/config";
-
-const connection = CONNECTION;
 
 export function useReservesList(): {
     reservesList: ReserveViewModel[] | null,

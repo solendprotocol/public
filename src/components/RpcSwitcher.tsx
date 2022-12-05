@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 import { ReactSVG } from "react-svg";
 import { rpcAtom } from "stores/globalStates";
@@ -10,6 +10,7 @@ const RpcSwitcher = () => {
   const [tempEndpoint, setTempEndpoint] = useState(
     rpc.name == "Custom" ? rpc.endpoint : ""
   );
+  
   const handleCustomRpc = (e) => {
     if (e.key == "Enter") {
       if (e.target.value !== "" && e.target.value.startsWith("http")) {
@@ -17,10 +18,10 @@ const RpcSwitcher = () => {
       }
     }
   };
-  const lists = ENDPOINTS.map((endpoint, x) => (
+  const lists = ENDPOINTS.map((endpoint) => (
     <li
       className={`${rpc.name === endpoint.name && "bordered"}`}
-      key={x}
+      key={endpoint.key}
       onClick={() => {
         setRpc({ name: endpoint.name, endpoint: endpoint.endpoint });
       }}

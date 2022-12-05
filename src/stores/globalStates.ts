@@ -15,8 +15,7 @@ export const selectedPoolAtom: PrimitiveAtom<PoolAtomType> = atom({
   name: "main",
 });
 
-export const RPC_ENDPOINT = process.env
-  .NEXT_PUBLIC_REACT_APP_SOLANA_RPC_HOST as string;
+export const RPC_ENDPOINT = process.env.NEXT_PUBLIC_REACT_APP_SOLANA_RPC_HOST as string;
 
 export const rpcAtom = atomWithStorage("rpc", {
   name: "RPCPool",
