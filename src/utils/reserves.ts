@@ -1,9 +1,8 @@
-import { AccountInfo, GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
+import { AccountInfo, Connection, GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
 import { parseReserve, Reserve } from "@solendprotocol/solend-sdk/dist/state/reserve";
 import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
 import BigNumber from "bignumber.js";
 import {
-    CONNECTION,
     PROGRAM_ID,
     MAIN_POOL_ADDRESS,
     MAIN_POOL_RESERVES_ADDRESSES
@@ -20,15 +19,14 @@ import { getTokensInfo } from "./tokens";
 
 const RESERVE_LEN = 619;
 const programId = PROGRAM_ID;
-const connection = CONNECTION;
-
 
 export const getReserves = async (
     lendingMarketPubkey: PublicKey,
+    connection: Connection,
     sbv2: SwitchboardProgram)
     : Promise<ReserveViewModel[]> => {
 
-    let reserves = await getReservesOfPool(lendingMarketPubkey);
+    let reserves = await getReservesOfPool(lendingMarketPubkey, connection);
     // hardcode the reserves order for main pool
     if (lendingMarketPubkey.toBase58() === MAIN_POOL_ADDRESS) {
         reserves = reorderMainPoolReserves(reserves);
@@ -49,7 +47,7 @@ export const getReserves = async (
 };
 
 
-const getReservesOfPool = async (lendingMarketPubkey: PublicKey) => {
+const getReservesOfPool = async (lendingMarketPubkey: PublicKey, connection: Connection) => {
     const filters: GetProgramAccountsFilter[] = [
         { dataSize: RESERVE_LEN },
         { memcmp: { offset: 10, bytes: lendingMarketPubkey.toBase58() } },

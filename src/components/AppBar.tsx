@@ -8,13 +8,13 @@ import Image from "next/image";
 import { usePoolsList } from "hooks/usePoolsList";
 
 const AppBar = ({}) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const [theme, setTheme] = useAtom(themeAtom);
   const { poolList, isLoading, isError } = usePoolsList();
 
   if (isLoading) return <div></div>;
   if (isError) return <div></div>;
+  
   const poolListItems = poolList!.map((p) => (
     <li
       key={p.address}
