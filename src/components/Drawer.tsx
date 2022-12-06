@@ -1,12 +1,18 @@
-import { FC } from "react";
+import { FC, useState, useRef, useEffect, useCallback } from "react";
 import { ReactSVG } from "react-svg";
 import { useAtom } from "jotai";
-import { themeAtom, selectedPoolAtom } from "stores/globalStates";
+import {
+  themeAtom,
+  selectedPoolAtom,
+  isDrawerOpenAtom,
+} from "stores/globalStates";
 import { usePoolsList } from "hooks/usePoolsList";
 import { useMediaQuery } from "react-responsive";
 import { RpcSwitcher } from "../components";
 const Drawer: FC = (props) => {
+  const inputRef = useRef<any>();
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
+  const [isDrawerOpen, setIsDrawerOpen] = useAtom(isDrawerOpenAtom);
   const [theme, setTheme] = useAtom(themeAtom);
   const { poolList, isLoading, isError } = usePoolsList();
   const isMobile = useMediaQuery({ query: `(max-width: 760px)` });
@@ -24,7 +30,11 @@ const Drawer: FC = (props) => {
     >
       <a className="text-xlg">
         {" "}
-        <label htmlFor="my-drawer" className="w-full">
+        <label
+          htmlFor="my-drawer"
+          className="w-full"
+          onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+        >
           {p.name ? p.name : p.address}{" "}
         </label>
       </a>
@@ -34,13 +44,23 @@ const Drawer: FC = (props) => {
   return (
     <div className="flex-1 drawer">
       {/* <div className="h-screen drawer drawer-mobile w-full"> */}
-      <input id="my-drawer" type="checkbox" className="grow drawer-toggle" />
+      <input
+        id="my-drawer"
+        type="checkbox"
+        className="grow drawer-toggle"
+        ref={inputRef}
+        checked={isDrawerOpen}
+      />
       <div className="items-center  drawer-content">{props.children}</div>
 
       {/* SideBar / Drawer */}
       {isMobile && (
         <div className="drawer-side">
-          <label htmlFor="my-drawer" className="drawer-overlay"></label>
+          <label
+            htmlFor="my-drawer"
+            className="drawer-overlay"
+            onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+          ></label>
           <div className="p-4 overflow-y-auto menu w-80 bg-neutral">
             <span className="pb-2">
               {" "}

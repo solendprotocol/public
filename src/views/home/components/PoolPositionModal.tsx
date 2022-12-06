@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ReactSVG } from "react-svg";
 const PoolPositionModal = () => {
+  const [walletBalancesActive, setWalletBalancesActive] = useState(false);
   const assetsBorrowed = [{}, {}, {}, {}, {}];
   const assetsBorrowedItems = assetsBorrowed!.map((p, x) => (
     <div className="flex flex-col" key={x}>
@@ -47,8 +48,8 @@ const PoolPositionModal = () => {
     <>
       <input type="checkbox" id="pp-modal" className="modal-toggle" />
 
-      <label id="pp-modal" className="modal cursor-pointer">
-        <label className="modal-box relative flex flex-col gap-2">
+      <label id="pp-modal" className="modal cursor-pointer" htmlFor="pp-modal">
+        <label className="modal-box relative flex flex-col gap-2" htmlFor="">
           {/* title and close button */}
           <span className="flex justify-between">
             <span className="absolute left-4 top-4">
@@ -64,11 +65,11 @@ const PoolPositionModal = () => {
 
           {/* pool position */}
 
-          <div className="mt-8 rounded-lg divide-opacity-100">
+          <div className="mt-8 rounded-lg divide-opacity-100 text-sm">
             <div className="flex flex-row justify-between px-4 pt-4">
-              <span className="flex flex-col gap-0">
+              <span className="flex flex-col gap-0  ">
                 <span className="flex gap-1 align-middle items-center">
-                  <h4 className="text-neutral-content text-sm">Net Value</h4>
+                  <h4 className="text-neutral-content ">Net Value</h4>
                   <div
                     className="tooltip tooltip-right"
                     data-tip="The value of your account calculated as (supply balance - borrow balance)."
@@ -78,7 +79,7 @@ const PoolPositionModal = () => {
                 </span>
                 <h3>$0.00</h3>
               </span>
-              <span className="flex flex-col gap-0">
+              <span className="flex flex-col gap-0 ">
                 <span className="flex gap-1 align-middle items-center">
                   <div
                     className="tooltip tooltip-left"
@@ -86,9 +87,7 @@ const PoolPositionModal = () => {
                   >
                     <ReactSVG wrapper="span" src="/icons/info.svg" />
                   </div>
-                  <h4 className="text-neutral-content text-sm">
-                    Borrow Utilization
-                  </h4>{" "}
+                  <h4 className="text-neutral-content ">Borrow Utilization</h4>{" "}
                 </span>
                 <h3>$0.00</h3>
               </span>
@@ -97,9 +96,7 @@ const PoolPositionModal = () => {
             <div className="flex flex-row justify-between px-4 ">
               <span className="flex flex-col gap-0">
                 <span className="flex gap-1 align-middle items-center">
-                  <h4 className="text-neutral-content text-sm">
-                    Borrow Balance
-                  </h4>
+                  <h4 className="text-neutral-content ">Borrow Balance</h4>
                   <div
                     className="tooltip tooltip-right"
                     data-tip="Borrow balance is the sum of all assets borrowed."
@@ -117,9 +114,7 @@ const PoolPositionModal = () => {
                   >
                     <ReactSVG wrapper="span" src="/icons/info.svg" />
                   </div>
-                  <h4 className="text-neutral-content text-sm">
-                    Supply Balance
-                  </h4>{" "}
+                  <h4 className="text-neutral-content ">Supply Balance</h4>{" "}
                 </span>
                 <h3>$0.00</h3>
               </span>
@@ -133,7 +128,7 @@ const PoolPositionModal = () => {
             </span>
             <div className="flex flex-row justify-between px-4 pt-2">
               <span className="flex gap-1 align-middle items-center">
-                <h4 className="text-neutral-content text-sm">Borrow Limit</h4>
+                <h4 className="text-neutral-content ">Borrow Limit</h4>
                 <div
                   className="tooltip tooltip-right"
                   data-tip="Borrow limit is the maximum value you can borrow marked by the white bar. To increase this limit, you can supply more assets.
@@ -150,7 +145,7 @@ const PoolPositionModal = () => {
             </div>
             <div className="flex flex-row justify-between px-4 pb-4">
               <span className="flex gap-1 align-middle items-center">
-                <h4 className="text-neutral-content text-sm">
+                <h4 className="text-neutral-content ">
                   Liquidation threshold{" "}
                 </h4>
                 <div
@@ -190,11 +185,24 @@ const PoolPositionModal = () => {
           <div className="divider"></div>
           <div className="flex flex-col gap-2">
             <span className="flex justify-between">
-              <h3 className="text-neutral-content text-sm">Wallet Balances</h3>
+              <span className="flex items-center gap-2 text-neutral-content cursor-pointer">
+                <h3
+                  className="text-neutral-content text-sm"
+                  onClick={() => setWalletBalancesActive(!walletBalancesActive)}
+                >
+                  Wallet Balances{" "}
+                </h3>{" "}
+                {walletBalancesActive ? (
+                  <ReactSVG wrapper="span" src={"/icons/caretup.svg"} />
+                ) : (
+                  <ReactSVG wrapper="span" src={"/icons/caretdown.svg"} />
+                )}
+              </span>
+
               <h3 className="text-neutral-content text-sm">Balance</h3>
             </span>
             {/* Wallet balance mapping */}
-            {walletBalanceItems}
+            {walletBalancesActive && walletBalanceItems}
           </div>
         </label>
       </label>

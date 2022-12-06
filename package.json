@@ -27,6 +27,7 @@
     "immer": "^9.0.12",
     "jotai": "^1.9.1",
     "next": "^12.3.1",
+    "numbro": "^2.3.6",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-responsive": "^9.0.0",
