@@ -33,6 +33,13 @@ export const MAIN_POOL_RESERVES_ADDRESSES = [
   "GYzjMCXTDue12eUGKKWAqtF5jcBYNmewr6Db6LaguEaX"  // soBTC (Sollet)
 ];
 
+export const SOLEND_ADDRESSES = new Set([
+  "5pHk2TmnqQzRF9L6egy5FfiyBgS7G9cMZ5RFaJAvghzw",
+  "yaDPAockQPna7Srx5LB2TugJSKHUduHghyZdQcn7zYz",
+  "81KTtWjRndxGQbJHGJq6EaJWL8JfXbyywVvZReVPQd1X",
+  "GDmSxpPzLkfxxr6dHLNRnCoYVGzvgc41tozkrr4pHTjB",
+]);
+
 
 export const ENDPOINTS = [
   {
@@ -44,10 +51,5 @@ export const ENDPOINTS = [
     key: "alchemy",
     name: "Alchemy",
     endpoint: process.env.NEXT_PUBLIC_ALCHEMY_RPC as string,
-  },
-  {
-    key: "serum",
-    name: "Public Serum",
-    endpoint: "https://solana-api.projectserum.com",
   },
 ];

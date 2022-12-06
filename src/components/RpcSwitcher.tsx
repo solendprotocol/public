@@ -61,7 +61,7 @@ const RpcSwitcher = () => {
           <a>Custom</a>
           <input
             type="text"
-            placeholder="Enter RPC Endpoint here"
+            placeholder="Enter endpoint here"
             className="input input-bordered w-full max-w-xs"
             onKeyDown={(e) => handleCustomRpc(e)}
             value={tempEndpoint}

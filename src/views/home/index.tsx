@@ -1,9 +1,9 @@
 import BigNumber from "bignumber.js";
 import { useReservesList } from "hooks/useReservesList";
 import { useAtom } from "jotai";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { selectedPoolAtom } from "stores/globalStates";
+import { connectionAtom, selectedPoolAtom } from "stores/globalStates";
 import { SbwrModal, PoolPositionModal } from "views/home/components";
 import {
   formatPoolValue,
@@ -11,13 +11,42 @@ import {
   formatAmount,
   formatPercentage,
   calculateValueinUSD,
+  formatPoolName,
 } from "utils/formatUtils";
 import { Error, Loader } from "components";
+import { PublicKey } from "@solana/web3.js";
+import { parseLendingMarket } from "@solendprotocol/solend-sdk/dist/state/lendingMarket";
+import { SOLEND_ADDRESSES } from "common/config";
 export const HomeView: FC = ({}) => {
-  const [selectedPool] = useAtom(selectedPoolAtom);
   const { reservesList, isLoading, isError } = useReservesList();
   const { connected } = useWallet();
+  const [selectedPool] = useAtom(selectedPoolAtom);
+  const [connection] = useAtom(connectionAtom);
   const [showAPY, setShowAPY] = useState(true);
+  const [poolCreator, setPoolCreator] = useState<string | null>(null);
+
+  useEffect(() => {
+    const showPoolCreator = async () => {
+      const poolPubkey = new PublicKey(selectedPool.address);
+      const poolInfo = await connection.getAccountInfo(poolPubkey);
+      if (!poolInfo) {
+        setPoolCreator("Unknown");
+        return;
+      }
+      const parsedPool = parseLendingMarket(poolPubkey, poolInfo);
+      const creatorPubkey = parsedPool.info.owner.toBase58();
+      if (SOLEND_ADDRESSES.has(creatorPubkey)) {
+        setPoolCreator("Solend");
+        return;
+      }
+      setPoolCreator(
+        creatorPubkey.slice(0, 4) + "..." + creatorPubkey.slice(-4)
+      );
+      return;
+    };
+    showPoolCreator();
+  }, [connection, selectedPool.address]);
+
   if (isError) return <Error />;
   if (isLoading) return <Loader />;
 
@@ -37,8 +66,7 @@ export const HomeView: FC = ({}) => {
 
       <span className="">
         {" "}
-        {/* TODO: Handle null name and address, proper formatting */}
-        <h1 className="text-2xl">{selectedPool.name}</h1>
+        <h1 className="text-2xl">{selectedPool.name ? formatPoolName(selectedPool.name): ""}</h1>
       </span>
       {/* pool details starting here */}
       <div className="divider bg-base-200"></div>
@@ -48,7 +76,7 @@ export const HomeView: FC = ({}) => {
           {" "}
           <span className="flex flex-col gap-2">
             <h3 className="text-neutral-content">Creator</h3>
-            <h3>Solend</h3> {/* TODO: Get creator name/address */}
+            <h3>{poolCreator ? poolCreator : ""}</h3>{" "}
           </span>
           <span className="flex flex-col gap-2">
             <h3 className="text-neutral-content">Total Supply</h3>
@@ -82,7 +110,7 @@ export const HomeView: FC = ({}) => {
         {" "}
         <span className="flex flex-col gap-2">
           <h3 className="text-neutral-content">Creator</h3>
-          <h3>Solend</h3> {/* TODO: Get creator name/address */}
+          <h3>{poolCreator ? poolCreator : ""}</h3>{" "}
         </span>
         <span className="flex flex-col gap-2">
           <h3 className="text-neutral-content">Total Supply</h3>

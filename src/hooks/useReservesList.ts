@@ -27,7 +27,7 @@ export function useReservesList(): {
             }
         }
         getReservesList();
-    }, [selectedPool, sbv2Program]);
+    }, [selectedPool, sbv2Program, connection]);
 
     return {
         reservesList,
