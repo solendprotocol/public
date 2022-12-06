@@ -1,8 +1,9 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import * as BufferLayout from "buffer-layout";
 import { ReserveConfig } from "../state/reserve";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
+
+const BufferLayout = require('buffer-layout');
 
 /// Updates a reserves config and a reserve price oracle pubkeys
 ///

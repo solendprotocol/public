@@ -4,8 +4,9 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
-import * as BufferLayout from "buffer-layout";
 import { LendingInstruction } from "./instruction";
+
+const BufferLayout = require('buffer-layout');
 
 /// Initializes a new lending market obligation.
 ///

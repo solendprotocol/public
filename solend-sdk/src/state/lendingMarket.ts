@@ -1,6 +1,7 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
-import * as BufferLayout from "buffer-layout";
 import * as Layout from "../utils/layout";
+
+const BufferLayout = require('buffer-layout');
 
 export interface LendingMarket {
   version: number;

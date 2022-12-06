@@ -1,6 +1,7 @@
 import BN from "bn.js";
-import * as BufferLayout from "buffer-layout";
 import * as Layout from "../utils/layout";
+
+const BufferLayout = require('buffer-layout');
 
 export const LastUpdateLayout: typeof BufferLayout.Structure =
   BufferLayout.struct(
