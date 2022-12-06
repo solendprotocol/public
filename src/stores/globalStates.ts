@@ -1,8 +1,11 @@
-import { MAIN_POOL_ADDRESS } from "common/config";
+import { Connection } from "@solana/web3.js";
+import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
+import { MAIN_POOL_ADDRESS, RPC_ENDPOINT } from "common/config";
 import { atom, PrimitiveAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
 export const themeAtom = atomWithStorage("theme", "dark");
+export const sbv2ProgramAtom = atom<SwitchboardProgram | null>(null); // is loaded once on mount
 
 interface PoolAtomType {
   address: string;
@@ -12,24 +15,10 @@ export const selectedPoolAtom: PrimitiveAtom<PoolAtomType> = atom({
   address: MAIN_POOL_ADDRESS,
   name: "main",
 });
-export const RPC_ENDPOINT = process.env
-  .NEXT_PUBLIC_REACT_APP_SOLANA_RPC_HOST as string;
-export const rpcAtom = atomWithStorage("rpc", {
-  name: "RPCPool",
-  endpoint: RPC_ENDPOINT,
-});
 
-export const isDrawerOpenAtom = atom(false);
+export const rpcEndpointAtom = atom<{ name: string, endpoint: string }>(
+  { name: RPC_ENDPOINT.name, endpoint: RPC_ENDPOINT.endpoint }
+);
 
-interface ReserveAtomType {
-  address: string;
-  tokenSymbol: string;
-  logoUri: string | null;
-  assetPriceUSD: number;
-  LTV: number;
-  supplyAPY: number;
-  borrowAPY: number;
-  supplyAPR: number;
-  borrowAPR: number;
-}
-export const selectedReserveAtom: PrimitiveAtom<ReserveAtomType> = atom({});
+export const connectionAtom = atom<Connection>(new Connection(RPC_ENDPOINT.endpoint, "confirmed"));
+

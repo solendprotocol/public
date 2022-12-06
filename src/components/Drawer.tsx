@@ -16,7 +16,7 @@ const Drawer: FC = (props) => {
   const [theme, setTheme] = useAtom(themeAtom);
   const { poolList, isLoading, isError } = usePoolsList();
   const isMobile = useMediaQuery({ query: `(max-width: 760px)` });
-  // TODO: return proper loading and error here
+
   if (isLoading) return <div></div>;
   if (isError) return <div></div>;
 

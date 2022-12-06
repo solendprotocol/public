@@ -24,9 +24,6 @@ import { ENVIRONMENT, RPC_ENDPOINT } from "common/config";
 
 const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { autoConnect } = useAutoConnect();
-  const { networkConfiguration } = useNetworkConfiguration();
-  // const network = networkConfiguration as WalletAdapterNetwork;
-  // const endpoint = useMemo(() => clusterApiUrl(network), [network]);
   const network = ENVIRONMENT as WalletAdapterNetwork;
   const endpoint = RPC_ENDPOINT;
   const wallets = useMemo(
@@ -51,8 +48,7 @@ const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }, []);
 
   return (
-    // TODO: updates needed for updating and referencing endpoint: wallet adapter rework
-    <ConnectionProvider endpoint={endpoint}>
+    <ConnectionProvider endpoint={endpoint.endpoint}>
       <WalletProvider
         wallets={wallets}
         onError={onError}

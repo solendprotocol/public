@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Hambuger, RpcSwitcher } from "../components";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { ReactSVG } from "react-svg";
@@ -8,14 +7,13 @@ import Image from "next/image";
 import { usePoolsList } from "hooks/usePoolsList";
 
 const AppBar = ({}) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
   const [theme, setTheme] = useAtom(themeAtom);
   const { poolList, isLoading, isError } = usePoolsList();
 
-  // TODO: return proper loading and error here
   if (isLoading) return <div></div>;
   if (isError) return <div></div>;
+  
   const poolListItems = poolList!.map((p) => (
     <li
       key={p.address}
