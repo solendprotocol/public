@@ -1,9 +1,10 @@
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import BN from "bn.js";
-import * as BufferLayout from "buffer-layout";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
+
+const BufferLayout = require('buffer-layout');
 
 /// Redeem collateral from a reserve in exchange for liquidity.
 export const withdrawObligationCollateralAndRedeemReserveLiquidity = (
