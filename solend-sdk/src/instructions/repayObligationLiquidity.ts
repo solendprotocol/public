@@ -1,9 +1,10 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import BN from "bn.js";
-import * as BufferLayout from "buffer-layout";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
+
+const BufferLayout = require('buffer-layout');
 
 /// Repay borrowed liquidity to a reserve. Requires a refreshed obligation and reserve.
 ///
