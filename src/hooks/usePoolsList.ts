@@ -22,7 +22,7 @@ export function usePoolsList(): {
             }
         }
         getPoolList();
-    }, []);
+    }, [connection]);
 
     return {
         poolList,

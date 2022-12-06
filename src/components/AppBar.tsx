@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Hambuger, RpcSwitcher } from "../components";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { ReactSVG } from "react-svg";

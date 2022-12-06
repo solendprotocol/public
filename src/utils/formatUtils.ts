@@ -41,3 +41,7 @@ export const formatPoolValue = (amount: BigNumber) => {
     }
     return `$${amount.toFormat(2)}`;
 }
+
+export const formatPoolName = (name: string) => {
+    return name.charAt(0).toUpperCase() + name.slice(1) + " Pool";
+}
