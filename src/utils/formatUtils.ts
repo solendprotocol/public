@@ -1,26 +1,25 @@
 import BigNumber from "bignumber.js";
 
-
 export const formatPercentage = (num: number) => {
-    return `${(num * 100).toFixed(2)}%`;
+  return `${(num * 100).toFixed(2)}%`;
 };
 
 export const formatAmount = (amount: BigNumber) => {
-    if (amount.isLessThan(1000)) {
-        return amount.toFormat(2);
-    }
-    return amount.integerValue().toFormat();
+  if (amount.isLessThan(1000)) {
+    return amount.toFormat(2);
+  }
+  return amount.integerValue().toFormat();
 };
 
 export const formatAssetPrice = (price: number) => {
-    if (price < 1) {
-        return "$" + BigNumber(price).toFormat(4);
-    }
-    return "$" + BigNumber(price).toFormat(2);
+  if (price < 1) {
+    return "$" + BigNumber(price).toFormat(4);
+  }
+  return "$" + BigNumber(price).toFormat(2);
 };
 
 export const calculateValueinUSD = (amount: BigNumber, price: number) => {
-    return amount.multipliedBy(price);
+  return amount.multipliedBy(price);
 };
 
 export const formatPoolValue = (amount: BigNumber) => {

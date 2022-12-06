@@ -21,3 +21,4 @@ export const rpcEndpointAtom = atom<{ name: string, endpoint: string }>(
 );
 
 export const connectionAtom = atom<Connection>(new Connection(RPC_ENDPOINT.endpoint, "confirmed"));
+
