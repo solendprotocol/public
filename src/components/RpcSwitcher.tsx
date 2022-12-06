@@ -1,28 +1,41 @@
-import React, { useState } from "react";
-import { useAtom } from "jotai";
+import React, { useContext, useEffect, useState } from "react";
 import { ReactSVG } from "react-svg";
-import { rpcAtom } from "stores/globalStates";
 import { ENDPOINTS } from "common/config";
+import { useAtom } from "jotai";
+import { Connection } from "@solana/web3.js";
+import { connectionAtom, rpcEndpointAtom } from "stores/globalStates";
 
 const RpcSwitcher = () => {
-  const [rpc, setRpc] = useAtom(rpcAtom);
+  const [rpcEndpoint, setRpcEndpoint] = useAtom(rpcEndpointAtom);
+  const [, setConnection] = useAtom(connectionAtom);
 
   const [tempEndpoint, setTempEndpoint] = useState(
-    rpc.name == "Custom" ? rpc.endpoint : ""
+    rpcEndpoint.name == "Custom" ? rpcEndpoint.endpoint : ""
   );
+
   const handleCustomRpc = (e) => {
     if (e.key == "Enter") {
-      if (e.target.value !== "" && e.target.value.startsWith("http")) {
-        setRpc({ name: "Custom", endpoint: e.target.value });
+      const enteredEndpoint = e.target.value;
+      if (enteredEndpoint !== "" && enteredEndpoint.startsWith("http")) {
+        try {
+          const newConnection = new Connection(enteredEndpoint, "confirmed");
+          setConnection(newConnection);
+          setRpcEndpoint({ name: "Custom", endpoint: enteredEndpoint });
+        } catch {}
       }
     }
   };
-  const lists = ENDPOINTS.map((endpoint, x) => (
+
+  const lists = ENDPOINTS.map((endpoint) => (
     <li
-      className={`${rpc.name === endpoint.name && "bordered"}`}
-      key={x}
+      className={`${rpcEndpoint.name === endpoint.name && "bordered"}`}
+      key={endpoint.key}
       onClick={() => {
-        setRpc({ name: endpoint.name, endpoint: endpoint.endpoint });
+        try {
+          const newConnection = new Connection(endpoint.endpoint, "confirmed");
+          setConnection(newConnection);
+          setRpcEndpoint({ name: endpoint.name, endpoint: endpoint.endpoint });
+        } catch {}
       }}
     >
       <a>{endpoint.name}</a>
@@ -35,7 +48,7 @@ const RpcSwitcher = () => {
         tabIndex={0}
         className="btn p-2 px-3 bg-base-200 w-35 flex gap-1 text-primary-content"
       >
-        <p className="text-primary-content">{rpc.name}</p>
+        <p className="text-primary-content">{rpcEndpoint.name}</p>
 
         <ReactSVG wrapper="span" src={"/icons/caretdown.svg"} />
       </label>
@@ -44,11 +57,11 @@ const RpcSwitcher = () => {
         className="dropdown-content menu p-4 shadow rounded-box  w-52 bg-base-200"
       >
         {lists}
-        <li className={`${rpc.name === "Custom" && "bordered"}`}>
+        <li className={`${rpcEndpoint.name === "Custom" && "bordered"}`}>
           <a>Custom</a>
           <input
             type="text"
-            placeholder="Paste Rpc and enter"
+            placeholder="Enter endpoint here"
             className="input input-bordered w-full max-w-xs"
             onKeyDown={(e) => handleCustomRpc(e)}
             value={tempEndpoint}

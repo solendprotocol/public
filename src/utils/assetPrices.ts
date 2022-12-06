@@ -122,3 +122,8 @@ const getPriceFromSb = async (accountInfo: AccountInfo<Buffer> | null, sbv2: Swi
 
     throw Error(`Unrecognized switchboard oracle.`);
 };
+
+export const getSbv2Program = async () => {
+    const sbv2 = await SwitchboardProgram.loadMainnet(connection);
+    return sbv2;
+};
