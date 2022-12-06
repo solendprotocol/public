@@ -4,9 +4,10 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
-import * as BufferLayout from "buffer-layout";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
+
+const BufferLayout = require('buffer-layout');
 
 export const initLendingMarketInstruction = (
   owner: PublicKey,
