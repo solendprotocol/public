@@ -102,6 +102,7 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
         Layout.uint64("availableAmount"),
         Layout.uint128("borrowedAmountWads"),
         Layout.uint128("cumulativeBorrowRateWads"),
+        Layout.uint128("accumulatedProtocolFeesWads"),
         Layout.uint128("marketPrice"),
       ],
       "liquidity"
@@ -116,14 +117,14 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
       "collateral"
     ),
     ReserveConfigLayout,
-    BufferLayout.blob(247, "padding"),
+    BufferLayout.blob(230, "padding"),
   ]
 );
 
 export const RESERVE_SIZE = ReserveLayout.span;
 
 export const isReserve = (info: AccountInfo<Buffer>) =>
-  info.data.length === ReserveLayout.span;
+  info.data.length === RESERVE_SIZE;
 
 export const parseReserve = (pubkey: PublicKey, info: AccountInfo<Buffer>) => {
   const { data } = info;
