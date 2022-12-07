@@ -2,8 +2,13 @@ import BigNumber from "bignumber.js";
 import { useReservesList } from "hooks/useReservesList";
 import { useAtom } from "jotai";
 import { FC, useEffect, useState } from "react";
+import Image from "next/image";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { connectionAtom, selectedPoolAtom } from "stores/globalStates";
+import {
+  connectionAtom,
+  selectedPoolAtom,
+  selectedReserveAtom,
+} from "stores/globalStates";
 import { SbwrModal, PoolPositionModal } from "views/home/components";
 import {
   formatPoolValue,
@@ -20,9 +25,9 @@ import { SOLEND_ADDRESSES } from "common/config";
 
 export const HomeView: FC = ({}) => {
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
+  const [selectedReserve, setSelectedReserve] = useAtom(selectedReserveAtom);
   const { reservesList, isLoading, isError } = useReservesList();
   const { connected } = useWallet();
-  const [selectedPool] = useAtom(selectedPoolAtom);
   const [connection] = useAtom(connectionAtom);
   const [showAPY, setShowAPY] = useState(true);
   const [poolCreator, setPoolCreator] = useState<string | null>(null);
@@ -71,7 +76,9 @@ export const HomeView: FC = ({}) => {
 
       <span className="">
         {" "}
-        <h1 className="text-2xl">{selectedPool.name ? formatPoolName(selectedPool.name): ""}</h1>
+        <h1 className="text-2xl">
+          {selectedPool.name ? formatPoolName(selectedPool.name) : ""}
+        </h1>
       </span>
       {/* pool details starting here */}
       <div className="divider bg-base-200"></div>
@@ -174,6 +181,7 @@ export const HomeView: FC = ({}) => {
                             ? reserve.logoUri
                             : "https://via.placeholder.com/150"
                         }
+                        alt="Image of Reserves"
                         width="100%"
                         height="100%"
                         className="rounded object-cover"
@@ -286,6 +294,7 @@ export const HomeView: FC = ({}) => {
                             ? reserve.logoUri
                             : "https://via.placeholder.com/150"
                         }
+                        alt="Image of Reserves"
                         width="100%"
                         height="100%"
                         className="rounded object-cover"
