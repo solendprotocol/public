@@ -35,7 +35,7 @@ const Drawer: FC = (props) => {
           className="w-full"
           onClick={() => setIsDrawerOpen(!isDrawerOpen)}
         >
-          {p.name ? p.name : p.address}{" "}
+          {p.name ? p.name+" Pool" : p.address}{" "}
         </label>
       </a>
     </li>
