@@ -114,3 +114,10 @@ Due to transaction size limits of Solana, a user with a high amount of positions
 #### Values are weird on devnet
 
 Partner rewards and liquidity mining are not present on devnet.
+
+## publishing
+```
+yarn login
+yarn publish --access public
+```
+and bump the version
