@@ -16,9 +16,26 @@ export const selectedPoolAtom: PrimitiveAtom<PoolAtomType> = atom({
   name: "main",
 });
 
-export const rpcEndpointAtom = atom<{ name: string, endpoint: string }>(
-  { name: RPC_ENDPOINT.name, endpoint: RPC_ENDPOINT.endpoint }
+export const rpcEndpointAtom = atom<{ name: string; endpoint: string }>({
+  name: RPC_ENDPOINT.name,
+  endpoint: RPC_ENDPOINT.endpoint,
+});
+
+export const connectionAtom = atom<Connection>(
+  new Connection(RPC_ENDPOINT.endpoint, "confirmed")
 );
 
-export const connectionAtom = atom<Connection>(new Connection(RPC_ENDPOINT.endpoint, "confirmed"));
+export const isDrawerOpenAtom = atom(false);
 
+interface ReserveAtomType {
+  address: string;
+  tokenSymbol: string;
+  logoUri: string | null;
+  assetPriceUSD: number;
+  LTV: number;
+  supplyAPY: number;
+  borrowAPY: number;
+  supplyAPR: number;
+  borrowAPR: number;
+}
+export const selectedReserveAtom: PrimitiveAtom<ReserveAtomType> = atom({});
