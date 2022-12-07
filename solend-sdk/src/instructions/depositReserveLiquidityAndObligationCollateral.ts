@@ -4,7 +4,7 @@ import BN from "bn.js";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
 
-const BufferLayout = require("buffer-layout");
+const BufferLayout = require('buffer-layout');
 
 /// Deposit liquidity into a reserve in exchange for collateral, and deposit the collateral as well.
 export const depositReserveLiquidityAndObligationCollateralInstruction = (

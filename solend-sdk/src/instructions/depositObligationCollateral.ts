@@ -4,7 +4,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
 
-const BufferLayout = require("buffer-layout");
+const BufferLayout = require('buffer-layout');
 
 /// Deposit collateral to an obligation. Requires a refreshed reserve.
 ///

@@ -8,7 +8,7 @@ import BN from "bn.js";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
 
-const BufferLayout = require("buffer-layout");
+const BufferLayout = require('buffer-layout');
 
 export const flashRepayReserveLiquidityInstruction = (
   liquidityAmount: number | BN,
