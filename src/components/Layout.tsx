@@ -2,22 +2,23 @@ import { ContextProvider } from "../contexts/ContextProvider";
 import { AppBar, Drawer } from "../components";
 import { useAtom } from "jotai";
 import Notifications from "../components/Notification";
-import { themeAtom, sbv2ProgramAtom } from "stores/globalStates";
+import { themeAtom, sbv2ProgramAtom, connectionAtom } from "stores/globalStates";
 import { useEffect } from "react";
 import { getSbv2Program } from "utils/assetPrices";
 
 const Layout = ({ children }) => {
   const [theme] = useAtom(themeAtom);
+  const [connection] = useAtom(connectionAtom);
   const [, setSbv2Program] = useAtom(sbv2ProgramAtom);
 
   // Initialize the Switchboard-v2 Program on mount
   useEffect(() => {
     async function loadSbv2Program() {
-      const sbv2 = await getSbv2Program();
+      const sbv2 = await getSbv2Program(connection);
       setSbv2Program(sbv2);
     }
     loadSbv2Program();
-  }, [setSbv2Program]);
+  }, [connection, setSbv2Program]);
 
   return (
     <div
