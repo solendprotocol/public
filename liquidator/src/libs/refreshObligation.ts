@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-throw-literal */
 import BigNumber from 'bignumber.js';
 import { findWhere, find } from 'underscore';
-import { Obligation, ObligationCollateral, ObligationLiquidity } from 'models/layouts/obligation';
-import {
-  getCollateralExchangeRate, getLiquidationThresholdRate, getLoanToValueRate, WAD,
-} from 'models/layouts/reserve';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
+import { Obligation, ObligationCollateral, ObligationLiquidity } from '@solendprotocol/solend-sdk';
+import {
+  getCollateralExchangeRate, getLiquidationThresholdRate, getLoanToValueRate, WAD,
+} from './utils';
 
 export const RISKY_OBLIGATION_THRESHOLD = 78;
 
