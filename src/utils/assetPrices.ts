@@ -1,13 +1,10 @@
-import { AccountInfo, PublicKey } from "@solana/web3.js";
+import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import { parsePriceData } from "@pythnetwork/client";
 import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
 import { AggregatorState } from "@switchboard-xyz/switchboard-api/lib/compiled";
-import { CONNECTION } from "common/config";
 
-const connection = CONNECTION;
 const SBV1_MAINNET = 'DtmE9D2CSB4L5D6A15mraeEjrGMm6auWVzgaD8hK2tZM';
 const SBV2_MAINNET = 'SW1TCH7qEPTdLsDHRgPuMQjbQxKdH2aBStViMFnt64f';
-
 
 export const getOracleAddresses = (parsedReserves: ParsedReserve[]) => {
     const oracles = new Map<string, { pyth: string, sb: string }>();
@@ -20,10 +17,14 @@ export const getOracleAddresses = (parsedReserves: ParsedReserve[]) => {
     return oracles;
 }
 
-export const getAssetPrices = async (oracles: Map<string, { pyth: string; sb: string; }>, sbv2Program: SwitchboardProgram) => {
+export const getAssetPrices = async (
+    oracles: Map<string, { pyth: string; sb: string; }>,
+    sbv2Program: SwitchboardProgram,
+    connection: Connection
+    ) => {
     const prices = new Map<string, number>();
-    const pythAccountsInfo = await getPythAccountsInfo(oracles);
-    const sbAccountsInfo = await getSbAccountsInfo(oracles);
+    const pythAccountsInfo = await getPythAccountsInfo(oracles, connection);
+    const sbAccountsInfo = await getSbAccountsInfo(oracles, connection);
 
     for (const [reserveAddress, { pyth, sb }] of oracles) {
         if (pyth) {
@@ -52,7 +53,7 @@ export const getAssetPrices = async (oracles: Map<string, { pyth: string; sb: st
     return prices;
 };
 
-const getPythAccountsInfo = async (oracles: Map<string, { pyth: string, sb: string }>) => {
+const getPythAccountsInfo = async (oracles: Map<string, { pyth: string, sb: string }>, connection: Connection) => {
     const accountsInfo = new Map<string, AccountInfo<Buffer> | null>();
     const promises = new Set<Promise<void>>();
 
@@ -68,7 +69,7 @@ const getPythAccountsInfo = async (oracles: Map<string, { pyth: string, sb: stri
     return accountsInfo;
 };
 
-const getSbAccountsInfo = async (oracles: Map<string, { pyth: string, sb: string }>) => {
+const getSbAccountsInfo = async (oracles: Map<string, { pyth: string, sb: string }>, connection: Connection) => {
     const accountsInfo = new Map<string, AccountInfo<Buffer> | null>();
     const promises = new Set<Promise<void>>();
 
@@ -123,7 +124,7 @@ const getPriceFromSb = async (accountInfo: AccountInfo<Buffer> | null, sbv2: Swi
     throw Error(`Unrecognized switchboard oracle.`);
 };
 
-export const getSbv2Program = async () => {
+export const getSbv2Program = async (connection: Connection) => {
     const sbv2 = await SwitchboardProgram.loadMainnet(connection);
     return sbv2;
 };

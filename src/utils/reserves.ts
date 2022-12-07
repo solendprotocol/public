@@ -34,7 +34,7 @@ export const getReserves = async (
     const parsedReserves = reserves.map((reserve) => getParsedReserve(reserve));
 
     const oracles = getOracleAddresses(parsedReserves);
-    const oraclePrices = await getAssetPrices(oracles, sbv2);
+    const oraclePrices = await getAssetPrices(oracles, sbv2, connection);
 
     const mints: PublicKey[] = [];
     parsedReserves.map((reserve) => { mints.push(reserve.info.liquidity.mintPubkey) });
