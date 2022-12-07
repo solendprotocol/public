@@ -8,6 +8,10 @@ module.exports = {
     return config;
   },
   images: {
-    domains: ["assets.coingecko.com", "raw.githubusercontent.com"],
+    domains: [
+      "assets.coingecko.com",
+      "raw.githubusercontent.com",
+      "via.placeholder.com",
+    ],
   },
 };
