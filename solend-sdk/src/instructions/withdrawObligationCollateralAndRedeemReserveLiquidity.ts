@@ -4,7 +4,7 @@ import BN from "bn.js";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
 
-const BufferLayout = require('buffer-layout');
+const BufferLayout = require("buffer-layout");
 
 /// Redeem collateral from a reserve in exchange for liquidity.
 export const withdrawObligationCollateralAndRedeemReserveLiquidity = (

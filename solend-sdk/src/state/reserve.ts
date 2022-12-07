@@ -4,7 +4,7 @@ import { Buffer } from "buffer";
 import * as Layout from "../utils/layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
 
-const BufferLayout = require('buffer-layout');
+const BufferLayout = require("buffer-layout");
 
 export interface Reserve {
   version: number;
@@ -53,6 +53,7 @@ export interface ReserveConfig {
   feeReceiver?: PublicKey;
   protocolLiquidationFee: number;
   protocolTakeRate: number;
+  accumulatedProtocolFeesWads: string;
 }
 
 export const ReserveConfigLayout = BufferLayout.struct(
@@ -77,6 +78,7 @@ export const ReserveConfigLayout = BufferLayout.struct(
     Layout.publicKey("feeReceiver"),
     BufferLayout.u8("protocolLiquidationFee"),
     BufferLayout.u8("protocolTakeRate"),
+    Layout.uint128("accumulatedProtocolFeesWads"),
   ],
   "config"
 );
@@ -102,7 +104,6 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
         Layout.uint64("availableAmount"),
         Layout.uint128("borrowedAmountWads"),
         Layout.uint128("cumulativeBorrowRateWads"),
-        Layout.uint128("accumulatedProtocolFeesWads"),
         Layout.uint128("marketPrice"),
       ],
       "liquidity"
