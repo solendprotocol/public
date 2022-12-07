@@ -6,7 +6,7 @@ import {
 } from "@solana/web3.js";
 import { LendingInstruction } from "./instruction";
 
-const BufferLayout = require("buffer-layout");
+const BufferLayout = require('buffer-layout');
 
 /// Initializes a new lending market obligation.
 ///
