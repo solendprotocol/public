@@ -22,7 +22,7 @@ const AppBar = ({}) => {
       }}
       className={`${selectedPool.address === p.address && "bordered"}`}
     >
-      <a className="text-xlg">{p.name ? p.name : p.address}</a>
+      <a className="text-xlg">{p.name ? p.name+" Pool" : p.address}</a>
     </li>
   ));
 

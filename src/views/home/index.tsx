@@ -77,7 +77,7 @@ export const HomeView: FC = ({}) => {
       <span className="">
         {" "}
         <h1 className="text-2xl">
-          {selectedPool.name ? formatPoolName(selectedPool.name) : ""}
+          {selectedPool.name ? formatPoolName(selectedPool.name)+" Pool" : ""}
         </h1>
       </span>
       {/* pool details starting here */}
