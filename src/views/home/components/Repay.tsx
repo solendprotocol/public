@@ -1,5 +1,4 @@
 import { FC, useState } from "react";
-import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import AssetInput from "./AssetInput";
 import { BNumber, BZero, max, min } from "utils/utils";

@@ -16,9 +16,7 @@ export function useReservesList(): {
   const [connection] = useAtom(connectionAtom);
   const [selectedPool] = useAtom(selectedPoolAtom);
   const [sbv2Program] = useAtom(sbv2ProgramAtom);
-  const [reservesList, setReservesList] = useState<ReserveViewModel[] | null>(
-    null
-  );
+  const [reservesList, setReservesList] = useState<ReserveViewModel[] | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -34,7 +32,7 @@ export function useReservesList(): {
           sbv2Program
         );
         setReservesList(reserves);
-      } catch (error) {
+      } catch {
         setError(true);
       }
     }

@@ -1,5 +1,4 @@
 import { FC, useState } from "react";
-import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import AssetInput from "./AssetInput";
 import { BNumber, BZero, max, min } from "utils/utils";
@@ -24,7 +23,7 @@ const Borrow: FC = ({ selectedToken, onFinish }: BorrowPropsType) => {
     setShowPositions(true);
     setValue(val);
   };
-  //TODO:get mac value, remove dummy data
+  //TODO:get max value, remove dummy data
   const maxValue = BZero;
 
   const [disableConfirmButton, buttonText] = ((): [boolean, string] => {

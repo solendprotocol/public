@@ -6,7 +6,6 @@ import { themeAtom, sbv2ProgramAtom } from "stores/globalStates";
 import { useEffect } from "react";
 import { getSbv2Program } from "utils/assetPrices";
 
-
 const Layout = ({ children }) => {
   const [theme] = useAtom(themeAtom);
   const [, setSbv2Program] = useAtom(sbv2ProgramAtom);
