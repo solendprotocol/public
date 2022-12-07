@@ -9,7 +9,7 @@ import * as Layout from "../utils/layout";
 import { ReserveConfig, ReserveConfigLayout } from "../state";
 import { LendingInstruction } from "./instruction";
 
-const BufferLayout = require('buffer-layout');
+const BufferLayout = require("buffer-layout");
 
 export const initReserveInstruction = (
   liquidityAmount: number | BN,
