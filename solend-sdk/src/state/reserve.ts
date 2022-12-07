@@ -4,7 +4,7 @@ import { Buffer } from "buffer";
 import * as Layout from "../utils/layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
 
-const BufferLayout = require('buffer-layout');
+const BufferLayout = require("buffer-layout");
 
 export interface Reserve {
   version: number;
@@ -26,6 +26,7 @@ export interface ReserveLiquidity {
   availableAmount: BN;
   borrowedAmountWads: BN;
   cumulativeBorrowRateWads: BN;
+  accumulatedProtocolFeesWads: string;
   marketPrice: BN;
 }
 

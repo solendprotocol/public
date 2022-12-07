@@ -1,7 +1,7 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { LendingInstruction } from "./instruction";
 
-const BufferLayout = require('buffer-layout');
+const BufferLayout = require("buffer-layout");
 
 /// Accrue interest and update market price of liquidity on a reserve.
 ///
