@@ -29,14 +29,16 @@ function ConfirmButton({
   canShowCanceled,
   symbol,
 }: ConfirmButtonPropsType): ReactElement {
-  const { connect } = useWallet();
+  const { connect, connected } = useWallet();
   const [showConfirm, setShowConfirm] = useState(false);
   const [showCancelled, setShowCancelled] = useState(false);
 
   return (
     <button
       className="btn btn-secondary p-2 glass text-primary-content"
-      disabled={!needsConnect && (disabled || showConfirm || !value)}
+      disabled={
+        (!needsConnect && (disabled || showConfirm || !value)) || needsConnect
+      }
       onClick={async () => {
         if (needsConnect) {
           connect();
@@ -58,13 +60,7 @@ function ConfirmButton({
             } else {
               setShowConfirm(false);
               setShowCancelled(false);
-              onFinish({
-                type: "claimResult",
-                symbol,
-                action,
-                amount: value,
-                signature,
-              });
+              onFinish();
             }
           }
         }
