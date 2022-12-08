@@ -18,7 +18,6 @@ import { AutoConnectProvider, useAutoConnect } from "./AutoConnectProvider";
 import { notify } from "../utils/notifications";
 import {
   NetworkConfigurationProvider,
-  useNetworkConfiguration,
 } from "./NetworkConfigurationProvider";
 import { ENVIRONMENT, RPC_ENDPOINT } from "common/config";
 

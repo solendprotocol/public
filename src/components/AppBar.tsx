@@ -5,6 +5,7 @@ import { useAtom } from "jotai";
 import { themeAtom, selectedPoolAtom } from "stores/globalStates";
 import Image from "next/image";
 import { usePoolsList } from "hooks/usePoolsList";
+import { formatAddress } from "utils/formatUtils";
 
 const AppBar = ({}) => {
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
@@ -13,7 +14,7 @@ const AppBar = ({}) => {
 
   if (isLoading) return <div></div>;
   if (isError) return <div></div>;
-  
+
   const poolListItems = poolList!.map((p) => (
     <li
       key={p.address}
@@ -22,7 +23,9 @@ const AppBar = ({}) => {
       }}
       className={`${selectedPool.address === p.address && "bordered"}`}
     >
-      <a className="text-xlg">{p.name ? p.name+" Pool" : p.address}</a>
+      <a className="text-xlg">
+        {p.name ? p.name + " Pool" : formatAddress(p.address)}
+      </a>
     </li>
   ));
 
