@@ -32,10 +32,5 @@ interface ReserveAtomType {
   tokenSymbol: string;
   logoUri: string | null;
   assetPriceUSD: number;
-  LTV: number;
-  supplyAPY: number;
-  borrowAPY: number;
-  supplyAPR: number;
-  borrowAPR: number;
 }
 export const selectedReserveAtom: PrimitiveAtom<ReserveAtomType> = atom({});

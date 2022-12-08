@@ -24,7 +24,6 @@ const AssetInput = forwardRef<HTMLSpanElement, AssetInputPropsType>(
 
     function handleUSDAmount(amount: string | null) {
       setUSDAmount(amount ? formatUSD(amount) : "");
-      console.log(typeof usdAmount);
     }
 
     useEffect(() => {
