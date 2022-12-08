@@ -2,22 +2,20 @@ import BigNumber from "bignumber.js";
 import { useReservesList } from "hooks/useReservesList";
 import { useAtom } from "jotai";
 import { FC, useEffect, useState } from "react";
-import Image from "next/image";
+
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
   connectionAtom,
   selectedPoolAtom,
   selectedReserveAtom,
 } from "stores/globalStates";
-import { SbwrModal, PoolPositionModal } from "views/home/components";
 import {
-  formatPoolValue,
-  formatAssetPrice,
-  formatAmount,
-  formatPercentage,
-  calculateValueinUSD,
-  formatPoolName,
-} from "utils/formatUtils";
+  SbwrModal,
+  PoolPositionModal,
+  MobileTable,
+  DesktopTable,
+} from "views/home/components";
+import { formatPoolValue, formatPoolName } from "utils/formatUtils";
 import { Error, Loader } from "components";
 import { PublicKey } from "@solana/web3.js";
 import { parseLendingMarket } from "@solendprotocol/solend-sdk/dist/state/lendingMarket";
@@ -77,7 +75,7 @@ export const HomeView: FC = ({}) => {
       <span className="">
         {" "}
         <h1 className="text-2xl">
-          {selectedPool.name ? formatPoolName(selectedPool.name)+" Pool" : ""}
+          {selectedPool.name ? formatPoolName(selectedPool.name) + " Pool" : ""}
         </h1>
       </span>
       {/* pool details starting here */}
@@ -164,226 +162,20 @@ export const HomeView: FC = ({}) => {
 
       {/* Pool assets for mobile  */}
       <div className="md:hidden lg:hidden flex">
-        <table className="table w-full">
-          <tbody>
-            {reservesList!.map((reserve) => (
-              <tr key={reserve.address} className="cursor-pointer hover ">
-                <td className="bg-neutral w-1/5">
-                  <label
-                    className="flex flex-col gap-4 justify-center"
-                    htmlFor="sbwr-modal"
-                    onClick={() => handleSelectReserve(reserve)}
-                  >
-                    <span className="w-8 h-full">
-                      <Image
-                        src={
-                          reserve.logoUri
-                            ? reserve.logoUri
-                            : "https://via.placeholder.com/150"
-                        }
-                        alt="Image of Reserves"
-                        width="100%"
-                        height="100%"
-                        className="rounded object-cover"
-                      />
-                    </span>
-                    <span className="flex flex-col gap-0">
-                      <h3 className="">
-                        {reserve.tokenSymbol
-                          ? reserve.tokenSymbol
-                          : reserve.address}
-                      </h3>
-                      <h3 className="text-neutral-content text-sm">
-                        {formatAssetPrice(reserve.assetPriceUSD)}
-                      </h3>
-                    </span>
-                  </label>
-                </td>
-
-                <td className="bg-neutral w-4/5">
-                  <label
-                    className="flex flex-col"
-                    htmlFor="sbwr-modal"
-                    onClick={() => handleSelectReserve(reserve)}
-                  >
-                    <span className="flex flex-row justify-between align-middle ">
-                      <h3 className="text-neutral-content text-sm">LTV</h3>
-                      <h3 className="">{reserve.LTV + "%"}</h3>
-                    </span>
-                    <span className="flex flex-row justify-between align-middle">
-                      {" "}
-                      <h3 className="text-neutral-content text-sm">
-                        Total Supply
-                      </h3>{" "}
-                      <h3 className="text-neutral-content">
-                        {formatAmount(reserve.totalSupply)}
-                      </h3>
-                    </span>
-                    <span className="flex flex-row justify-between align-middle">
-                      {" "}
-                      <h3 className="text-neutral-content text-sm">
-                        Total Borrow
-                      </h3>
-                      <h3 className="text-neutral-content">
-                        {formatAmount(reserve.totalBorrow)}
-                      </h3>
-                    </span>
-                    <span className="flex flex-row justify-between align-middle">
-                      {" "}
-                      <h3 className="text-neutral-content text-sm">
-                        Supply {showAPY ? "APY" : "APR"}
-                      </h3>
-                      <h3 className="">
-                        {formatPercentage(
-                          showAPY ? reserve.supplyAPY : reserve.supplyAPR
-                        )}
-                      </h3>
-                    </span>
-                    <span className="flex flex-row justify-between align-middle">
-                      {" "}
-                      <h3 className="text-neutral-content text-sm">
-                        Borrow {showAPY ? "APY" : "APR"}
-                      </h3>
-                      <h3 className="">
-                        {formatPercentage(
-                          showAPY ? reserve.borrowAPY : reserve.borrowAPR
-                        )}
-                      </h3>
-                    </span>
-                  </label>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <MobileTable
+          reservesList={reservesList}
+          showAPY={showAPY}
+          handleSelectReserve={handleSelectReserve}
+        />
       </div>
 
       {/* Pool assets for larger */}
       <div className="md:flex lg:flex hidden">
-        <table className="table w-full">
-          {/* Head of the table */}
-          <thead>
-            <tr className="">
-              <th className="text-primary-content bg-base-200">Asset Name</th>
-              <th className="text-primary-content bg-base-200">LTV</th>
-              <th className="text-primary-content bg-base-200">Total Supply</th>
-              <th className="text-primary-content bg-base-200">
-                {" "}
-                Supply {showAPY ? "APY" : "APR"}
-              </th>
-              <th className="text-primary-content bg-base-200">Total borrow</th>
-              <th className="text-primary-content bg-base-200">
-                {" "}
-                Borrow {showAPY ? "APY" : "APR"}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {reservesList!.map((reserve) => (
-              <tr key={reserve.address} className="cursor-pointer hover">
-                <td className="bg-neutral">
-                  <label
-                    className="flex flex-row gap-4 cursor-pointer items-center"
-                    htmlFor="sbwr-modal"
-                    onClick={() => handleSelectReserve(reserve)}
-                  >
-                    <span className="w-10 h-full">
-                      <Image
-                        src={
-                          reserve.logoUri
-                            ? reserve.logoUri
-                            : "https://via.placeholder.com/150"
-                        }
-                        alt="Image of Reserves"
-                        width="100%"
-                        height="100%"
-                        className="rounded object-cover"
-                      />
-                    </span>
-                    <span className="flex flex-col gap-0">
-                      <h3 className="">
-                        {reserve.tokenSymbol
-                          ? reserve.tokenSymbol
-                          : reserve.address}
-                      </h3>
-                      <h3 className="text-neutral-content text-sm">
-                        {formatAssetPrice(reserve.assetPriceUSD)}
-                      </h3>
-                    </span>
-                  </label>
-                </td>
-                <td className="bg-neutral">
-                  <h3>{reserve.LTV + "%"}</h3>
-                </td>
-                <td className="bg-neutral">
-                  <label
-                    className="flex flex-col cursor-pointer"
-                    htmlFor="sbwr-modal"
-                    onClick={() => handleSelectReserve(reserve)}
-                  >
-                    <h3 className="text-neutral-content">
-                      {formatAmount(reserve.totalSupply)}
-                    </h3>
-                    <h3 className="text-neutral-content">
-                      {reserve.tokenSymbol
-                        ? reserve.tokenSymbol
-                        : reserve.address}
-                    </h3>
-                    <h3 className="text-neutral-content text-sm">
-                      {formatAssetPrice(
-                        calculateValueinUSD(
-                          reserve.totalSupply,
-                          reserve.assetPriceUSD
-                        ).toNumber()
-                      )}
-                    </h3>
-                  </label>
-                </td>
-
-                <td className="bg-neutral">
-                  <h3>
-                    {" "}
-                    {formatPercentage(
-                      showAPY ? reserve.supplyAPY : reserve.supplyAPR
-                    )}
-                  </h3>
-                </td>
-                <td className="bg-neutral">
-                  <label
-                    className="flex flex-col cursor-pointer"
-                    htmlFor="sbwr-modal"
-                    onClick={() => handleSelectReserve(reserve)}
-                  >
-                    <h3 className="text-neutral-content">
-                      {formatAmount(reserve.totalBorrow)}
-                    </h3>
-                    <h3 className="text-neutral-content">
-                      {reserve.tokenSymbol
-                        ? reserve.tokenSymbol
-                        : reserve.address}
-                    </h3>
-                    <h3 className="text-neutral-content text-sm">
-                      {formatAssetPrice(
-                        calculateValueinUSD(
-                          reserve.totalBorrow,
-                          reserve.assetPriceUSD
-                        ).toNumber()
-                      )}
-                    </h3>
-                  </label>
-                </td>
-                <td className="bg-neutral">
-                  <h3>
-                    {" "}
-                    {formatPercentage(
-                      showAPY ? reserve.borrowAPY : reserve.borrowAPR
-                    )}
-                  </h3>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <DesktopTable
+          reservesList={reservesList}
+          showAPY={showAPY}
+          handleSelectReserve={handleSelectReserve}
+        />
       </div>
       <SbwrModal />
       <PoolPositionModal />

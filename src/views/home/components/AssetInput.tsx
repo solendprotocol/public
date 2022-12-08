@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, forwardRef } from "react";
-import Link from "next/link";
 import { ReactSVG } from "react-svg";
 
 import { BNumber } from "utils/utils";
@@ -25,7 +24,6 @@ const AssetInput = forwardRef<HTMLSpanElement, AssetInputPropsType>(
 
     function handleUSDAmount(amount: string | null) {
       setUSDAmount(amount ? formatUSD(amount) : "");
-      console.log(typeof usdAmount);
     }
 
     useEffect(() => {

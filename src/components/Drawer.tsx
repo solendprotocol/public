@@ -1,4 +1,4 @@
-import { FC, useState, useRef, useEffect, useCallback } from "react";
+import { FC, useRef } from "react";
 import { ReactSVG } from "react-svg";
 import { useAtom } from "jotai";
 import {
@@ -9,6 +9,7 @@ import {
 import { usePoolsList } from "hooks/usePoolsList";
 import { useMediaQuery } from "react-responsive";
 import { RpcSwitcher } from "../components";
+import { formatAddress } from "utils/formatUtils";
 const Drawer: FC = (props) => {
   const inputRef = useRef<any>();
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
@@ -35,7 +36,7 @@ const Drawer: FC = (props) => {
           className="w-full"
           onClick={() => setIsDrawerOpen(!isDrawerOpen)}
         >
-          {p.name ? p.name+" Pool" : p.address}{" "}
+          {p.name ? p.name + " Pool" : formatAddress(p.address)}{" "}
         </label>
       </a>
     </li>

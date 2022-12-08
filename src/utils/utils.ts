@@ -1,5 +1,6 @@
 import BN from "bn.js";
 import BigNumber from "bignumber.js";
+import { U64_MAX } from "@solendprotocol/solend-sdk/dist/classes/constants";
 
 export type ReserveSummary = {
   lendingMarketAddress: string;

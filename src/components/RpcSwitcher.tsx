@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ReactSVG } from "react-svg";
 import { ENDPOINTS } from "common/config";
 import { useAtom } from "jotai";

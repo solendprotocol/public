@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { isDrawerOpenAtom } from "stores/globalStates";
 import { useAtom } from "jotai";
 const Hambuger = () => {
