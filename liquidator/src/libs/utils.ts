@@ -2,19 +2,20 @@
 /* eslint-disable no-restricted-syntax */
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
+import {
+  OBLIGATION_SIZE, parseObligation, parseReserve, Reserve, RESERVE_SIZE,
+} from '@solendprotocol/solend-sdk';
 import BigNumber from 'bignumber.js';
 import {
   LiquidityToken, MarketConfig, TokenCount,
 } from 'global';
-import {
-  ObligationParser, OBLIGATION_LEN,
-} from 'models/layouts/obligation';
-import { ReserveParser, RESERVE_LEN } from 'models/layouts/reserve';
 import { findWhere } from 'underscore';
 import { TokenOracleData } from './pyth';
 
 export const WAD = new BigNumber(`1${''.padEnd(18, '0')}`);
 export const U64_MAX = '18446744073709551615';
+const INITIAL_COLLATERAL_RATIO = 1;
+const INITIAL_COLLATERAL_RATE = new BigNumber(INITIAL_COLLATERAL_RATIO).multipliedBy(WAD);
 
 // Converts amount to human (rebase with decimals)
 export function toHuman(market: MarketConfig, amount: string, symbol: string) {
@@ -143,12 +144,12 @@ export async function getObligations(connection: Connection, lendingMarketAddr) 
         },
       },
       {
-        dataSize: OBLIGATION_LEN,
+        dataSize: OBLIGATION_SIZE,
       }],
     encoding: 'base64',
   });
 
-  return resp.map((account) => ObligationParser(account.pubkey, account.account));
+  return resp.map((account) => parseObligation(account.pubkey, account.account));
 }
 
 export async function getReserves(connection: Connection, lendingMarketAddr) {
@@ -163,13 +164,13 @@ export async function getReserves(connection: Connection, lendingMarketAddr) {
         },
       },
       {
-        dataSize: RESERVE_LEN,
+        dataSize: RESERVE_SIZE,
       },
     ],
     encoding: 'base64',
   });
 
-  return resp.map((account) => ReserveParser(account.pubkey, account.account));
+  return resp.map((account) => parseReserve(account.pubkey, account.account));
 }
 
 export async function getWalletBalances(connection, wallet, tokensOracle, market) {
@@ -255,8 +256,34 @@ export function getWalletDistTarget() {
     const asset = tokens[0];
     const unitAmount = tokens[1];
 
-    target.push({ symbol: asset, target: parseFloat(unitAmount) });
+    if (asset && unitAmount) {
+      target.push({ symbol: asset, target: parseFloat(unitAmount) });
+    }
   }
 
   return target;
 }
+
+export const getCollateralExchangeRate = (reserve: Reserve): BigNumber => {
+  const totalLiquidity = (new BigNumber(reserve.liquidity.availableAmount.toString()).multipliedBy(WAD))
+    .plus(new BigNumber(reserve.liquidity.borrowedAmountWads.toString()));
+
+  const { collateral } = reserve;
+  let rate;
+  if (collateral.mintTotalSupply.isZero() || totalLiquidity.isZero()) {
+    rate = INITIAL_COLLATERAL_RATE;
+  } else {
+    const { mintTotalSupply } = collateral;
+    rate = (new BigNumber(mintTotalSupply.toString()).multipliedBy(WAD))
+      .dividedBy(new BigNumber(totalLiquidity.toString()));
+  }
+  return rate;
+};
+
+export const getLoanToValueRate = (reserve: Reserve): BigNumber => new BigNumber(
+  reserve.config.loanToValueRatio / 100,
+);
+
+export const getLiquidationThresholdRate = (reserve: Reserve): BigNumber => new BigNumber(
+  reserve.config.liquidationThreshold / 100,
+);

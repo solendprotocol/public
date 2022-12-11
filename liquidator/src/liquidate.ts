@@ -7,7 +7,6 @@ import {
   PublicKey,
 } from '@solana/web3.js';
 import dotenv from 'dotenv';
-import { ObligationParser } from 'models/layouts/obligation';
 import {
   getObligations, getReserves, getWalletBalances, getWalletDistTarget, getWalletTokenData, wait,
 } from 'libs/utils';
@@ -18,6 +17,7 @@ import { liquidateAndRedeem } from 'libs/actions/liquidateAndRedeem';
 import { rebalanceWallet } from 'libs/rebalanceWallet';
 import { Jupiter } from '@jup-ag/core';
 import { unwrapTokens } from 'libs/unwrap/unwrapToken';
+import { parseObligation } from '@solendprotocol/solend-sdk';
 import { getMarkets } from './config';
 
 dotenv.config();
@@ -126,7 +126,7 @@ async function runLiquidator() {
             const postLiquidationObligation = await connection.getAccountInfo(
               new PublicKey(obligation.pubkey),
             );
-            obligation = ObligationParser(obligation.pubkey, postLiquidationObligation!);
+            obligation = parseObligation(obligation.pubkey, postLiquidationObligation!);
           }
         } catch (err) {
           console.error(`error liquidating ${obligation!.pubkey.toString()}: `, err);
