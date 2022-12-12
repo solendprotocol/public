@@ -2,11 +2,13 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import {
-  Account,
   Connection,
+  Keypair,
   PublicKey,
   Transaction,
   TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
 } from '@solana/web3.js';
 import {
   getTokenInfoFromMarket,
@@ -19,7 +21,7 @@ import { MarketConfig, MarketConfigReserve } from 'global';
 
 export const liquidateAndRedeem = async (
   connection: Connection,
-  payer: Account,
+  payer: Keypair,
   liquidityAmount: number | string,
   repayTokenSymbol: string,
   withdrawTokenSymbol: string,
@@ -134,11 +136,15 @@ export const liquidateAndRedeem = async (
     ),
   );
 
-  const tx = new Transaction().add(...ixs);
-  const { blockhash } = await connection.getRecentBlockhash();
-  tx.recentBlockhash = blockhash;
-  tx.feePayer = payer.publicKey;
-  tx.sign(payer);
+  const latestBlockhash = await connection.getLatestBlockhash('finalized');
+  const messageV0 = new TransactionMessage({
+    payerKey: payer.publicKey,
+    recentBlockhash: latestBlockhash.blockhash,
+    instructions: ixs,
+  }).compileToV0Message();
+
+  const tx = new VersionedTransaction(messageV0);
+  tx.sign([payer]);
 
   const txHash = await connection.sendRawTransaction(tx.serialize(), { skipPreflight: false });
   await connection.confirmTransaction(txHash, 'processed');
