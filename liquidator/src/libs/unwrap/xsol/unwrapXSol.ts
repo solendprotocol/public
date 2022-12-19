@@ -56,6 +56,10 @@ export const checkAndUnwrapXSolTokens = async (
     payer.publicKey,
   );
 
+  if (poolTokens === 0) {
+    return;
+  }
+
   const poolTokenAccount = await getAssociatedTokenAddress(
     LAINE_ADDRESS_MAP.stakePoolToken,
     payer.publicKey,
