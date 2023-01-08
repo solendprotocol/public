@@ -15,7 +15,7 @@ export const SOLEND_BETA_PROGRAM_ID = new PublicKey(
   "BLendhFh4HGnycEDDFhbeFEUYLP4fXB5tTHMoTX8Dch5"
 );
 
-export function getProgramId(environment: string) {
+export function getProgramId(environment?: string) {
   switch (environment) {
     case "production":
       return SOLEND_PRODUCTION_PROGRAM_ID;
@@ -26,6 +26,8 @@ export function getProgramId(environment: string) {
     case "beta":
       return SOLEND_BETA_PROGRAM_ID;
       break;
+    default:
+      return SOLEND_PRODUCTION_PROGRAM_ID;
   }
 
   throw Error(`Unsupported environment: ${environment}`);
