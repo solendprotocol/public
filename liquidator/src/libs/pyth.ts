@@ -22,7 +22,7 @@ export type TokenOracleData = {
 };
 
 async function getTokenOracleData(connection: Connection, reserve: MarketConfigReserve) {
-  let price;
+  let priceData;
   const oracle = {
     priceAddress: reserve.pythOracle,
     switchboardFeedAddress: reserve.switchboardOracle,
@@ -31,23 +31,32 @@ async function getTokenOracleData(connection: Connection, reserve: MarketConfigR
   if (oracle.priceAddress && oracle.priceAddress !== NULL_ORACLE) {
     const pricePublicKey = new PublicKey(oracle.priceAddress);
     const result = await connection.getAccountInfo(pricePublicKey);
-    price = parsePriceData(result!.data).price;
-  } else {
+    const { price, previousPrice } = parsePriceData(result!.data);
+    priceData = price || previousPrice;
+  }
+
+  // only fetch from switchboard if not already available from pyth
+  if (!priceData) {
     const pricePublicKey = new PublicKey(oracle.switchboardFeedAddress);
     const info = await connection.getAccountInfo(pricePublicKey);
     const owner = info?.owner.toString();
     if (owner === SWITCHBOARD_V1_ADDRESS) {
       const result = AggregatorState.decodeDelimited((info?.data as Buffer)?.slice(1));
-      price = result?.lastRoundResult?.result;
+      priceData = result?.lastRoundResult?.result;
     } else if (owner === SWITCHBOARD_V2_ADDRESS) {
       if (!switchboardV2) {
         switchboardV2 = await SwitchboardProgram.loadMainnet(connection);
       }
       const result = switchboardV2.decodeLatestAggregatorValue(info!);
-      price = result?.toNumber();
+      priceData = result?.toNumber();
     } else {
       console.error('unrecognized switchboard owner address: ', owner);
     }
+  }
+
+  if (!priceData) {
+    console.error(`failed to get price for ${reserve.liquidityToken.symbol} | reserve ${reserve.address}`);
+    priceData = 0;
   }
 
   return {
@@ -55,7 +64,7 @@ async function getTokenOracleData(connection: Connection, reserve: MarketConfigR
     reserveAddress: reserve.address,
     mintAddress: reserve.liquidityToken.mint,
     decimals: new BigNumber(10 ** reserve.liquidityToken.decimals),
-    price: new BigNumber(price!),
+    price: new BigNumber(priceData!),
   } as TokenOracleData;
 }
 
