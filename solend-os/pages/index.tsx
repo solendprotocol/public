@@ -1,7 +1,6 @@
 import Head from 'next/head'
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { Inter } from '@next/font/google'
-import { Dashboard } from 'pages/dashboard/Dashboard';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { RPC_ENDPOINT, ENVIRONMENT } from "utils/config";
 import {
@@ -12,12 +11,15 @@ import {
 } from '@solana/wallet-adapter-wallets';
 
 import styles from '../styles/Home.module.css'
-import { useEffect, useMemo } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { StoreProvider } from './useStore';
+import dynamic from 'next/dynamic';
+import Dashboard from './dashboard/Dashboard';
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 const inter = Inter({ subsets: ['latin'] })
+
 
 export default function Home() {
 
@@ -43,9 +45,7 @@ coinbase,
 brave,
             ]} autoConnect>
                 <WalletModalProvider>
-                  <StoreProvider>
-                    <Dashboard/>
-                  </StoreProvider>
+                      <Dashboard/>
                 </WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>

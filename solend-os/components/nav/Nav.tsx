@@ -1,16 +1,16 @@
 import { Grid, GridItem, List, ListItem } from "@chakra-ui/react";
-import { useAtom } from "jotai";
-import { poolsAtom, selectedPoolAtom } from 'stores/pools';
-import { RPC_ENDPOINT, ENVIRONMENT } from "utils/config";
+import { useAtom, useSetAtom } from "jotai";
+import { useEffect } from "react";
+import { configAtom, selectedPoolAtom } from 'stores/pools';
 
-export function Nav() {
-    const [pools] = useAtom(poolsAtom);
+export default function Nav() {
+    const [config] = useAtom(configAtom);
     const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
+    console.log('config', config);
 
 return  <List spacing={3}>
-    {pools.map(pool => <ListItem key={pool.address.toBase58()} onClick={() => setSelectedPool(pool.address)}>
-        {pool.address === selectedPool?.address ? <u>{pool.address.toBase58()}</u> : pool.address.toBase58()}
-    </ListItem>)}
-    
+    {config.map(address => <ListItem key={address.toBase58()} onClick={() => setSelectedPool(address)}>
+        {address === selectedPool?.address ? <u>{address.toBase58()}</u> : address.toBase58()}
+    </ListItem>)}   
 </List>
 }

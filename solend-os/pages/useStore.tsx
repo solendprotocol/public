@@ -3,7 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 import { useAtom, useSetAtom } from "jotai";
 import { createContext, ReactElement, useCallback, useContext, useEffect } from "react";
 import { obligationsAtom, selectedObligationAtom } from "stores/obligations";
-import { connectionAtom, loadPoolsAtom, poolsAtom, refreshPoolsAtom, ReserveType, selectedPoolAtom } from "stores/pools";
+import { configAtom, connectionAtom, loadPoolsAtom, poolsAtom, refreshPoolsAtom, ReserveType, selectedPoolAtom } from "stores/pools";
 import { publicKeyAtom } from "stores/wallet";
 import { PROGRAM_ID } from "utils/config";
 import { getPoolsFromChain, getReservesOfPool } from "utils/pools";
@@ -16,7 +16,7 @@ export const StoreContext =
 export function StoreProvider({
     children,
   }: { children: React.ReactNode;}): ReactElement {
-    const [pools, setPools] = useAtom(poolsAtom);
+    const [config] = useAtom(configAtom);
     const loadPools = useSetAtom(loadPoolsAtom);
     const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom)
     const [_selectedObligation, setSelectedObligation] = useAtom(selectedObligationAtom)
@@ -24,52 +24,56 @@ export function StoreProvider({
     const {publicKey} = useWallet();
     const [_publicKeyInAtom, setPublicKeyInAtom] = useAtom(publicKeyAtom);
 
+    console.log('wtf');
     useEffect(() => {
       setPublicKeyInAtom(publicKey)
     }, [publicKey])
 
     // The first time addresses are loaded, default to the first pool
     useEffect(() => {
-      if (pools.length) {
-        setSelectedPool(pools[0].address)
+      console.log('load config', config);
+      if (config.length) {
+        setSelectedPool(config[0])
+        loadPools(true);
+        console.log('loaded config', config);
       }
-    }, [Boolean(pools.length)]);
+    }, [Boolean(config.length)]);
 
     useEffect(() => {
-      loadPools()
-    }, [pools.map(p => p.address).join(',')])
+      loadPools(false)
+    }, [config.join(',')])
 
-    const loadObligationAddresses = useCallback(async () => {  
-      console.log('loadObligationAddresses')
-      if (!publicKey) return;
+    // const loadObligationAddresses = useCallback(async () => {  
+    //   console.log('loadObligationAddresses')
+    //   if (!publicKey) return;
       
-      const obligations = await Promise.all(
-        pools.map(p => PublicKey.createWithSeed(
-          publicKey,
-          p.address.toBase58().slice(0, 32),
-          PROGRAM_ID
-        ).then(o => ({
-          address: o,
-          deposits: [],
-          borrows: [],
-        })))
-      );
-      console.log('setObligations(obligations)', obligations, pools);
-      setObligations(obligations);
-      if (selectedPool) {
-        console.log('setSelectedObligation');
-        setSelectedObligation(await PublicKey.createWithSeed(
-          publicKey,
-          selectedPool.address.toBase58().slice(0, 32),
-          PROGRAM_ID
-        ))
-      }
+    //   const obligations = await Promise.all(
+    //     config.map(p => PublicKey.createWithSeed(
+    //       publicKey,
+    //       p.address.toBase58().slice(0, 32),
+    //       PROGRAM_ID
+    //     ).then(o => ({
+    //       address: o,
+    //       deposits: [],
+    //       borrows: [],
+    //     })))
+    //   );
+    //   console.log('setObligations(obligations)', obligations, config);
+    //   setObligations(obligations);
+    //   if (selectedPool) {
+    //     console.log('setSelectedObligation');
+    //     setSelectedObligation(await PublicKey.createWithSeed(
+    //       publicKey,
+    //       selectedPool.address.toBase58().slice(0, 32),
+    //       PROGRAM_ID
+    //     ))
+    //   }
 
-    }, [publicKey, pools.map(p => p.address).join(',')]);
+  //   }, [publicKey, config.map(p => p.address).join(',')]);
 
-  useEffect(() => {
-    loadObligationAddresses();
-  }, [publicKey, pools.map(p => p.address).join(',')])
+  // useEffect(() => {
+  //   loadObligationAddresses();
+  // }, [publicKey, config.map(p => p.address).join(',')])
 
 
     return (

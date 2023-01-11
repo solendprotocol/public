@@ -1,8 +1,9 @@
 import { Flex } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import dynamic from "next/dynamic";
-import { poolsAtom } from 'stores/pools';
+import { useEffect } from "react";
+import { configAtom, loadPoolsAtom, poolsAtom } from 'stores/pools';
 
 const WalletDisconnectButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-react-ui')).WalletDisconnectButton,
@@ -13,9 +14,22 @@ const WalletMultiButtonDynamic = dynamic(
     { ssr: false }
 );
 
-export function Header() {
+export default function Header() {
+    const [config] = useAtom(configAtom);
+    const loadPools = useSetAtom(loadPoolsAtom);
     const [pools] = useAtom(poolsAtom);
     const { publicKey } = useWallet();
+
+    useEffect(() => {
+        if (config.length) {
+          loadPools(true);
+          console.log('loaded config', config);
+        }
+      }, [Boolean(config.length)]);
+  
+      useEffect(() => {
+        loadPools(false)
+      }, [config.join(',')])
 
     return <Flex>
             {publicKey ? <WalletDisconnectButtonDynamic /> : <WalletMultiButtonDynamic />}

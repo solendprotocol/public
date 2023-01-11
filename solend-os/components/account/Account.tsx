@@ -8,8 +8,8 @@ import { poolsAtom } from 'stores/pools';
 export function Account() {
     const [ selectedObligation ] = useAtom(selectedObligationAtom);
 
-    console.log(selectedObligation);
-    return <div>Deposits: <List spacing={3}>
+    return <div>
+        Deposits: <List spacing={3}>
     {selectedObligation?.deposits.map(d => <ListItem key={d.reserveAddress.toBase58()}>
         {d.amount.toString()}
     </ListItem>)}</List>
@@ -17,5 +17,6 @@ export function Account() {
     {selectedObligation?.deposits.map(d => <ListItem key={d.reserveAddress.toBase58()}>
         {d.amount.toString()}
     </ListItem>)}
-</List></div>
+</List>
+</div>
 }

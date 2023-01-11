@@ -20,10 +20,22 @@ export const connectionAtom = atom<Connection>(
     new Connection(RPC_ENDPOINT.endpoint, "confirmed")
 );
 
-export const configAtom = atomWithDefault<Array<PublicKey>>(async (get) => {
-    const connection = get(connectionAtom);
+async function fetchConfig(connection: Connection) {
     return (await getPoolsFromChain(connection)).map(k => new PublicKey(k));
+}
+export const configAtom = atom(async (get) => {
+    const connection = get(connectionAtom);
+    const config =  await fetchConfig(connection)
+    return config;
 });
+
+// export const loadConfigAtom = atom(
+//     (get) => get(configAtom),
+//     async (get, set) => {
+//     const connection = get(connectionAtom);
+//     const addresses = (await getPoolsFromChain(connection)).map(k => new PublicKey(k));
+//     set(configAtom, addresses);
+// });
 
 async function fetchPools(addresses: Array<PublicKey>, connection: Connection) {
     return Promise.all(addresses.map(
@@ -40,13 +52,17 @@ async function fetchPools(addresses: Array<PublicKey>, connection: Connection) {
 export const poolsAtom = atom<Array<PoolType>>([])
 
 export const loadPoolsAtom = atom(
-    (get) => get(poolsAtom),
-    async (get, set) => {
+    (get) => {get(poolsAtom)},
+    async (get, set, initial: boolean) => {
         const connection = get(connectionAtom);
         const addresses = get(configAtom);
         const pools = await fetchPools(addresses, connection);
-        console.log('pools', pools)
-        return set(poolsAtom, pools);
+
+        console.log(pools);
+        set(poolsAtom, initial ? addresses.map(address => ({
+            address,
+            reserves: []
+        })) : pools);
     }
 )
 
@@ -70,7 +86,6 @@ export const selectedPoolAtom = atom((get) => {
         throw 'Selected pool not found';
     }
 
-    console.log('getReservesOfPool');
     getReservesOfPool(
         new PublicKey(newSelectedPoolAddress),
         connection
