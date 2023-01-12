@@ -3,6 +3,7 @@ import {
   AddressLookupTableAccount,
   Blockhash,
   BlockhashWithExpiryBlockHeight,
+  BlockheightBasedTransactionConfirmationStrategy,
   Commitment,
   ConfirmedSignatureInfo,
   ConfirmedSignaturesForAddress2Options,
@@ -18,6 +19,7 @@ import {
   PublicKey,
   RpcResponseAndContext,
   SendOptions,
+  SignatureResult,
   SimulatedTransactionResponse,
   SimulateTransactionConfig,
   TokenAmount,
@@ -222,6 +224,20 @@ export class MultiConnection implements SolendRPCConnection {
         delayed(
           index === 0 ? 0 : this.delay,
           c.getAddressLookupTable(accountKey, config)
+        )
+      )
+    );
+  }
+
+  confirmTransaction(
+    strategy: BlockheightBasedTransactionConfirmationStrategy,
+    commitment?: Commitment
+  ): Promise<RpcResponseAndContext<SignatureResult>> {
+    return Promise.race(
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.confirmTransaction(strategy, commitment)
         )
       )
     );

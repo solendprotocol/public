@@ -3,6 +3,7 @@ import {
   AddressLookupTableAccount,
   Blockhash,
   BlockhashWithExpiryBlockHeight,
+  BlockheightBasedTransactionConfirmationStrategy,
   Commitment,
   ConfirmedSignatureInfo,
   ConfirmedSignaturesForAddress2Options,
@@ -18,6 +19,7 @@ import {
   PublicKey,
   RpcResponseAndContext,
   SendOptions,
+  SignatureResult,
   SimulatedTransactionResponse,
   SimulateTransactionConfig,
   TokenAmount,
@@ -159,6 +161,15 @@ export class RetryConnection implements SolendRPCConnection {
   ): Promise<RpcResponseAndContext<AddressLookupTableAccount | null>> {
     return this.withRetries(
       this.connection.getAddressLookupTable(accountKey, config)
+    );
+  }
+
+  confirmTransaction(
+    strategy: BlockheightBasedTransactionConfirmationStrategy,
+    commitment?: Commitment
+  ): Promise<RpcResponseAndContext<SignatureResult>> {
+    return this.withRetries(
+      this.connection.confirmTransaction(strategy, commitment)
     );
   }
 
