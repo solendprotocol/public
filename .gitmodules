@@ -1,0 +1,3 @@
+[submodule "solend-lite"]
+	path = solend-lite
+	url = https://github.com/solendprotocol/solend-lite
