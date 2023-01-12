@@ -3,6 +3,7 @@ import {
   AddressLookupTableAccount,
   Blockhash,
   BlockhashWithExpiryBlockHeight,
+  BlockheightBasedTransactionConfirmationStrategy,
   Commitment,
   ConfirmedSignatureInfo,
   ConfirmedSignaturesForAddress2Options,
@@ -18,6 +19,7 @@ import {
   PublicKey,
   RpcResponseAndContext,
   SendOptions,
+  SignatureResult,
   SimulatedTransactionResponse,
   SimulateTransactionConfig,
   TokenAmount,
@@ -185,6 +187,16 @@ export class InstrumentedConnection implements SolendRPCConnection {
     return this.withStats(
       this.connection.getAddressLookupTable(accountKey, config),
       "getAddressLookupTable"
+    );
+  }
+
+  async confirmTransaction(
+    strategy: BlockheightBasedTransactionConfirmationStrategy,
+    commitment?: Commitment
+  ): Promise<RpcResponseAndContext<SignatureResult>> {
+    return this.withStats(
+      this.connection.confirmTransaction(strategy, commitment),
+      "confirmTransaction"
     );
   }
 

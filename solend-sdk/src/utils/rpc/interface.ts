@@ -3,6 +3,7 @@ import {
   AddressLookupTableAccount,
   Blockhash,
   BlockhashWithExpiryBlockHeight,
+  BlockheightBasedTransactionConfirmationStrategy,
   Commitment,
   ConfirmedSignatureInfo,
   ConfirmedSignaturesForAddress2Options,
@@ -18,6 +19,7 @@ import {
   PublicKey,
   RpcResponseAndContext,
   SendOptions,
+  SignatureResult,
   SimulatedTransactionResponse,
   SimulateTransactionConfig,
   TokenAmount,
@@ -90,4 +92,8 @@ export interface SolendRPCConnection {
     accountKey: PublicKey,
     config?: GetAccountInfoConfig
   ): Promise<RpcResponseAndContext<AddressLookupTableAccount | null>>;
+  confirmTransaction(
+    strategy: BlockheightBasedTransactionConfirmationStrategy,
+    commitment?: Commitment
+  ): Promise<RpcResponseAndContext<SignatureResult>>;
 }
