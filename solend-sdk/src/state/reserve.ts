@@ -1,6 +1,7 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import { Buffer } from "buffer";
+import * as fzstd from "fzstd";
 import * as Layout from "../utils/layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
 
@@ -214,8 +215,15 @@ export const RESERVE_SIZE = ReserveLayout.span;
 export const isReserve = (info: AccountInfo<Buffer>) =>
   info.data.length === RESERVE_SIZE;
 
-export const parseReserve = (pubkey: PublicKey, info: AccountInfo<Buffer>) => {
-  const { data } = info;
+export const parseReserve = (
+  pubkey: PublicKey,
+  info: AccountInfo<Buffer>,
+  encoding?: string
+) => {
+  let { data } = info;
+  if (encoding === "base64+zstd") {
+    data = Buffer.from(fzstd.decompress(data));
+  }
   const buffer = Buffer.from(data);
   const reserve = decodeReserve(buffer);
 
