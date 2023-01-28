@@ -119,10 +119,10 @@ export const parseObligation = (
   info: AccountInfo<Buffer>,
   encoding?: string
 ) => {
-  let { data } = info;
   if (encoding === "base64+zstd") {
-    data = Buffer.from(fzstd.decompress(data));
+    info.data = Buffer.from(fzstd.decompress(info.data));
   }
+  const { data } = info;
   const buffer = Buffer.from(data);
   const {
     version,
