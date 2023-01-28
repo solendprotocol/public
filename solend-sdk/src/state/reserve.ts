@@ -220,10 +220,10 @@ export const parseReserve = (
   info: AccountInfo<Buffer>,
   encoding?: string
 ) => {
-  let { data } = info;
   if (encoding === "base64+zstd") {
-    data = Buffer.from(fzstd.decompress(data));
+    info.data = Buffer.from(fzstd.decompress(info.data));
   }
+  let { data } = info;
   const buffer = Buffer.from(data);
   const reserve = decodeReserve(buffer);
 
