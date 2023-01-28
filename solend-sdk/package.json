@@ -34,6 +34,7 @@
     "bn.js": "^5.2.0",
     "buffer": "^6.0.3",
     "buffer-layout": "^1.2.0",
+    "fzstd": "^0.1.0",
     "hot-shots": "^9.3.0",
     "isomorphic-fetch": "^3.0.0",
     "jsbi": "^4.3.0",

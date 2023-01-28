@@ -1,5 +1,6 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
+import * as fzstd from "fzstd";
 import * as Layout from "../utils/layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
 
@@ -115,9 +116,13 @@ export interface ProtoObligation {
 
 export const parseObligation = (
   pubkey: PublicKey,
-  info: AccountInfo<Buffer>
+  info: AccountInfo<Buffer>,
+  encoding?: string
 ) => {
-  const { data } = info;
+  let { data } = info;
+  if (encoding === "base64+zstd") {
+    data = Buffer.from(fzstd.decompress(data));
+  }
   const buffer = Buffer.from(data);
   const {
     version,
