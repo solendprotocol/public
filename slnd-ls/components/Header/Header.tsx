@@ -1,20 +1,18 @@
-import { Flex } from "@chakra-ui/react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { HStack, Center, Text, Spacer } from "@chakra-ui/react";
+import Logo from "components/Logo/Logo";
+import RpcSwitcher from "components/RpcSwitcher/RpcSwitcher";
 import { useAtom, useSetAtom } from "jotai";
 import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import { obligationsAtom } from "stores/obligations";
 import { loadPoolsAtom, poolsAtom } from 'stores/pools';
 import { publicKeyAtom } from "stores/wallet";
-
-const WalletDisconnectButtonDynamic = dynamic(
-    async () => (await import('@solana/wallet-adapter-react-ui')).WalletDisconnectButton,
-    { ssr: false }
-);
-const WalletMultiButtonDynamic = dynamic(
-    async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
-    { ssr: false }
-);
+import { 
+  WalletDisconnectButton,
+  WalletMultiButton,
+  useWalletModal
+ } from '@solana/wallet-adapter-react-ui';
+import ConnectButton from "components/ConnectButton/ConnectButton";
 
 export default function Header() {
     const [pools] = useAtom(poolsAtom);
@@ -24,19 +22,28 @@ export default function Header() {
 
     useEffect(() => {
       if (Object.keys(pools).length > 0) {
-        console.log('loaded config full');
-        loadPools()
+        loadPools();
       }
     }, [Boolean(Object.keys(pools).length)])
 
-    return <Flex>
-      <>
-        {publicKey ? <WalletDisconnectButtonDynamic /> : <WalletMultiButtonDynamic />}
-        Wallet: {publicKey?.toBase58()}
+    return  <HStack h="100%" spacing='48px' mx={4}><HStack>
+      <Center>
+      <Logo />
+      </Center>
+      <Center>
+        <Text variant="caption">
+        Wallet: {publicKey}
         <br/>
         Total number of reserves: {Object.values(pools).reduce((acc, pool) => pool.reserves.length + acc, 0)}
         {' '}
         Total number of positions: {Object.values(obligations).reduce((acc, obligation) => obligation.borrows.length + obligation.deposits.length + acc, 0)}
-        </>
-    </Flex>
+        </Text>
+        </Center>
+        </HStack>
+        <Spacer/>
+        <Center>
+        <ConnectButton/>
+        <RpcSwitcher/>
+        </Center>
+        </HStack>
 }

@@ -6,7 +6,6 @@ import { configAtom, selectedPoolAtom } from 'stores/pools';
 export default function Nav() {
     const [config] = useAtom(configAtom);
     const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
-    console.log('config', config);
 
 return  <List spacing={3}>
     {config.map(address => <ListItem key={address.toBase58()} onClick={() => setSelectedPool(address)}>

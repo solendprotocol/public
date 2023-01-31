@@ -1,5 +1,4 @@
 import { Html, Head, Main, NextScript } from 'next/document'
-import { ChakraProvider } from '@chakra-ui/react'
 
 export default function Document() {
   return (

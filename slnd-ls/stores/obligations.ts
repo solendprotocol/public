@@ -1,12 +1,37 @@
 import { PublicKey } from "@solana/web3.js";
+import BigNumber from "bignumber.js";
 import { atom } from "jotai";
-import { atomFamily } from "jotai/utils";
-import { PROGRAM_ID } from "utils/config";
-import { fetchSimulatedObligationByAddress, fetchObligationsByAddress, ObligationType, fetchObligationByAddress } from "utils/obligations";
-import { configAtom, connectionAtom, poolsAtom, poolsFamily } from "./pools";
+import { atomFamily, loadable } from "jotai/utils";
+import { createObligationAddress } from "utils/common";
+import { fetchSimulatedObligationByAddress, fetchObligationsByAddress, fetchObligationByAddress } from "utils/obligations";
+import { metadataAtom } from "./metadata";
+import { configAtom, connectionAtom, poolsFamily, selectedPoolAtom } from "./pools";
 import { publicKeyAtom } from "./wallet";
 
 export const obligationsAtom = atom<{[address: string]: ObligationType}>({});
+
+export type Position = {
+    reserveAddress: string,
+    amount: BigNumber,
+}
+
+export type ObligationType = {
+    address: string;
+    deposits: Array<Position>;
+    borrows: Array<Position>;
+    poolAddress: string;
+    totalSupplyValue: BigNumber,
+    totalBorrowValue: BigNumber,
+    borrowLimit: BigNumber,
+    liquidationThreshold: BigNumber,
+    netAccountValue: BigNumber;
+    liquidationThresholdFactor: BigNumber;
+    borrowLimitFactor: BigNumber;
+    borrowUtilization: BigNumber;
+    isBorrowLimitReached: boolean;
+    borrowOverSupply: BigNumber;
+    borrowLimitOverSupply: BigNumber;
+}
 
 export const loadObligationsAtom = atom(
     (get) => get(obligationsAtom),
@@ -17,18 +42,24 @@ export const loadObligationsAtom = atom(
 
         if (!publicKey || !config.length) return;
 
-        const keys = await Promise.all(
-            config.map(address => PublicKey.createWithSeed(
-            publicKey,
-            address.toBase58().slice(0, 32),
-            PROGRAM_ID
-        )))
-
+        const keys = (await Promise.all(
+            config.map(pool => createObligationAddress(publicKey, pool.address))))
         const obligations = fullLoad ? await fetchObligationsByAddress(keys, connection) : keys.map((o, index) => ({
             address: o,
-            poolAddress: config[index],
             deposits: [],
             borrows: [],
+            poolAddress: config[index].address,
+            totalSupplyValue: new BigNumber(0),
+            totalBorrowValue: new BigNumber(0),
+            borrowLimit: new BigNumber(0),
+            liquidationThreshold: new BigNumber(0),
+            netAccountValue: new BigNumber(0),
+            liquidationThresholdFactor: new BigNumber(0),
+            borrowLimitFactor: new BigNumber(0),
+            borrowUtilization: new BigNumber(0),
+            isBorrowLimitReached: false,
+            borrowOverSupply: new BigNumber(0),
+            borrowLimitOverSupply: new BigNumber(0),
         }));
 
         set(
@@ -36,7 +67,7 @@ export const loadObligationsAtom = atom(
             Object.fromEntries(
                 obligations.map(
                     obligation => [
-                        obligation.address.toBase58(), 
+                        obligation.address, 
                         obligation
                     ]
                 )
@@ -58,26 +89,66 @@ const obligationsFamily = atomFamily((address: string) =>
   ),
 )
 
-export const selectedObligationAddressAtom = atom<PublicKey | null>(null)
+export const selectedObligationAddressAtom = atom<string | null>(null)
 
 export const selectedObligationAtom = atom((get) => {
     const selectedObligationAddress = get(selectedObligationAddressAtom);
-    return selectedObligationAddress ? get(obligationsFamily(selectedObligationAddress.toBase58())) : null;
+    if (!selectedObligationAddress) return null;
+    const metadata = get(metadataAtom);
+    const selectedPool = get(selectedPoolAtom);
+    const obligation = get(obligationsFamily(selectedObligationAddress))
+
+    if (!obligation) return null;
+    return selectedObligationAddress ? {
+        ...obligation,
+    deposits: obligation?.deposits?.map(d => {
+            const reserve = selectedPool?.reserves.find(r => r.address === d.reserveAddress);
+
+            const addressString = reserve?.mintAddress;
+            const tokenMetadata = metadata[addressString ?? ''];
+
+            const decimals = reserve?.decimals ?? 0;
+
+            return {
+            ...d,
+            decimals,
+            amount: d.amount.shiftedBy(-(decimals)),
+            price: reserve?.price,
+            symbol: tokenMetadata?.symbol,
+            logo: tokenMetadata?.logoUri,
+        }}) ?? [],
+        borrows: obligation?.borrows?.map(b => {
+            const reserve = selectedPool?.reserves.find(r => r.address === b.reserveAddress);
+
+            const addressString = reserve?.mintAddress;
+            const tokenMetadata = metadata[addressString ?? ''];
+
+            const decimals = reserve?.decimals ?? 0;
+
+            return {
+            ...b,
+            decimals,
+            amount: b.amount.shiftedBy(-(decimals + 18)),
+            price: reserve?.price,
+            symbol: tokenMetadata?.symbol,
+            logo: tokenMetadata?.logoUri,
+        }}) ?? [],
+    } : null;
 }, (get, set, payload: {
-        newSelectedObligationAddress: PublicKey | null,
-        lendingMarket?: PublicKey,
+        newSelectedObligationAddress: string | null,
+        poolAddress?: string,
     }) => {
     if (!payload.newSelectedObligationAddress) return;
 
     const connection = get(connectionAtom);
 
-    const obligationToUpdateAtom = obligationsFamily(payload.newSelectedObligationAddress.toBase58());
+    const obligationToUpdateAtom = obligationsFamily(payload.newSelectedObligationAddress);
     if (!obligationToUpdateAtom) {
         throw 'Selected obligation not found';
     }
 
     const obligation = get(obligationToUpdateAtom);
-    const poolAddress = payload.lendingMarket?.toBase58() ?? obligation.poolAddress.toBase58();
+    const poolAddress = payload.poolAddress ?? obligation.poolAddress;
 
     if (!poolAddress) {
         throw Error('Pool address for obligation must be specified to simulate transaction.')
@@ -107,3 +178,5 @@ export const selectedObligationAtom = atom((get) => {
 
     set(selectedObligationAddressAtom, payload.newSelectedObligationAddress);
 });
+
+export const loadableObligationAtom = loadable(selectedObligationAtom)

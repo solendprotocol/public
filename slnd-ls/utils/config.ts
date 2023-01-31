@@ -3,10 +3,18 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 
 export const ENVIRONMENT = process.env.NEXT_PUBLIC_REACT_APP_NETWORK || WalletAdapterNetwork.Devnet;
 export const PROGRAM_ID = getProgramId(ENVIRONMENT);
-export const RPC_ENDPOINT = {
-  name: "RPCPool",
-  endpoint: process.env.NEXT_PUBLIC_ALCHEMY_RPC as string,
-}
+export const DEFAULT_RPC_ENDPOINTS =  [
+  {
+      name: "Alchemy",
+      endpoint: process.env.NEXT_PUBLIC_ALCHEMY_RPC as string,
+  },
+  {
+      name: "RPCPool",
+      endpoint: process.env.NEXT_PUBLIC_RPCPOOL_RPC as string,
+  },
+]
+
+export const SLOTS_PER_YEAR = 63072000;
 
 export const MAIN_POOL_ADDRESS = "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtfpks7FatyKvdY";
 export const MAIN_POOL_RESERVES_ADDRESSES = [

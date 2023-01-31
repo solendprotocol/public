@@ -1,40 +1,38 @@
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
+import { unpackAccount, getAssociatedTokenAddress } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
+import BigNumber from "bignumber.js";
 import { atom } from "jotai";
-import { getBatchMultipleAccountsInfo } from "utils/common";
-import { PROGRAM_ID } from "utils/config";
+import { createObligationAddress, getBatchMultipleAccountsInfo } from "utils/common";
+import { metadataAtom } from "./metadata";
 import { loadObligationsAtom, obligationsAtom, selectedObligationAtom } from "./obligations";
-import { connectionAtom, selectedPoolAddressAtom, unqiueAssetsAtom } from "./pools";
+import { connectionAtom, selectedPoolAddressAtom, selectedPoolAtom, unqiueAssetsAtom } from "./pools";
 
 type WalletAssetType = {
-    amount: number;
-    mintAddress: PublicKey;
+    amount: BigNumber;
+    mintAddress: string;
+    symbol: string;
 }
 
-export const publicKeyAtom = atom<PublicKey | null>(
+export const publicKeyAtom = atom<string | null>(
     null
 );
 
 export const setPublicKeyAtom = atom(
     (get) => get(publicKeyAtom),
-    async (get, set, newPublicKey: PublicKey | null) => {
+    async (get, set, newPublicKey: string | null) => {
+        const selectedPoolAddress = get(selectedPoolAddressAtom);
         set(publicKeyAtom, newPublicKey);
-        console.log('set new newPublicKey', newPublicKey);
         if (!newPublicKey) {
             set(obligationsAtom, {});
+            set(selectedPoolAtom, null);
             return;
         }
-        const selectedPoolAddress = get(selectedPoolAddressAtom);
+
         await set(loadObligationsAtom, false);
         if (selectedPoolAddress) {
             set(selectedObligationAtom, {
-                newSelectedObligationAddress: await PublicKey.createWithSeed(
-                newPublicKey,
-                selectedPoolAddress.toBase58().slice(0, 32),
-                PROGRAM_ID,
-                
-            ),
-            lendingMarket: selectedPoolAddress})
+                newSelectedObligationAddress: await createObligationAddress(newPublicKey, selectedPoolAddress),
+            poolAddress: selectedPoolAddress})
         }
         set(loadObligationsAtom, true);
     }
@@ -44,18 +42,15 @@ export const walletAssetsAtom = atom(async (get) => {
     const uniqueAssets = get(unqiueAssetsAtom);
     const publicKey = get(publicKeyAtom);
     const connection = get(connectionAtom);
+    const metadata = get(metadataAtom);
 
-    const a = Token;
-    debugger;
     if (!publicKey) return [];
 
     const userTokenAssociatedAddresses = await Promise.all(
             uniqueAssets.map(async (asset) => {
-            const userTokenAccount = await Token.getAssociatedTokenAddress(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            asset,
-            publicKey,
+            const userTokenAccount = await getAssociatedTokenAddress(
+            new PublicKey(asset),
+            new PublicKey(publicKey),
             true,
             );
             return userTokenAccount;
@@ -64,18 +59,24 @@ export const walletAssetsAtom = atom(async (get) => {
 
     const userAssociatedTokenAccounts = await getBatchMultipleAccountsInfo(
         userTokenAssociatedAddresses,
-        connection,
+        connection
     )
 
     return userAssociatedTokenAccounts.map((account, index) => {
         if (!account) return null;
-        const parsedAccount = AccountLayout.decode(account.data);
+        const address = userTokenAssociatedAddresses[index];
+        const parsedAccount = unpackAccount(address, account);
+        const mintAddress = parsedAccount.mint.toBase58();
+        const tokenMetadata = metadata[mintAddress];
+        const decimals = tokenMetadata?.decimals ?? 0;
 
         return {
-            amount: u64
-                    .fromBuffer(parsedAccount.amount)
-                    .toNumber(),
-            mintAddress: userTokenAssociatedAddresses[index],
-          }
+            decimals,
+            symbol: tokenMetadata?.symbol,
+            address,
+            amount: new BigNumber(parsedAccount.amount).shiftedBy(-decimals),
+            mintAddress,
+        }
+
     }).filter(Boolean) as Array<WalletAssetType>;
 });

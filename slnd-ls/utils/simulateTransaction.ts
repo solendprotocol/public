@@ -45,11 +45,11 @@ export async function simulateRefreshObligation(
 
   const ixs: TransactionInstruction[] = [];
   const reserveAddresses = depositReserves.concat(borrowReserves);
-  const uniqueReserveAddresses = reserveAddresses.filter((item, pos) => reserveAddresses.indexOf(item) === pos);
+  const uniqueReserveAddresses = reserveAddresses.filter((item, pos) => reserveAddresses.findIndex(address => address.equals(item)) === pos);
 
   uniqueReserveAddresses.forEach((reserveAddress) => {
     const reserveInfo = config.reserves.find(
-      (r) => r.address.equals(reserveAddress),
+      (r) => r.address === reserveAddress.toBase58(),
     );
 
     if (!reserveInfo) {
@@ -58,8 +58,8 @@ export async function simulateRefreshObligation(
 
     const refreshReserveIx = refreshReserveInstruction(
       reserveAddress,
-      reserveInfo.pythOracle,
-      reserveInfo.switchboardOracle,
+      new PublicKey(reserveInfo.pythOracle),
+      new PublicKey(reserveInfo.switchboardOracle),
     );
     ixs.push(refreshReserveIx);
   });
@@ -89,7 +89,6 @@ export async function simulateRefreshObligation(
     const response = responseAndContext.value;
     const simulatedObligationAccount = response.accounts![0];
 
-    console.log(responseAndContext, config);
     obligationAccount.data = Buffer.from(
       simulatedObligationAccount!.data[0],
       'base64',
