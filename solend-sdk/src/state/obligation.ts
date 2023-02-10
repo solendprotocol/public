@@ -112,8 +112,6 @@ export interface ProtoObligation {
   dataFlat: Buffer;
 }
 
-
-
 export const parseObligation = (
   pubkey: PublicKey,
   info: AccountInfo<Buffer>
