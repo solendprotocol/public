@@ -1,4 +1,10 @@
-import React, { forwardRef, useRef, useEffect, useState } from 'react';
+import React, {
+  forwardRef,
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import { ReactSVG } from 'react-svg';
 import classNames from 'classnames';
 import { formatExact, formatUsd } from 'utils/numberFormatter';
@@ -12,58 +18,61 @@ interface BigInputPropsType {
   selectedToken: SelectedReserveType;
   onChange: (amount: string) => void;
   value: string | null;
-  maxPossibleValue: string;
+  maxPossibleValue: BigNumber;
   useCToken?: boolean;
   showSymbol?: boolean;
 }
 
 const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
-  (
+  function BigInput(
     { selectedToken, onChange, value, maxPossibleValue, useCToken, showSymbol },
-    forwardedRef
-  ) => {
+    forwardedRef,
+  ) {
     const inputRef = useRef<any>();
-    const [useUSD, setUseUSD] = useState(false);
+    const [useUsd, setUseUsd] = useState(false);
     const [inputFocused, setInputFocused] = useState(false);
-    const [usdAmount, setUSDAmount] = useState<string | null>(null);
+    const [usdAmount, setUsdAmount] = useState<string | null>(null);
 
-    function handleUSDAmount(amount: string | null) {
-      setUSDAmount(amount ? formatUsd(amount, true) : '');
+    function handleUsdAmount(amount: string | null) {
+      setUsdAmount(amount ? formatUsd(amount, true) : '');
     }
 
     useEffect(() => {
       inputRef.current.focus();
     }, [inputRef]);
 
-    let exchangeRate = selectedToken.price;
+    const exchangeRate = selectedToken.price;
 
-    const formatToken = (amount: string) => {
-      const vals = amount.split('.');
-      const formattedString = `${vals[0].replace(
-        /\B(?=(\d{3})+(?!\d))/g,
-        ',',
-      )}${vals.length >= 2 ? '.' : ''}${
-        useUSD ? (vals[1] ?? '').substring(0, 2) : vals[1] ?? ''
-      }`;
-      let parsedAmount = `${vals[0]}${vals.length >= 2 ? '.' : ''}${
-        useUSD ? (vals[1] ?? '').substring(0, 2) : vals[1] ?? ''
-      }`;
+    const formatToken = useCallback(
+      (amount: string) => {
+        const vals = amount.split('.');
+        const formattedString = `${vals[0].replace(
+          /\B(?=(\d{3})+(?!\d))/g,
+          ',',
+        )}${vals.length >= 2 ? '.' : ''}${
+          useUsd ? (vals[1] ?? '').substring(0, 2) : vals[1] ?? ''
+        }`;
+        let parsedAmount = `${vals[0]}${vals.length >= 2 ? '.' : ''}${
+          useUsd ? (vals[1] ?? '').substring(0, 2) : vals[1] ?? ''
+        }`;
 
-      // If the user has only typed in a single "." characters, we
-      // assume the value is 0.
-      if (parsedAmount === '.') {
-        parsedAmount = '0';
-      }
+        // If the user has only typed in a single "." characters, we
+        // assume the value is 0.
+        if (parsedAmount === '.') {
+          parsedAmount = '0';
+        }
 
-      return {
-        formattedString,
-        parsedAmount,
-      };
-    };
+        return {
+          formattedString,
+          parsedAmount,
+        };
+      },
+      [useUsd],
+    );
 
     useEffect(() => {
       if (inputRef.current) {
-        if (useUSD) {
+        if (useUsd) {
           inputRef.current.textContent = usdAmount || '';
         } else {
           inputRef.current.textContent = value
@@ -71,7 +80,7 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
             : '';
         }
       }
-    }, [useUSD, exchangeRate]);
+    }, [useUsd, exchangeRate, value, formatToken, usdAmount]);
 
     const focusMainInput = () => {
       const input = inputRef.current;
@@ -91,17 +100,19 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
     };
 
     const handleMax = () => {
-      onChange(maxPossibleValue);
-      const mpvObj = new BigNumber(maxPossibleValue);
-      const usdValue = mpvObj.multipliedBy(new BigNumber(exchangeRate)).toString();
-      handleUSDAmount(usdValue);
-      if (useUSD) {
-        inputRef.current.textContent = maxPossibleValue
+      const mpvString = maxPossibleValue.toString();
+      onChange(mpvString);
+      const usdValue = maxPossibleValue
+        .times(new BigNumber(exchangeRate))
+        .toString();
+      handleUsdAmount(usdValue);
+      if (useUsd) {
+        inputRef.current.textContent = mpvString
           ? formatUsd(usdValue, true)
           : '';
       } else {
-        inputRef.current.textContent = maxPossibleValue
-          ? formatToken(maxPossibleValue).formattedString
+        inputRef.current.textContent = mpvString
+          ? formatToken(mpvString).formattedString
           : '';
       }
     };
@@ -141,11 +152,13 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
 
         const exchangeObj = new BigNumber(exchangeRate);
 
-        if (useUSD) {
-          handleUSDAmount(parsedAmount);
-          onChange(new BigNumber(parsedAmount).dividedBy(exchangeObj).toString());
+        if (useUsd) {
+          handleUsdAmount(parsedAmount);
+          onChange(
+            new BigNumber(parsedAmount).dividedBy(exchangeObj).toString(),
+          );
         } else {
-          handleUSDAmount(
+          handleUsdAmount(
             new BigNumber(parsedAmount).multipliedBy(exchangeObj).toString(),
           );
           onChange(parsedAmount);
@@ -153,12 +166,14 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
       }
     };
 
-    const fontSize = useUSD
+    const fontSize = useUsd
       ? 48 - 1.4 * ((usdAmount ?? '').toString().length + 1)
       : 48 -
-        1.4 * ((value ?? '').toString().length + selectedToken.symbol.length);
+        1.4 *
+          ((value ?? '').toString().length +
+            (selectedToken.symbol?.length ?? 0));
 
-    const nullAmount = !usdAmount || isNaN(Number(usdAmount));
+    const nullAmount = !usdAmount || !usdAmount || usdAmount === 'NaN';
 
     if (value === '' && inputRef?.current?.textContent !== '') {
       // Edge case for resetting the input if the textContent and value don't match
@@ -167,21 +182,22 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
 
     return (
       <div className={styles.container}>
-        <Flex justify='space-between' align='middle' className={styles.inputRow}>
-          <Box flexBasis="12.5%">
+        <Flex
+          justify='space-between'
+          align='middle'
+          className={styles.inputRow}
+        >
+          <Box flexBasis='12.5%'>
             <div
               className={styles.iconContainer}
               onClick={() => handleMax()}
               aria-hidden='true'
             >
-              <ReactSVG
-                src='/assets/icons/max.svg'
-                className={styles.maxButton}
-              />
+              <ReactSVG src='/max.svg' className={styles.maxButton} />
             </div>
           </Box>
           <Box
-            flexBasis="75%"
+            flexBasis='75%'
             className={classNames(
               styles.amountInput,
               !inputFocused && nullAmount && styles.nullAmount,
@@ -190,7 +206,7 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
               fontSize,
             }}
           >
-            {useUSD && (
+            {useUsd && (
               <span onClick={focusMainInput} aria-hidden='true'>
                 ${!inputFocused && nullAmount && 0}
               </span>
@@ -224,8 +240,10 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
                 }
               }}
               aria-hidden='true'
-            />
-            {!useUSD && (
+            >
+              {!inputFocused && nullAmount ? 0 : null}
+            </span>
+            {!useUsd && (
               <span onClick={focusMainInput} aria-hidden='true'>
                 {!inputFocused && nullAmount && 0}
                 &nbsp;
@@ -234,27 +252,24 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
               </span>
             )}
           </Box>
-          <Box flexBasis="12.5%" order='right'>
+          <Box flexBasis='12.5%' order='right'>
             <Flex justify='end'>
               <div
                 className={styles.iconContainer}
-                onClick={() => setUseUSD(!useUSD)}
+                onClick={() => setUseUsd(!useUsd)}
                 aria-hidden='true'
               >
-                <ReactSVG
-                  src='/assets/icons/switch.svg'
-                  className={styles.swapButton}
-                />
+                <ReactSVG src='/switch.svg' className={styles.swapButton} />
               </div>
             </Flex>
           </Box>
         </Flex>
         <Text variant='label' color='secondary'>
           ≈{' '}
-          {useUSD
+          {useUsd
             ? `${value ? formatExact(value) : ''} ${useCToken ? 'c' : ''}${
                 showSymbol ? selectedToken.symbol : ''
-              } `
+              }`
             : `$${nullAmount || !usdAmount ? '0' : usdAmount}`}
         </Text>
       </div>

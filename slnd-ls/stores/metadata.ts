@@ -1,19 +1,33 @@
-import { atom } from "jotai";
-import { getTokensInfo } from "utils/metadata";
-import { loadObligationsAtom, obligationsAtom, selectedObligationAtom } from "./obligations";
-import { connectionAtom, selectedPoolAddressAtom, selectedPoolAtom, unqiueAssetsAtom } from "./pools";
+import { atom } from 'jotai';
+import { atomWithDefault } from 'jotai/utils';
+import { getTokensInfo } from 'utils/metadata';
+import {
+  connectionAtom,
+  selectedPoolAddressAtom,
+  selectedPoolAtom,
+  unqiueAssetsAtom,
+} from './pools';
 
-export type TokenMetadata = {[mintAddress: string]: {
-    symbol: string,
-    logoUri: string | null,
-    decimals: number
-}}
+export type TokenMetadata = {
+  [mintAddress: string]: {
+    symbol: string;
+    logoUri: string | null;
+    decimals: number;
+  };
+};
 
-export const metadataAtom = atom<Promise<TokenMetadata>>(
-    async (get) => {
-        const mints = get(unqiueAssetsAtom);    
-        const connection = get(connectionAtom);
+export const metadataAtom = atom<TokenMetadata>({});
 
-        return mints.length ? await getTokensInfo(mints, connection) : Promise.resolve({});
+export const loadMetadataAtom = atom(
+  (get) => {
+    get(metadataAtom);
+  },
+  async (get, set) => {
+    const mints = get(unqiueAssetsAtom);
+    const connection = get(connectionAtom);
+
+    if (mints.length) {
+      set(metadataAtom, await getTokensInfo(mints, connection));
     }
+  },
 );

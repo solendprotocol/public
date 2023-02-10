@@ -1,71 +1,143 @@
-import { 
-    Button, 
-    Input, 
-    Modal, 
-    ModalBody, 
-    ModalCloseButton, 
-    ModalContent, 
-    ModalOverlay, 
-    Tabs,
-    TabList,
-    Tab,
-    TabPanels,
-    TabPanel
-} from "@chakra-ui/react";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { useAtom, } from "jotai";
-import { useCallback } from "react";
-import { useState } from "react";
-import { connectionAtom, ReserveType, SelectedReserveType } from 'stores/pools';
-import { publicKeyAtom } from "stores/wallet";
-import { supplyConfigs } from "./configs"
-import { SolendAction } from './../../../solend-sdk/src/classes/action';
-import TransactionTab from "./TransactionTab/TransactionTab";
-import BigNumber from "bignumber.js";
+import {
+  Modal,
+  ModalContent,
+  ModalOverlay,
+  Tabs,
+  TabList,
+  Tab,
+  Text,
+  TabPanels,
+  TabPanel,
+} from '@chakra-ui/react';
+import { useAtom, useSetAtom } from 'jotai';
+import { useState } from 'react';
+import { configAtom, selectedReserveAtom } from 'stores/pools';
+import {
+  borrowConfigs,
+  repayConfigs,
+  supplyConfigs,
+  withdrawConfigs,
+} from './configs';
+import TransactionTab from './TransactionTab/TransactionTab';
+import { selectedObligationAtom } from 'stores/obligations';
+import { walletAssetsAtom } from 'stores/wallet';
+import Result, { ResultConfigType } from 'components/Result/Result';
 
-export default function TransactionTakeover({
-    selectedReserve,
-    onClose
-}:{
-    selectedReserve: SelectedReserveType | null,
-    onClose: () => void,
-}) {
-    const [value, setValue] = useState('10');
+export default function TransactionTakeover() {
+  const [obligation] = useAtom(selectedObligationAtom);
+  const [walletAssets] = useAtom(walletAssetsAtom);
+  const refresh = useSetAtom(configAtom);
+  const [selectedReserve, setSelectedReserve] = useAtom(selectedReserveAtom);
+  const [value, setValue] = useState('');
+  const [result, setResult] = useState<ResultConfigType | null>(null);
 
-    return <Modal isOpen={Boolean(selectedReserve)} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-        <Tabs>
-  <TabList>
-    <Tab>Supply</Tab>
-    <Tab>Borrow</Tab>
-    <Tab>Withdraw</Tab>
-    <Tab>Repay</Tab>
-  </TabList>
+  if (!selectedReserve) {
+    return null;
+  }
 
-  <TabPanels>
-    <TabPanel>
-      <TransactionTab
-        value={value}
-        setValue={setValue}
-        onSubmit={supplyConfigs.action}
-        onClose={onClose}
-        selectedReserve={selectedReserve!}
-        maxValue={new BigNumber('10000000000')}
-        // maxValue={supplyConfigs.calculateMax()}
-      />
-    </TabPanel>
-    <TabPanel>
-    {/* <TransactionTab/> */}
-    </TabPanel>
-    <TabPanel>
-    {/* <TransactionTab/> */}
-    </TabPanel>
-    <TabPanel>
-    {/* <TransactionTab/> */}
-    </TabPanel>
-  </TabPanels>
-</Tabs>
-        </ModalContent>
+  const onFinish = (res: ResultConfigType) => {
+    setResult(res);
+    refresh();
+  };
+
+  const handleCancel = () => {
+    setValue('');
+    setResult(null);
+    setSelectedReserve(null);
+    refresh();
+  };
+
+  return (
+    <Modal isOpen={Boolean(selectedReserve)} onClose={() => handleCancel()}>
+      <ModalOverlay />
+      <ModalContent>
+        {result ? (
+          <Result result={result} setResult={setResult} />
+        ) : (
+          <Tabs>
+            <TabList mb={2}>
+              <Tab>
+                <Text variant='headline'>Supply</Text>
+              </Tab>
+              <Tab>
+                <Text variant='headline'>Borrow</Text>
+              </Tab>
+              <Tab>
+                <Text variant='headline'>Withdraw</Text>
+              </Tab>
+              <Tab>
+                <Text variant='headline'>Repay</Text>
+              </Tab>
+            </TabList>
+
+            <TabPanels>
+              <TabPanel>
+                <TransactionTab
+                  onFinish={onFinish}
+                  value={value}
+                  setValue={setValue}
+                  onSubmit={supplyConfigs.action}
+                  selectedReserve={selectedReserve}
+                  maxValue={supplyConfigs.calculateMax(
+                    selectedReserve,
+                    walletAssets,
+                  )}
+                  action='supply'
+                  getNewCalculations={supplyConfigs.getNewCalculations}
+                />
+              </TabPanel>
+              <TabPanel>
+                <TransactionTab
+                  onFinish={onFinish}
+                  value={value}
+                  setValue={setValue}
+                  onSubmit={borrowConfigs.action}
+                  selectedReserve={selectedReserve}
+                  maxValue={borrowConfigs.calculateMax(
+                    selectedReserve,
+                    walletAssets,
+                    obligation,
+                  )}
+                  action='borrow'
+                  getNewCalculations={borrowConfigs.getNewCalculations}
+                />
+              </TabPanel>
+              <TabPanel>
+                <TransactionTab
+                  onFinish={onFinish}
+                  value={value}
+                  setValue={setValue}
+                  onSubmit={withdrawConfigs.action}
+                  selectedReserve={selectedReserve}
+                  maxValue={withdrawConfigs.calculateMax(
+                    selectedReserve,
+                    walletAssets,
+                    obligation,
+                  )}
+                  action='withdraw'
+                  getNewCalculations={withdrawConfigs.getNewCalculations}
+                />
+              </TabPanel>
+              <TabPanel>
+                <TransactionTab
+                  onFinish={onFinish}
+                  value={value}
+                  setValue={setValue}
+                  onSubmit={repayConfigs.action}
+                  selectedReserve={selectedReserve}
+                  maxValue={repayConfigs.calculateMax(
+                    selectedReserve,
+                    walletAssets,
+                    obligation,
+                  )}
+                  action='repay'
+                  getNewCalculations={repayConfigs.getNewCalculations}
+                />
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
+        )}
+      </ModalContent>
     </Modal>
+  );
 }

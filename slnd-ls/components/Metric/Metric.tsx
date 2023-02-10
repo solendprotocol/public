@@ -1,7 +1,9 @@
 import React, { ReactElement } from 'react';
-import Image from 'next/image'
-import { Flex, Spacer, Text, Tooltip  } from "@chakra-ui/react";
+import { Flex, Text, Tooltip } from '@chakra-ui/react';
 import { InfoIcon, WarningTwoIcon } from '@chakra-ui/icons';
+import classNames from 'classnames';
+
+import styles from './Metric.module.scss';
 
 type MetricPropType = {
   label?: React.ReactNode;
@@ -13,7 +15,6 @@ type MetricPropType = {
   row?: boolean;
 };
 
-
 function Metric({
   label,
   value,
@@ -21,33 +22,39 @@ function Metric({
   tooltip,
   dangerTooltip,
   row,
+  alignCenter,
 }: MetricPropType): ReactElement {
   return (
-    <Flex direction={row ? 'row' : 'column'}>
+    <Flex
+      direction={row ? 'row' : 'column'}
+      align={row ? 'center' : undefined}
+      justify='space-between'
+      className={classNames(styles.alignCenter, !alignCenter && styles.metric)}
+    >
       {label && (
-        <Text variant='caption' color='secondary'>
-          {label}
+        <Flex align='center' justify={alignCenter ? 'center' : undefined}>
+          <Text variant='caption' color='secondary'>
+            {label}
+          </Text>
           {tooltip && (
             <>
               <Tooltip label={dangerTooltip ?? tooltip}>
-                {dangerTooltip ? (
-                  <WarningTwoIcon />
-                ) : (
-                  <InfoIcon />
-                )}
+                <Text variant='caption' color='secondary'>
+                  {dangerTooltip ? (
+                    <WarningTwoIcon ml={1} />
+                  ) : (
+                    <InfoIcon ml={1} />
+                  )}
+                </Text>
               </Tooltip>
             </>
           )}
-        </Text>
+        </Flex>
       )}
-      <Spacer/>
-      <Text >{value}</Text>
+      <Text>{value}</Text>
       {secondary && (
         <>
-          <Text
-            color='secondary'
-            variant='caption'
-          >
+          <Text color='secondary' variant='caption'>
             {secondary}
           </Text>
         </>

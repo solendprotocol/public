@@ -695,8 +695,8 @@ export class SolendAction {
       const refreshReserveIx = refreshReserveInstruction(
         new PublicKey(reserveAddress),
         this.programId,
-        new PublicKey(this.reserve.pythOracle),
-        new PublicKey(this.reserve.switchboardOracle)
+        new PublicKey(reserveInfo.pythOracle),
+        new PublicKey(reserveInfo.switchboardOracle)
       );
       this.setupIxs.push(refreshReserveIx);
     });

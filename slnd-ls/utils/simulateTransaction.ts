@@ -21,18 +21,13 @@ export async function simulateRefreshObligation(
   connection: Connection,
   obligationAddress: PublicKey,
 ) {
-  const obligationAccount = await connection.getAccountInfo(
-    obligationAddress
-  );
+  const obligationAccount = await connection.getAccountInfo(obligationAddress);
 
   if (obligationAccount === null) {
     return null;
   }
 
-  const obligation = parseObligation(
-    obligationAddress,
-    obligationAccount,
-  )!;
+  const obligation = parseObligation(obligationAddress, obligationAccount)!;
 
   const borrowReserves = obligation.info.borrows.map((b) => b.borrowReserve);
   const depositReserves = obligation.info.deposits.map((d) => d.depositReserve);
@@ -45,7 +40,10 @@ export async function simulateRefreshObligation(
 
   const ixs: TransactionInstruction[] = [];
   const reserveAddresses = depositReserves.concat(borrowReserves);
-  const uniqueReserveAddresses = reserveAddresses.filter((item, pos) => reserveAddresses.findIndex(address => address.equals(item)) === pos);
+  const uniqueReserveAddresses = reserveAddresses.filter(
+    (item, pos) =>
+      reserveAddresses.findIndex((address) => address.equals(item)) === pos,
+  );
 
   uniqueReserveAddresses.forEach((reserveAddress) => {
     const reserveInfo = config.reserves.find(
@@ -53,7 +51,7 @@ export async function simulateRefreshObligation(
     );
 
     if (!reserveInfo) {
-      throw Error('Reserve not found for the obligation.')
+      throw Error('Reserve not found for the obligation.');
     }
 
     const refreshReserveIx = refreshReserveInstruction(

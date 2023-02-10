@@ -18,8 +18,8 @@ const nextConfig = {
         protocol: 'https',
         hostname: '**.coingecko.com',
       },
-    ]
-  }
-}
+    ],
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

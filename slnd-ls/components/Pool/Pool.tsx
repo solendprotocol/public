@@ -1,55 +1,177 @@
-import { Text, Table, TableContainer, Tbody, Td, Th, Thead, Tr, Flex, Avatar } from "@chakra-ui/react";
-import { useAtom } from "jotai";
-import { useEffect } from "react";
-import Image from 'next/image'
-import { poolsAtom, selectedPoolAtom, selectedPoolStateAtom, SelectedReserveType } from 'stores/pools';
-import { formatPercent, formatToken, formatUsd } from "utils/numberFormatter";
+import {
+  Text,
+  Table,
+  TableContainer,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  Flex,
+  Box,
+  Divider,
+} from '@chakra-ui/react';
+import { useAtom } from 'jotai';
+import { useEffect } from 'react';
+import {
+  poolsAtom,
+  selectedPoolAtom,
+  selectedPoolStateAtom,
+} from 'stores/pools';
+import { formatPercent, formatToken, formatUsd } from 'utils/numberFormatter';
+import Token from 'components/Token/Token';
+import Metric from 'components/Metric/Metric';
+import Loading from 'components/Loading/Loading';
+import BigNumber from 'bignumber.js';
 
-export default function Pool({selectReserveWithModal}: {selectReserveWithModal: (reserve: SelectedReserveType) => void}) {
-    const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
-    const [selectedPoolState] = useAtom(selectedPoolStateAtom);
-    const [pools] = useAtom(poolsAtom);
+export default function Pool({
+  selectReserveWithModal,
+}: {
+  selectReserveWithModal: (reserve: string) => void;
+}) {
+  const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
+  const [selectedPoolState] = useAtom(selectedPoolStateAtom);
+  const [pools] = useAtom(poolsAtom);
 
-    useEffect(() => {
-        if (Object.keys(pools).length > 0) {
-            setSelectedPool(Object.values(pools)[0].address)
-        }
-    }, [Boolean(pools.length)])
+  const firstPool = Object.values(pools)[0].address;
+  const poolsExist = Object.keys(pools).length > 0;
+  useEffect(() => {
+    if (poolsExist) {
+      setSelectedPool(firstPool);
+    }
+  }, [poolsExist, setSelectedPool, firstPool]);
 
-    console.log(pools, selectedPoolState);
-    if (selectedPoolState === 'loading') return <div>Loading...</div>;
+  if (selectedPoolState === 'loading') return <Loading />;
 
-    return  <TableContainer>
-    <Table size='sm'>
-      <Thead>
-        <Tr>
-          <Th><Text>Asset name</Text></Th>
-          <Th><Text>LTV</Text></Th>
-          <Th isNumeric><Text>Total supply</Text></Th>
-          <Th isNumeric><Text>Supply APR</Text></Th>
-          <Th isNumeric><Text>Total borrow</Text></Th>
-          <Th isNumeric><Text>Borrow APR</Text></Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        {selectedPool?.reserves.map(reserve =>  <Tr key={reserve.address} onClick={() => selectReserveWithModal(reserve)}>
-          <Td><Flex gap={4}>
-            {reserve.logo ? <Image
-            src={reserve.logo ?? ''}
-            alt={`logo for ${reserve.symbol}`}
-            width={32}
-            height={32}
-          /> : <Avatar icon={<Avatar
-            width={8}
-            height={8}
-            name="U" borderRadius={100}/>} w={8} h={8} borderRadius={100} name={reserve.symbol}/>}<Text>{reserve.symbol ?? `${reserve.mintAddress.slice(0,4)}...${reserve.mintAddress.slice(-4,reserve.mintAddress.length-1)}`} ({formatUsd(reserve.price)})</Text></Flex></Td>
-          <Td isNumeric><Text>{formatPercent(reserve.loanToValueRatio)}</Text></Td>
-          <Td isNumeric><Text>{formatToken(reserve.totalSupply)}</Text></Td>
-          <Td isNumeric><Text>{formatPercent(reserve.supplyInterest)}</Text></Td>
-          <Td isNumeric><Text>{formatToken(reserve.totalBorrow)}</Text></Td>
-          <Td isNumeric><Text>{formatPercent(reserve.borrowInterest)}</Text></Td>
-        </Tr>)}
-      </Tbody>
-    </Table>
-  </TableContainer>
+  const totalSupply =
+    selectedPool?.reserves.reduce(
+      (arr, r) => r.totalSupplyUsd.plus(arr),
+      BigNumber(0),
+    ) ?? new BigNumber(0);
+  const totalBorrow =
+    selectedPool?.reserves.reduce(
+      (arr, r) => r.totalBorrowUsd.plus(arr),
+      BigNumber(0),
+    ) ?? new BigNumber(0);
+  const totalAvailable =
+    selectedPool?.reserves.reduce(
+      (arr, r) => r.availableAmountUsd.plus(arr),
+      BigNumber(0),
+    ) ?? new BigNumber(0);
+
+  return (
+    <Box px={8} py={8}>
+      <Box mb={8}>
+        <Text variant='headline'>Pool overview</Text>
+        <Divider my={1} />
+        <Flex px={4} w='100%' justify='space-between'>
+          <Metric
+            label='Total supply'
+            alignCenter
+            value={formatUsd(totalSupply)}
+          />
+          <Metric
+            label='Total borrow'
+            alignCenter
+            value={formatUsd(totalBorrow)}
+          />
+          <Metric label='TVL' alignCenter value={formatUsd(totalAvailable)} />
+        </Flex>
+      </Box>
+
+      <Box>
+        <Text variant='headline'>Assets</Text>
+        <Divider my={1} />
+        <TableContainer>
+          <Table size='sm'>
+            <Thead>
+              <Tr>
+                <Th>
+                  <Text color='secondary' variant='caption'>
+                    Asset name
+                  </Text>
+                </Th>
+                <Th>
+                  <Text color='secondary' variant='caption'>
+                    LTV
+                  </Text>
+                </Th>
+                <Th isNumeric>
+                  <Text color='secondary' variant='caption'>
+                    Total supply
+                  </Text>
+                </Th>
+                <Th isNumeric>
+                  <Text color='secondary' variant='caption'>
+                    Supply APR
+                  </Text>
+                </Th>
+                <Th isNumeric>
+                  <Text color='secondary' variant='caption'>
+                    Total borrow
+                  </Text>
+                </Th>
+                <Th isNumeric>
+                  <Text color='secondary' variant='caption'>
+                    Borrow APR
+                  </Text>
+                </Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {selectedPool?.reserves.map((reserve) => (
+                <Tr
+                  key={reserve.address}
+                  onClick={() => selectReserveWithModal(reserve.address)}
+                  cursor='pointer'
+                >
+                  <Td>
+                    <Flex align='center'>
+                      <Token size={32} reserve={reserve} />
+                      <Box ml={4}>
+                        <Text>
+                          {reserve.symbol ??
+                            `${reserve.mintAddress.slice(
+                              0,
+                              4,
+                            )}...${reserve.mintAddress.slice(
+                              -4,
+                              reserve.mintAddress.length - 1,
+                            )}`}
+                        </Text>
+                        <Text color='secondary' variant='label'>
+                          {formatUsd(reserve.price)}
+                        </Text>
+                      </Box>
+                    </Flex>
+                  </Td>
+                  <Td isNumeric>
+                    <Text>{formatPercent(reserve.loanToValueRatio)}</Text>
+                  </Td>
+                  <Td isNumeric>
+                    <Text>{formatToken(reserve.totalSupply)}</Text>
+                    <Text color='secondary' variant='label'>
+                      {formatToken(reserve.totalSupplyUsd)}
+                    </Text>
+                  </Td>
+                  <Td isNumeric>
+                    <Text>{formatPercent(reserve.supplyInterest)}</Text>
+                  </Td>
+                  <Td isNumeric>
+                    <Text>{formatToken(reserve.totalBorrow)}</Text>
+                    <Text color='secondary' variant='label'>
+                      {formatToken(reserve.totalBorrowUsd)}
+                    </Text>
+                  </Td>
+                  <Td isNumeric>
+                    <Text>{formatPercent(reserve.borrowInterest)}</Text>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </TableContainer>
+      </Box>
+    </Box>
+  );
 }

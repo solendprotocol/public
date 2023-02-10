@@ -1,32 +1,31 @@
 .container {
-    width: 100%;
-    height: 8px;
-    margin-bottom: 16px;
+  width: 100%;
+  height: 8px;
+  margin-bottom: 16px;
+}
+
+.section {
+  display: inline-block;
+  height: 100%;
+  background-color: var(--chakra-colors-line);
+  cursor: pointer;
+  &:hover {
+    transform: scale(1.01);
   }
-  
-  .section {
-    display: inline-block;
-    height: 100%;
-    background-color: var(--chakra-colors-line);
-    cursor: pointer;
-    &:hover {
-      transform: scale(1.01);
-    }
-  }
-  
-  .limitBar {
-    background-color: var(--chakra-colors-primary);
-  }
-  
-  .liquidationBar {
-    background-color: var(--chakra-colors-brand);
-  }
-  
-  .borrowed {
-    background-color: var(--chakra-colors-brandAlt);
-  }
-  
-  .overBorrowed {
-    background-color: var(--chakra-colors-brand);
-  }
-  
+}
+
+.limitBar {
+  background-color: var(--chakra-colors-primary);
+}
+
+.liquidationBar {
+  background-color: var(--chakra-colors-brand);
+}
+
+.borrowed {
+  background-color: var(--chakra-colors-brandAlt);
+}
+
+.overBorrowed {
+  background-color: var(--chakra-colors-brand);
+}

@@ -1,9 +1,10 @@
 import React from 'react';
 import BigNumber from 'bignumber.js';
-import { Tooltip } from "@chakra-ui/react";
+import { Tooltip } from '@chakra-ui/react';
 
 export function formatExact(value: string | number | BigNumber) {
-  return new BigNumber(value).toFormat();
+  const bignum = new BigNumber(value);
+  return bignum.isNaN() ? '0' : bignum.toFormat();
 }
 
 export function formatToken(
@@ -28,7 +29,7 @@ export function formatToken(
     );
   }
 
-  const contents = bn.toFormat(digits, round ? 4 : 1)
+  const contents = bn.toFormat(digits, round ? 4 : 1);
 
   return exactTip ? (
     <Tooltip title={formatExact(value)}>{contents}</Tooltip>
@@ -84,7 +85,9 @@ export function formatUsd(
     return `${omitPrefix ? '' : '$'}0${rounded ? '' : '.00'}`;
   }
 
-  return `${neg ? '-' : ''}${omitPrefix ? '' : '$'}${abs.toFormat(rounded ? 0 : 2)}`;
+  return `${neg ? '-' : ''}${omitPrefix ? '' : '$'}${abs.toFormat(
+    rounded ? 0 : 2,
+  )}`;
 }
 
 export function formatPercent(
@@ -100,5 +103,12 @@ export function formatPercent(
     return '< 0.01%';
   }
 
-  return noTrim ?  `${bnPercent.multipliedBy(100)}%` : `${bnPercent.multipliedBy(100).toFormat(2)}%`;
+  return noTrim
+    ? `${bnPercent.multipliedBy(100)}%`
+    : `${bnPercent.multipliedBy(100).toFormat(2)}%`;
+}
+
+export function formatCompact(value: BigNumber) {
+  const formatter = Intl.NumberFormat('en', { notation: 'compact' });
+  return formatter.format(Number(value.toString()));
 }

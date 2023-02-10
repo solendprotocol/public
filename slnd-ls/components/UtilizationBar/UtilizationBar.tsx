@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
 import classNames from 'classnames';
-import { Tooltip  } from "@chakra-ui/react";
+import { Tooltip } from '@chakra-ui/react';
 import { formatPercent, formatUsd } from 'utils/numberFormatter';
 
 import styles from './UtilizationBar.module.scss';
@@ -36,33 +36,39 @@ function Section({
 }
 
 function UtilizationBar(): ReactElement {
-    const [obligation] = useAtom(selectedObligationAtom);
+  const [obligation] = useAtom(selectedObligationAtom);
 
-    if (!obligation) return <div/>;
+  if (!obligation) return <div />;
 
   const passedLimit =
     obligation.totalSupplyValue.isZero() ||
     (!obligation.totalBorrowValue.isZero() &&
-      obligation.totalBorrowValue.isGreaterThanOrEqualTo(obligation.borrowLimit));
+      obligation.totalBorrowValue.isGreaterThanOrEqualTo(
+        obligation.borrowLimit,
+      ));
   const passedThreshold =
     obligation.totalSupplyValue.isZero() ||
     (!obligation.totalBorrowValue.isZero() &&
-      obligation.totalBorrowValue.isGreaterThanOrEqualTo(obligation.liquidationThreshold));
+      obligation.totalBorrowValue.isGreaterThanOrEqualTo(
+        obligation.liquidationThreshold,
+      ));
   // 2% reserved for the bars
   const denominator = 97 + (passedLimit ? 1 : 0) + (passedThreshold ? 1 : 0);
 
   const borrowWidth = Math.min(
     100,
-    Number(Number(obligation.borrowOverSupply.toString()).toFixed(4)) * denominator,
+    Number(Number(obligation.borrowOverSupply.toString()).toFixed(4)) *
+      denominator,
   );
   const unborrowedWidth =
     Number(
       Number(
         obligation.totalSupplyValue.isZero()
           ? BigNumber(0)
-          : BigNumber.max(obligation.borrowLimit
-              .minus(obligation.totalBorrowValue),
-              BigNumber(0))
+          : BigNumber.max(
+              obligation.borrowLimit.minus(obligation.totalBorrowValue),
+              BigNumber(0),
+            )
               .dividedBy(obligation.totalSupplyValue)
               .toString(),
       ).toFixed(4),
@@ -72,9 +78,15 @@ function UtilizationBar(): ReactElement {
       Number(
         obligation.totalSupplyValue.isZero()
           ? BigNumber(0)
-          : BigNumber.max(obligation.liquidationThreshold
-              .minus(BigNumber.max(obligation.borrowLimit, obligation.totalBorrowValue)),
-              BigNumber(0))
+          : BigNumber.max(
+              obligation.liquidationThreshold.minus(
+                BigNumber.max(
+                  obligation.borrowLimit,
+                  obligation.totalBorrowValue,
+                ),
+              ),
+              BigNumber(0),
+            )
               .dividedBy(obligation.totalSupplyValue)
               .toString(),
       ).toFixed(4),
@@ -107,7 +119,9 @@ function UtilizationBar(): ReactElement {
         <Section
           width={unborrowedWidth}
           tooltip={`You can borrow ${formatUsd(
-            obligation.borrowLimit.minus(obligation.totalBorrowValue).toString(),
+            obligation.borrowLimit
+              .minus(obligation.totalBorrowValue)
+              .toString(),
           )} more before you hit your borrow limit.`}
         />
       )}
