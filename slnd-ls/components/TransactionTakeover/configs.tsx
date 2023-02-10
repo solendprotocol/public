@@ -110,6 +110,7 @@ export const borrowConfigs = {
       selectedReserve.symbol,
       new PublicKey(publicKey),
       'production',
+      undefined,
       new PublicKey(selectedReserve.poolAddress),
     );
 

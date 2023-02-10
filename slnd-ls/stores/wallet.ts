@@ -108,14 +108,18 @@ export const walletAssetsAtom = atom(async (get) => {
     })
     .filter(Boolean) as WalletType;
 
-  const solAsset = assets.find((a) => a.symbol === 'wSOL');
+  const solInPool = uniqueAssets.find((a) => a === NATIVE_MINT.toBase58());
 
-  return solAsset
+  return solInPool
     ? assets.concat([
         {
           decimals: Math.log10(LAMPORTS_PER_SOL),
           symbol: 'SOL',
-          address: solAsset.address,
+          address: await getAssociatedTokenAddress(
+            NATIVE_MINT,
+            new PublicKey(publicKey),
+            true,
+          ),
           amount: new BigNumber(nativeSolBalance).dividedBy(LAMPORTS_PER_SOL),
           mintAddress: NATIVE_MINT.toBase58(),
         },

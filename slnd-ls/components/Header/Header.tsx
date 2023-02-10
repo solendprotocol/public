@@ -107,7 +107,7 @@ export default function Header() {
           />
         </Flex>
       </Flex>
-      <Flex pr={8} justify='end' w={400} align='center'>
+      <Flex justify='end' w={400} align='center'>
         <ConnectButton />
         <RpcSwitcher />
         <RefreshDataButton />

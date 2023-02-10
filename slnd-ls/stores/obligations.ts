@@ -107,10 +107,8 @@ export const selectedObligationAtom = atom(
     const metadata = get(metadataAtom);
     const selectedPool = get(selectedPoolAtom);
     const obligation = get(obligationsFamily(selectedObligationAddress));
-
     if (!obligation) return null;
-    return selectedObligationAddress
-      ? {
+    return {
           ...obligation,
           deposits:
             obligation?.deposits?.map((d) => {
@@ -159,7 +157,6 @@ export const selectedObligationAtom = atom(
               };
             }) ?? [],
         }
-      : null;
   },
   (
     get,
@@ -181,17 +178,11 @@ export const selectedObligationAtom = atom(
     }
 
     const obligation = get(obligationToUpdateAtom);
-    const poolAddress = payload.poolAddress ?? obligation.poolAddress;
-
-    if (!poolAddress) {
-      throw Error(
-        'Pool address for obligation must be specified to simulate transaction.',
-      );
-    }
+    const poolAddress = payload.poolAddress ?? obligation?.poolAddress;
 
     const pool = get(poolsFamily(poolAddress));
 
-    if (pool.reserves.length) {
+    if (pool?.reserves?.length && poolAddress) {
       fetchSimulatedObligationByAddress(
         payload.newSelectedObligationAddress,
         connection,

@@ -33,6 +33,7 @@ export default function Account() {
     }
   }, [selectedObligation?.address, changed]);
 
+  console.log(selectedObligation);
   return (
     <Card m={8} p={2} border='1px solid'>
       <Input
