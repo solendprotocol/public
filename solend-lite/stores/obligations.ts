@@ -109,54 +109,52 @@ export const selectedObligationAtom = atom(
     const obligation = get(obligationsFamily(selectedObligationAddress));
     if (!obligation) return null;
     return {
-          ...obligation,
-          deposits:
-            obligation?.deposits?.map((d) => {
-              const reserve = selectedPool?.reserves.find(
-                (r) => r.address === d.reserveAddress,
-              );
+      ...obligation,
+      deposits:
+        obligation?.deposits?.map((d) => {
+          const reserve = selectedPool?.reserves.find(
+            (r) => r.address === d.reserveAddress,
+          );
 
-              const addressString = reserve?.mintAddress;
-              const tokenMetadata = metadata[addressString ?? ''];
+          const addressString = reserve?.mintAddress;
+          const tokenMetadata = metadata[addressString ?? ''];
 
-              const decimals = reserve?.decimals ?? 0;
+          const decimals = reserve?.decimals ?? 0;
 
-              return {
-                ...d,
-                decimals,
-                amount: d.amount.shiftedBy(-decimals),
-                price: reserve?.price,
-                amountUsd: d.amount
-                  .shiftedBy(-decimals)
-                  .times(reserve?.price ?? 0),
-                symbol: tokenMetadata?.symbol,
-                logo: tokenMetadata?.logoUri,
-              };
-            }) ?? [],
-          borrows:
-            obligation?.borrows?.map((b) => {
-              const reserve = selectedPool?.reserves.find(
-                (r) => r.address === b.reserveAddress,
-              );
+          return {
+            ...d,
+            decimals,
+            amount: d.amount.shiftedBy(-decimals),
+            price: reserve?.price,
+            amountUsd: d.amount.shiftedBy(-decimals).times(reserve?.price ?? 0),
+            symbol: tokenMetadata?.symbol,
+            logo: tokenMetadata?.logoUri,
+          };
+        }) ?? [],
+      borrows:
+        obligation?.borrows?.map((b) => {
+          const reserve = selectedPool?.reserves.find(
+            (r) => r.address === b.reserveAddress,
+          );
 
-              const addressString = reserve?.mintAddress;
-              const tokenMetadata = metadata[addressString ?? ''];
+          const addressString = reserve?.mintAddress;
+          const tokenMetadata = metadata[addressString ?? ''];
 
-              const decimals = reserve?.decimals ?? 0;
+          const decimals = reserve?.decimals ?? 0;
 
-              return {
-                ...b,
-                decimals,
-                amount: b.amount.shiftedBy(-(decimals + 18)),
-                price: reserve?.price,
-                amountUsd: b.amount
-                  .shiftedBy(-(decimals + 18))
-                  .times(reserve?.price ?? 0),
-                symbol: tokenMetadata?.symbol,
-                logo: tokenMetadata?.logoUri,
-              };
-            }) ?? [],
-        }
+          return {
+            ...b,
+            decimals,
+            amount: b.amount.shiftedBy(-(decimals + 18)),
+            price: reserve?.price,
+            amountUsd: b.amount
+              .shiftedBy(-(decimals + 18))
+              .times(reserve?.price ?? 0),
+            symbol: tokenMetadata?.symbol,
+            logo: tokenMetadata?.logoUri,
+          };
+        }) ?? [],
+    };
   },
   (
     get,

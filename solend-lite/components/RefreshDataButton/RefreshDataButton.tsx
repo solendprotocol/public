@@ -8,7 +8,10 @@ import {
   unqiueAssetsAtom,
 } from 'stores/pools';
 import { useAtom, useSetAtom } from 'jotai';
-import { loadObligationsAtom, selectedObligationAddressAtom, selectedObligationAtom } from 'stores/obligations';
+import {
+  selectedObligationAddressAtom,
+  selectedObligationAtom,
+} from 'stores/obligations';
 import { loadMetadataAtom } from 'stores/metadata';
 
 import styles from './RefreshDataButton.module.scss';
@@ -34,7 +37,9 @@ function RefreshDataButton(): ReactElement {
   const loadAll = useCallback(() => {
     loadPools(true);
     if (selectedObligationAddress) {
-      loadObligation({newSelectedObligationAddress: selectedObligationAddress, });
+      loadObligation({
+        newSelectedObligationAddress: selectedObligationAddress,
+      });
     }
   }, [loadPools, loadObligation, selectedObligationAddress]);
 
