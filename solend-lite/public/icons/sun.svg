@@ -1,0 +1,84 @@
+ <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="8"
+                  cy="8"
+                  r="3"
+                  stroke="white"
+                />
+                <rect
+                  x="7.5"
+                  y="0.5"
+                  width="1"
+                  height="2"
+                  rx="0.5"
+                  fill="white"
+                />
+                <rect
+                  x="7.5"
+                  y="13.5"
+                  width="1"
+                  height="2"
+                  rx="0.5"
+                  fill="white"
+                />
+                <rect
+                  x="0.5"
+                  y="8.5"
+                  width="1"
+                  height="2"
+                  rx="0.5"
+                  transform="rotate(-90 0.5 8.5)"
+                  fill="white"
+                />
+                <rect
+                  x="13.5"
+                  y="8.5"
+                  width="1"
+                  height="2"
+                  rx="0.5"
+                  transform="rotate(-90 13.5 8.5)"
+                  fill="white"
+                />
+                <rect
+                  x="3.05023"
+                  y="13.6569"
+                  width="1"
+                  height="2"
+                  rx="0.5"
+                  transform="rotate(-135 3.05023 13.6569)"
+                  fill="white"
+                />
+                <rect
+                  x="12.2426"
+                  y="4.46448"
+                  width="1"
+                  height="2"
+                  rx="0.5"
+                  transform="rotate(-135 12.2426 4.46448)"
+                  fill="white"
+                />
+                <rect
+                  x="13.6569"
+                  y="12.9498"
+                  width="1"
+                  height="2"
+                  rx="0.5"
+                  transform="rotate(135 13.6569 12.9498)"
+                  fill="white"
+                />
+                <rect
+                  x="4.46442"
+                  y="3.75739"
+                  width="1"
+                  height="2"
+                  rx="0.5"
+                  transform="rotate(135 4.46442 3.75739)"
+                  fill="white"
+                />
+              </svg>
