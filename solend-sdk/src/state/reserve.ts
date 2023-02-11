@@ -20,9 +20,9 @@ export interface ReserveLiquidity {
   mintDecimals: number;
   supplyPubkey: PublicKey;
   // @FIXME: oracle option
-  oracleOption: number;
-  pythOraclePubkey: PublicKey;
-  switchboardOraclePubkey: PublicKey;
+  oracleOption: number;  
+  pythOracle: PublicKey;
+  switchboardOracle: PublicKey;
   availableAmount: BN;
   borrowedAmountWads: BN;
   cumulativeBorrowRateWads: BN;

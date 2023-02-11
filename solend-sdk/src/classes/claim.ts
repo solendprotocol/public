@@ -1,7 +1,7 @@
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  Token,
-  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
+  TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { PsyAmericanIdl, getOptionByKey } from "@mithraic-labs/psy-american";
@@ -52,9 +52,7 @@ export class SolendClaim {
     const setupIxs = [];
     const exerciseIxs = [];
 
-    const claimantTokenAccountAddress = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
+    const claimantTokenAccountAddress = await getAssociatedTokenAddress(
       optionMarket.underlyingAssetMint,
       this.provider.wallet.publicKey,
       true
@@ -67,32 +65,24 @@ export class SolendClaim {
 
     if (!claimantTokenAccountInfo) {
       const createUserTokenAccountIx =
-        Token.createAssociatedTokenAccountInstruction(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          optionMarket.underlyingAssetMint,
+        createAssociatedTokenAccountInstruction(
+          this.provider.wallet.publicKey,
           claimantTokenAccountAddress,
           this.provider.wallet.publicKey,
-          this.provider.wallet.publicKey
+          optionMarket.underlyingAssetMint,
         );
       setupIxs.push(createUserTokenAccountIx);
     }
 
-    const exerciserOptionTokenSrc = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
+    const exerciserOptionTokenSrc = await getAssociatedTokenAddress(
       optionMarket.optionMint,
       this.provider.wallet.publicKey
     );
-    const underlyingAssetDest = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
+    const underlyingAssetDest = await getAssociatedTokenAddress(
       optionMarket.underlyingAssetMint,
       this.provider.wallet.publicKey
     );
-    const quoteAssetSrc = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
+    const quoteAssetSrc = await getAssociatedTokenAddress(
       optionMarket.quoteAssetMint,
       this.provider.wallet.publicKey
     );
@@ -136,9 +126,7 @@ export class SolendClaim {
     const setupIxs = [];
     const claimIxs = [];
 
-    const claimantTokenAccountAddress = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
+    const claimantTokenAccountAddress = await getAssociatedTokenAddress(
       this.metadata.distributor.mint,
       this.provider.wallet.publicKey,
       true
@@ -151,13 +139,11 @@ export class SolendClaim {
 
     if (!claimantTokenAccountInfo) {
       const createUserTokenAccountIx =
-        Token.createAssociatedTokenAccountInstruction(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          this.metadata.distributor.mint,
-          claimantTokenAccountAddress,
+        createAssociatedTokenAccountInstruction(
           this.provider.wallet.publicKey,
-          this.provider.wallet.publicKey
+          this.metadata.distributor.mint,
+          this.provider.wallet.publicKey,
+          claimantTokenAccountAddress,
         );
       setupIxs.push(createUserTokenAccountIx);
     }
