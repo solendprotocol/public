@@ -1,7 +1,6 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import { SolendObligation } from "./obligation";
 import { SolendReserve } from "./reserve";
-import { parseObligation } from "../state/obligation";
 import axios from "axios";
 import { getProgramId } from "./constants";
 import {
@@ -9,6 +8,7 @@ import {
   ExternalRewardStatType,
   MarketConfigType,
 } from "./shared";
+import { simulateRefreshObligation } from "../utils/simulateTransaction";
 
 type Config = Array<MarketConfigType>;
 
@@ -82,17 +82,12 @@ export class SolendMarket {
       config.address.slice(0, 32),
       this.programId
     );
-    const rawObligationData = await this.connection.getAccountInfo(
-      obligationAddress
-    );
 
-    if (!rawObligationData) {
-      return null;
-    }
-
-    const parsedObligation = parseObligation(
-      PublicKey.default,
-      rawObligationData!
+    const parsedObligation = await simulateRefreshObligation(
+      this.config,
+      this.connection,
+      publicKey,
+      this.programId
     );
 
     if (!parsedObligation) {
@@ -103,12 +98,10 @@ export class SolendMarket {
       await this.loadReserves();
     }
 
-    const obligationInfo = parsedObligation.info;
-
     return new SolendObligation(
       publicKey,
       obligationAddress,
-      obligationInfo,
+      parsedObligation,
       reserves
     );
   }

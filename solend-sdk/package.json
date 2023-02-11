@@ -23,7 +23,7 @@
     "@project-serum/anchor": "^0.24.2",
     "@pythnetwork/client": "^2.5.1",
     "@solana/buffer-layout": "^4.0.0",
-    "@solana/spl-token": "^0.1.8",
+    "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.66.2",
     "axios": "^0.24.0",
     "bignumber.js": "^9.0.2",
