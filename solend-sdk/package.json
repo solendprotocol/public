@@ -17,9 +17,6 @@
     "coverage": "jest --coverage",
     "lint": "prettier --write .; prettier --check .;eslint ."
   },
-  "resolutions": {
-    "@solana/spl-token": "^0.3.6"
-  },
   "dependencies": {
     "@marinade.finance/marinade-ts-sdk": "^3.1.1",
     "@mithraic-labs/psy-american": "^0.2.1",
