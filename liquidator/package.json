@@ -1,5 +1,5 @@
 {
-  "name": "solend-liquidator",
+  "name": "@solendprotocol/solend-liquidator",
   "version": "1.0.0",
   "description": "liquidation bot for solend",
   "main": "build/index.js",
