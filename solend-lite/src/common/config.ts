@@ -5,16 +5,16 @@ export const ENVIRONMENT =
   process.env.NEXT_PUBLIC_REACT_APP_NETWORK || WalletAdapterNetwork.Devnet;
 export const PROGRAM_ID = getProgramId(ENVIRONMENT);
 export const DEFAULT_RPC_ENDPOINTS = [
-  process.env.NEXT_PUBLIC_RPCPOOL_RPC
-    ? {
-        name: 'RPCPool',
-        endpoint: process.env.NEXT_PUBLIC_RPCPOOL_RPC as string,
-      }
-    : null,
   process.env.NEXT_PUBLIC_ALCHEMY_RPC
     ? {
         name: 'Alchemy RPC',
         endpoint: process.env.NEXT_PUBLIC_ALCHEMY_RPC as string,
+      }
+    : null,
+  process.env.NEXT_PUBLIC_RPCPOOL_RPC
+    ? {
+        name: 'RPCPool',
+        endpoint: process.env.NEXT_PUBLIC_RPCPOOL_RPC as string,
       }
     : null,
   {
