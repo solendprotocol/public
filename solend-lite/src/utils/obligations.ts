@@ -1,7 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { PoolType } from 'stores/pools';
-import { Obligation, parseObligation } from '../../../solend-sdk/src/state';
+import { Obligation, parseObligation } from '@solendprotocol/solend-sdk';
 import { getBatchMultipleAccountsInfo } from 'utils/utils';
 import { simulateRefreshObligation } from './simulateTransaction';
 

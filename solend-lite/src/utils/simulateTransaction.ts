@@ -8,8 +8,10 @@ import {
   VersionedTransaction,
 } from '@solana/web3.js';
 import { PoolType } from 'stores/pools';
-import { parseObligation } from '../../../solend-sdk/src/state/obligation';
-import { LendingInstruction } from '../../../solend-sdk/src/instructions/instruction';
+import {
+  parseObligation,
+  LendingInstruction,
+} from '@solendprotocol/solend-sdk';
 import { PROGRAM_ID } from '../common/config';
 
 const BufferLayout = require('buffer-layout');

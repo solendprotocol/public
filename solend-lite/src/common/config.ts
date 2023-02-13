@@ -1,5 +1,5 @@
-import { getProgramId } from '../../../solend-sdk/src/classes/constants';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { getProgramId } from '@solendprotocol/solend-sdk';
 
 export const ENVIRONMENT =
   process.env.NEXT_PUBLIC_REACT_APP_NETWORK || WalletAdapterNetwork.Devnet;

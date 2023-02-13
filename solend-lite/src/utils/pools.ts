@@ -1,7 +1,10 @@
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
-import { parseReserve, Reserve } from '../../../solend-sdk/src/state';
-import { LENDING_MARKET_SIZE } from '../../../solend-sdk/src/state/lendingMarket';
+import {
+  parseReserve,
+  Reserve,
+  LENDING_MARKET_SIZE,
+} from '@solendprotocol/solend-sdk';
 import SwitchboardProgram from '@switchboard-xyz/sbv2-lite';
 import {
   MAIN_POOL_RESERVES_ADDRESSES,
