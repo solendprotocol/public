@@ -6,9 +6,7 @@ import {
   flashBorrowReserveLiquidityInstruction,
   flashRepayReserveLiquidityInstruction,
 } from "../../dist";
-import {
-  getAssociatedTokenAddress
-} from "@solana/spl-token";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
 
 const SOLANA_RPC_ENDPOINT = "https://api.devnet.solana.com";
 
@@ -22,10 +20,7 @@ export const USER_KEYPAIR = Keypair.fromSecretKey(
 );
 
 const getATA = async (mintAddress: PublicKey, owner: PublicKey) => {
-  return getAssociatedTokenAddress(
-    mintAddress,
-    owner
-  );
+  return getAssociatedTokenAddress(mintAddress, owner);
 };
 
 const main = async () => {

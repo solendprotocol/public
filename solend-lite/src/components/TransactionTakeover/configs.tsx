@@ -8,8 +8,7 @@ import BigNumber from 'bignumber.js';
 import { ObligationType } from 'stores/obligations';
 import { SelectedReserveType } from 'stores/pools';
 import { WalletType } from 'stores/wallet';
-import { SolendAction } from '../../../../solend-sdk/src/classes/action';
-import { U64_MAX } from '../../../../solend-sdk/src/classes/constants';
+import { SolendAction, U64_MAX } from '@solendprotocol/solend-sdk';
 
 const SOL_PADDING_FOR_RENT_AND_FEE = 0.001;
 

@@ -6,7 +6,6 @@ import {
   getAssociatedTokenAddress,
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  AccountLayout,
   unpackAccount,
 } from "@solana/spl-token";
 import {
@@ -242,7 +241,7 @@ export class SolendWallet {
           ).value.amount !== "0";
 
         const om = optionMarkets[index];
-        
+
         return {
           ...d,
           optionMarket: om

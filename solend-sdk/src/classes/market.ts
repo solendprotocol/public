@@ -171,7 +171,9 @@ export class SolendMarket {
     const [externalRewards, currentSlot] = await Promise.all(promises);
 
     const querySymbols = [
-      ...new Set(externalRewards.map((reward) => reward.rewardSymbol)),
+      ...Array.from(
+        new Set(externalRewards.map((reward) => reward.rewardSymbol))
+      ),
     ];
 
     const priceData = await this.loadPriceData(querySymbols.concat("SLND"));

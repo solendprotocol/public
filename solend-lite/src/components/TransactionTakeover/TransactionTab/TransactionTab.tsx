@@ -9,7 +9,7 @@ import { ObligationType, selectedObligationAtom } from 'stores/obligations';
 import { connectionAtom, SelectedReserveType } from 'stores/pools';
 import { publicKeyAtom } from 'stores/wallet';
 import BigInput from '../BigInput/BigInput';
-import { U64_MAX } from '../../../../../solend-sdk/src/classes/constants';
+import { U64_MAX } from '@solendprotocol/solend-sdk';
 import ConfirmButton from '../ConfirmButton/ConfirmButton';
 import ReserveStats from '../ReserveStats/ReserveStats';
 

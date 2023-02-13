@@ -1,7 +1,7 @@
 import {
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
-  TOKEN_PROGRAM_ID
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { PsyAmericanIdl, getOptionByKey } from "@mithraic-labs/psy-american";
@@ -64,13 +64,12 @@ export class SolendClaim {
       );
 
     if (!claimantTokenAccountInfo) {
-      const createUserTokenAccountIx =
-        createAssociatedTokenAccountInstruction(
-          this.provider.wallet.publicKey,
-          claimantTokenAccountAddress,
-          this.provider.wallet.publicKey,
-          optionMarket.underlyingAssetMint,
-        );
+      const createUserTokenAccountIx = createAssociatedTokenAccountInstruction(
+        this.provider.wallet.publicKey,
+        claimantTokenAccountAddress,
+        this.provider.wallet.publicKey,
+        optionMarket.underlyingAssetMint
+      );
       setupIxs.push(createUserTokenAccountIx);
     }
 
@@ -138,13 +137,12 @@ export class SolendClaim {
       );
 
     if (!claimantTokenAccountInfo) {
-      const createUserTokenAccountIx =
-        createAssociatedTokenAccountInstruction(
-          this.provider.wallet.publicKey,
-          this.metadata.distributor.mint,
-          this.provider.wallet.publicKey,
-          claimantTokenAccountAddress,
-        );
+      const createUserTokenAccountIx = createAssociatedTokenAccountInstruction(
+        this.provider.wallet.publicKey,
+        this.metadata.distributor.mint,
+        this.provider.wallet.publicKey,
+        claimantTokenAccountAddress
+      );
       setupIxs.push(createUserTokenAccountIx);
     }
 
