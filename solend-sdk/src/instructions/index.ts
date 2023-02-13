@@ -15,3 +15,4 @@ export * from "./initReserve";
 export * from "./updateReserveConfig";
 export * from "./flashBorrowReserveLiquidity";
 export * from "./flashRepayReserveLiquidity";
+export * from "./instruction";

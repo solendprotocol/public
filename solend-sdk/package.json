@@ -1,11 +1,12 @@
 {
   "name": "@solendprotocol/solend-sdk",
   "version": "0.6.9",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "license": "MIT",
   "scripts": {
@@ -23,8 +24,9 @@
     "@project-serum/anchor": "^0.24.2",
     "@pythnetwork/client": "^2.5.1",
     "@solana/buffer-layout": "^4.0.0",
-    "@solana/spl-token": "^0.1.8",
+    "@solana/spl-token": "^0.3.6",
     "@solana/web3.js": "^1.66.2",
+    "@types/bn.js": "^5.1.1",
     "axios": "^0.24.0",
     "bignumber.js": "^9.0.2",
     "bn.js": "^5.2.0",
