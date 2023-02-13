@@ -3,11 +3,10 @@ import axios from "axios";
 import { SolendClaim } from "./claim";
 import * as anchor from "@project-serum/anchor";
 import {
-  Token,
+  getAssociatedTokenAddress,
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  AccountLayout,
-  u64,
+  unpackAccount,
 } from "@solana/spl-token";
 import {
   PsyAmericanIdl,
@@ -179,9 +178,7 @@ export class SolendWallet {
     const optionAtas = await Promise.all(
       optionMarkets.map((om) =>
         om
-          ? Token.getAssociatedTokenAddress(
-              ASSOCIATED_TOKEN_PROGRAM_ID,
-              TOKEN_PROGRAM_ID,
+          ? getAssociatedTokenAddress(
               new PublicKey(om.optionMint),
               this.provider.wallet.publicKey,
               true
@@ -195,8 +192,8 @@ export class SolendWallet {
     const optionBalances =
       await this.provider.connection.getMultipleAccountsInfo(optionAtas);
 
-    const parsedOptionBalances = optionBalances.map((om) =>
-      om ? AccountLayout.decode(om.data) : null
+    const parsedOptionBalances = optionBalances.map((om, index) =>
+      om ? unpackAccount(optionAtas[index], om) : null
     );
 
     const merkleDistributors =
@@ -250,11 +247,7 @@ export class SolendWallet {
           optionMarket: om
             ? {
                 ...om,
-                userBalance: parsedOptionBalances[index]?.amount
-                  ? u64
-                      .fromBuffer(parsedOptionBalances[index]?.amount)
-                      .toNumber()
-                  : 0,
+                userBalance: Number(parsedOptionBalances[index]?.amount ?? 0),
                 expired:
                   om.expirationUnixTimestamp.toNumber() <=
                   Math.floor(new Date().getTime()) / 1000,

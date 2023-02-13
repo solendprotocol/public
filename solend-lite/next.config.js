@@ -8,10 +8,18 @@ module.exports = {
     return config;
   },
   images: {
-    domains: [
-      "assets.coingecko.com",
-      "raw.githubusercontent.com",
-      "via.placeholder.com",
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.coingecko.com',
+      },
     ],
+  },
+  experimental: {
+    externalDir: true,
   },
 };

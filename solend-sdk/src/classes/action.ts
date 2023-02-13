@@ -7,10 +7,11 @@ import {
   TransactionSignature,
 } from "@solana/web3.js";
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
   NATIVE_MINT,
-  TOKEN_PROGRAM_ID,
-  Token,
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
+  getMinimumBalanceForRentExemptAccount,
+  createCloseAccountInstruction,
 } from "@solana/spl-token";
 import BN from "bn.js";
 import BigNumber from "bignumber.js";
@@ -218,16 +219,20 @@ export class SolendAction {
     // Union of addresses
     const distinctReserveCount =
       [
-        ...new Set([
-          ...borrowReserves.map((e) => e.toBase58()),
-          ...(action === "borrow" ? [reserve.address] : []),
-        ]),
+        ...Array.from(
+          new Set([
+            ...borrowReserves.map((e) => e.toBase58()),
+            ...(action === "borrow" ? [reserve.address] : []),
+          ])
+        ),
       ].length +
       [
-        ...new Set([
-          ...depositReserves.map((e) => e.toBase58()),
-          ...(action === "deposit" ? [reserve.address] : []),
-        ]),
+        ...Array.from(
+          new Set([
+            ...depositReserves.map((e) => e.toBase58()),
+            ...(action === "deposit" ? [reserve.address] : []),
+          ])
+        ),
       ].length;
 
     if (distinctReserveCount > POSITION_LIMIT) {
@@ -237,17 +242,15 @@ export class SolendAction {
     }
 
     const tokenInfo = getTokenInfo(symbol, lendingMarket);
-    const userTokenAccountAddress = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
+    const userTokenAccountAddress = await getAssociatedTokenAddress(
       new PublicKey(tokenInfo.liquidityToken.mint),
-      publicKey
+      publicKey,
+      true
     );
-    const userCollateralAccountAddress = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
+    const userCollateralAccountAddress = await getAssociatedTokenAddress(
       new PublicKey(reserve.collateralMintAddress),
-      publicKey
+      publicKey,
+      true
     );
 
     return new SolendAction(
@@ -677,7 +680,7 @@ export class SolendAction {
   private async addRefreshIxs() {
     // Union of addresses
     const allReserveAddresses = [
-      ...new Set([
+      ...Array.from([
         ...this.depositReserves.map((e) => e.toBase58()),
         ...this.borrowReserves.map((e) => e.toBase58()),
         this.reserve.address,
@@ -752,13 +755,11 @@ export class SolendAction {
       );
       if (!userTokenAccountInfo) {
         const createUserTokenAccountIx =
-          Token.createAssociatedTokenAccountInstruction(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            new PublicKey(this.reserve.liquidityToken.mint),
+          createAssociatedTokenAccountInstruction(
+            this.publicKey,
             this.userTokenAccountAddress,
             this.publicKey,
-            this.publicKey
+            new PublicKey(this.reserve.liquidityToken.mint)
           );
 
         if (this.positions === POSITION_LIMIT && this.hostAta) {
@@ -776,13 +777,11 @@ export class SolendAction {
 
       if (!userCollateralAccountInfo) {
         const createUserCollateralAccountIx =
-          Token.createAssociatedTokenAccountInstruction(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            new PublicKey(this.reserve.collateralMintAddress),
+          createAssociatedTokenAccountInstruction(
+            this.publicKey,
             this.userCollateralAccountAddress,
             this.publicKey,
-            this.publicKey
+            new PublicKey(this.reserve.collateralMintAddress)
           );
 
         if (this.positions === POSITION_LIMIT && this.symbol === "SOL") {
@@ -855,7 +854,7 @@ export class SolendAction {
       this.userTokenAccountAddress
     );
 
-    const rentExempt = await Token.getMinBalanceRentForExemptAccount(
+    const rentExempt = await getMinimumBalanceForRentExemptAccount(
       this.connection
     );
 
@@ -870,8 +869,7 @@ export class SolendAction {
     });
     preIxs.push(transferLamportsIx);
 
-    const closeWSOLAccountIx = Token.createCloseAccountInstruction(
-      TOKEN_PROGRAM_ID,
+    const closeWSOLAccountIx = createCloseAccountInstruction(
       this.userTokenAccountAddress,
       this.publicKey,
       this.publicKey,
@@ -886,15 +884,12 @@ export class SolendAction {
         postIxs.push(closeWSOLAccountIx);
       }
     } else {
-      const createUserWSOLAccountIx =
-        Token.createAssociatedTokenAccountInstruction(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          NATIVE_MINT,
-          this.userTokenAccountAddress,
-          this.publicKey,
-          this.publicKey
-        );
+      const createUserWSOLAccountIx = createAssociatedTokenAccountInstruction(
+        this.publicKey,
+        this.userTokenAccountAddress,
+        this.publicKey,
+        NATIVE_MINT
+      );
       preIxs.push(createUserWSOLAccountIx);
       postIxs.push(closeWSOLAccountIx);
     }
