@@ -12,19 +12,26 @@ import {
   SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import Dashboard from './dashboard/Dashboard';
 import { selectedRpcAtom } from 'stores/settings';
 import { useAtom } from 'jotai';
+import { useMediaQuery } from '@chakra-ui/react';
+import MobileDashboard from './dashboard/MobileDashboard';
+import Dashboard from './dashboard/Dashboard';
+import { Suspense } from 'react';
+import Loading from 'components/Loading/Loading';
+import NoSSR from 'react-no-ssr';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-export default function Home() {
+export default function Index() {
   const [rpc] = useAtom(selectedRpcAtom);
   const network = ENVIRONMENT as WalletAdapterNetwork;
   const phantom = new PhantomWalletAdapter();
   const solflare = new SolflareWalletAdapter({ network });
   const coinbase = new CoinbaseWalletAdapter();
   const brave = new BraveWalletAdapter();
+
+  const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
   return (
     <>
@@ -79,7 +86,11 @@ export default function Home() {
           autoConnect
         >
           <WalletModalProvider>
-            <Dashboard />
+            <NoSSR>
+              <Suspense fallback={<Loading />}>
+                {isLargerThan800 ? <Dashboard /> : <MobileDashboard />}
+              </Suspense>
+            </NoSSR>
           </WalletModalProvider>
         </WalletProvider>
       </ConnectionProvider>

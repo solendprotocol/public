@@ -66,70 +66,100 @@ function PoolRow({ reserves }: { reserves: Array<ReserveWithMetadataType> }) {
   );
 }
 
-export default function Nav() {
+export default function Nav({ onClose }: { onClose?: () => void }) {
   const [newPoolAddress, setNewPoolAddress] = useState<string>('');
   const [config] = useAtom(configAtom);
   const [pools] = useAtom(poolsWithMetaData);
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
 
   return (
-    <Box position='absolute' borderRight='1px solid var(--chakra-colors-line)'>
-      <Center px={2} py={3} h={50}>
-        <Input
-          placeholder='Enter custom address...'
-          borderColor='var(--chakra-colors-line)'
-          fontSize={11}
-          value={newPoolAddress}
-          onChange={(event) => setNewPoolAddress(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              setSelectedPool(newPoolAddress);
-            }
-          }}
-        />
-      </Center>
+    <Box
+      sx={{
+        '::-webkit-scrollbar': {
+          width: 1,
+          background: 'rgba(0, 0, 0, 0.2)',
+        },
+        '::-webkit-scrollbar-thumb': {
+          background: 'rgba(90, 90, 90)',
+        },
+        '::-webkit-scrollbar-track': {
+          background: 'rgba(0, 0, 0, 0.2)',
+        },
+      }}
+      overflow='overlay'
+      bg='neutral'
+      position='relative'
+      height='100%'
+    >
+      <Box
+        position='absolute'
+        right={0}
+        left={0}
+        borderRight='1px solid var(--chakra-colors-line)'
+      >
+        <Center px={2} py={3} h={50}>
+          <Input
+            placeholder='Enter custom address...'
+            borderColor='var(--chakra-colors-line)'
+            fontSize={11}
+            value={newPoolAddress}
+            onChange={(event) => setNewPoolAddress(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                setSelectedPool(newPoolAddress);
+              }
+            }}
+          />
+        </Center>
 
-      <List>
-        {config.map((pool) => (
-          <ListItem
-            key={pool.address}
-            borderTop='1px'
-            borderBottom='1px'
-            h='64px'
-            cursor='pointer'
-            p={2}
-            bg={
-              selectedPool && pool.address === selectedPool.address
-                ? 'neutralAlt'
-                : undefined
-            }
-            onClick={() => setSelectedPool(pool.address)}
-          >
-            {
-              <Tooltip closeOnClick label={pool.address}>
-                <Box>
-                  <Flex>
-                    <Text>{pool.name ?? formatAddress(pool.address)} </Text>
-                    <CopyIcon
-                      mb='2px'
-                      onClick={(e: any) => {
-                        navigator.clipboard.writeText(pool.address);
-                        e.stopPropagation();
-                      }}
-                    />
-                  </Flex>
-                </Box>
-              </Tooltip>
-            }
-            <Flex>
-              <PoolRow
-                key={pool.address}
-                reserves={pools[pool.address]?.reserves ?? []}
-              />
-            </Flex>
-          </ListItem>
-        ))}
-      </List>
+        <List>
+          {config.map((pool) => (
+            <ListItem
+              key={pool.address}
+              borderTop='1px'
+              borderBottom='1px'
+              h='64px'
+              cursor='pointer'
+              p={2}
+              bg={
+                selectedPool && pool.address === selectedPool.address
+                  ? 'neutralAlt'
+                  : undefined
+              }
+              onClick={() => {
+                setSelectedPool(pool.address);
+                if (onClose) {
+                  onClose();
+                }
+              }}
+            >
+              {
+                <Tooltip closeOnClick label={pool.address}>
+                  <Box>
+                    <Flex gap={1} alignItems='center'>
+                      <Text>{pool.name ?? formatAddress(pool.address)}</Text>{' '}
+                      <CopyIcon
+                        mb='2px'
+                        color='primary'
+                        onClick={(e: any) => {
+                          navigator.clipboard.writeText(pool.address);
+                          e.stopPropagation();
+                        }}
+                      />
+                    </Flex>
+                  </Box>
+                </Tooltip>
+              }
+              <Flex>
+                <PoolRow
+                  key={pool.address}
+                  reserves={pools[pool.address]?.reserves ?? []}
+                />
+              </Flex>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
     </Box>
   );
 }

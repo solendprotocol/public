@@ -11,6 +11,7 @@ import {
   Tr,
   Card,
   Divider,
+  useMediaQuery,
 } from '@chakra-ui/react';
 import AccountMetrics from 'components/AccountMetrics/AccountMetrics';
 import Wallet from 'components/Wallet/Wallet';
@@ -32,9 +33,14 @@ export default function Account() {
       setNewObligationAddress(selectedObligation?.address ?? '');
     }
   }, [selectedObligation?.address, changed]);
+  const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
   return (
-    <Card m={8} p={2} border='1px solid'>
+    <Card
+      m={isLargerThan800 ? 8 : 0}
+      p={isLargerThan800 ? 2 : 0}
+      border='1px solid'
+    >
       <Input
         placeholder='Enter custom obligation address...'
         borderColor='var(--chakra-colors-line)'
