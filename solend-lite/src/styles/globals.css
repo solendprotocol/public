@@ -1,3 +1,8 @@
 html {
   color-scheme: dark !important;
 }
+
+/* Uncomment for debugging layout */
+/* * {
+  outline: 1px solid red !important;
+} */

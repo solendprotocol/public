@@ -1,4 +1,4 @@
-import { Flex, Box, useMediaQuery } from '@chakra-ui/react';
+import { Flex, Box, Button } from '@chakra-ui/react';
 import Logo from 'components/Logo/Logo';
 import RpcSwitcher from 'components/RpcSwitcher/RpcSwitcher';
 import { useAtom, useSetAtom } from 'jotai';
@@ -12,19 +12,11 @@ import { formatCompact, formatUsd } from 'utils/numberFormatter';
 import RefreshDataButton from 'components/RefreshDataButton/RefreshDataButton';
 
 import styles from './Header.module.scss';
-import { HamburgerIcon } from '@chakra-ui/icons';
 
-export default function Header({
-  openNav,
-  openAccount,
-}: {
-  openNav?: () => void;
-  openAccount?: () => void;
-}) {
+export default function Header({ openNav }: { openNav?: () => void }) {
   const [pools] = useAtom(poolsAtom);
   const [obligations] = useAtom(obligationsAtom);
   const loadPools = useSetAtom(loadPoolsAtom);
-  const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
   const poolsExist = Boolean(Object.keys(pools).length > 0);
   useEffect(() => {
@@ -77,60 +69,49 @@ export default function Header({
       align='center'
       justify='space-between'
       className={styles.headerBanner}
-      px={isLargerThan800 ? undefined : 4}
     >
-      {!isLargerThan800 && openNav ? (
-        <Box>
-          <HamburgerIcon
-            color='primary'
-            onClick={() => openNav()}
-            cursor='pointer'
-          />
-        </Box>
-      ) : null}
-      <Box pl={isLargerThan800 ? 8 : 0} w={isLargerThan800 ? 200 : undefined}>
+      {openNav && <Button onClick={() => openNav()} />}
+      <Box pl={8} w={200}>
         <Logo />
       </Box>
-      {isLargerThan800 && (
-        <Flex px={4} flex='1'>
-          <Flex w='100%' justify='space-around' p={1}>
-            <Metric
-              label='Total supply'
-              value={formatCompact(totalSupplyUsd)}
-              alignCenter
-            />
-            <Metric
-              label='Total borrow'
-              value={formatCompact(totalBorrowUsd)}
-              alignCenter
-            />
-            <Metric
-              label='Solend TVL'
-              value={formatCompact(totalAvailableUsd)}
-              alignCenter
-            />
-            <Metric
-              label='Your supply'
-              value={formatUsd(yourSupply)}
-              alignCenter
-            />
-            <Metric
-              label='Your borrow'
-              value={formatUsd(yourBorrow)}
-              alignCenter
-            />
-            <Metric
-              label='Positions'
-              value={yourPositions.toString()}
-              alignCenter
-            />
-          </Flex>
+      <Flex px={4} flex='1'>
+        <Flex w='100%' justify='space-around' p={1}>
+          <Metric
+            label='Total supply'
+            value={formatCompact(totalSupplyUsd)}
+            alignCenter
+          />
+          <Metric
+            label='Total borrow'
+            value={formatCompact(totalBorrowUsd)}
+            alignCenter
+          />
+          <Metric
+            label='Solend TVL'
+            value={formatCompact(totalAvailableUsd)}
+            alignCenter
+          />
+          <Metric
+            label='Your supply'
+            value={formatUsd(yourSupply)}
+            alignCenter
+          />
+          <Metric
+            label='Your borrow'
+            value={formatUsd(yourBorrow)}
+            alignCenter
+          />
+          <Metric
+            label='Positions'
+            value={yourPositions.toString()}
+            alignCenter
+          />
         </Flex>
-      )}
-      <Flex justify='end' w={isLargerThan800 ? 400 : undefined} align='center'>
-        <ConnectButton openAccount={openAccount} />
-        {isLargerThan800 ? <RpcSwitcher /> : null}
-        {isLargerThan800 ? <RefreshDataButton /> : null}
+      </Flex>
+      <Flex justify='end' w={400} align='center'>
+        <ConnectButton />
+        <RpcSwitcher />
+        <RefreshDataButton />
       </Flex>
     </Flex>
   );

@@ -25,7 +25,7 @@ function ErrorFallback({
   return (
     <div role='alert'>
       <Text>Something went wrong:</Text>
-      <pre>{error.message}</pre>
+      <Text variant='secondary'>{error.message}</Text>
       <button onClick={resetErrorBoundary}>Try again</button>
     </div>
   );
@@ -51,7 +51,7 @@ export default function Dashboard() {
         setSelectedRpc(DEFAULT_RPC_ENDPOINTS[0]);
       }}
     >
-      <Suspense fallback={<Text>Loading...</Text>}>
+      <Suspense fallback={<Loading />}>
         <NoSSR>
           <Suspense>
             <TransactionTakeover />
@@ -76,24 +76,7 @@ export default function Dashboard() {
                 </Suspense>
               </ErrorBoundary>
             </GridItem>
-            <GridItem
-              sx={{
-                '::-webkit-scrollbar': {
-                  width: 1,
-                  background: 'rgba(0, 0, 0, 0.2)',
-                },
-                '::-webkit-scrollbar-thumb': {
-                  background: 'rgba(90, 90, 90)',
-                },
-                '::-webkit-scrollbar-track': {
-                  background: 'rgba(0, 0, 0, 0.2)',
-                },
-              }}
-              overflow='overlay'
-              bg='neutral'
-              area={'nav'}
-              position='relative'
-            >
+            <GridItem area={'nav'}>
               <ErrorBoundary
                 FallbackComponent={ErrorFallback}
                 onReset={() => {}}

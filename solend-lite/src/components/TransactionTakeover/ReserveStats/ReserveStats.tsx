@@ -14,7 +14,8 @@ const PYTH_ORACLE_MAPPING: Record<string, string> = {
   H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG: 'sol',
 };
 
-function getPythLink(feedAddress: string, assetName: string): string {
+function getPythLink(feedAddress: string, assetName: string | null): string {
+  if (!assetName) return '';
   if (feedAddress in PYTH_ORACLE_MAPPING) {
     return `https://pyth.network/price-feeds/crypto-${PYTH_ORACLE_MAPPING[
       feedAddress
