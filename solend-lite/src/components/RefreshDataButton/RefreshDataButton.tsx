@@ -13,6 +13,7 @@ import {
   selectedObligationAtom,
 } from 'stores/obligations';
 import { loadMetadataAtom } from 'stores/metadata';
+import { selectedRpcAtom } from 'stores/settings';
 
 import styles from './RefreshDataButton.module.scss';
 
@@ -33,6 +34,7 @@ function RefreshDataButton(): ReactElement {
   const [refreshCounter] = useAtom(refreshCounterAtom);
   const loadMetadata = useSetAtom(loadMetadataAtom);
   const [unqiueAssets] = useAtom(unqiueAssetsAtom);
+  const [selectedRpc] = useAtom(selectedRpcAtom);
 
   const loadAll = useCallback(() => {
     loadPools(true);
@@ -58,7 +60,7 @@ function RefreshDataButton(): ReactElement {
   useEffect(() => {
     restart(getNewExpiryTimestamp(), true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [on, refreshCounter]);
+  }, [on, refreshCounter, selectedRpc]);
 
   useEffect(() => {
     loadAll();

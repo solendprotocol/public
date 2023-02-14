@@ -16,7 +16,7 @@ import { useState } from 'react';
 import { DEFAULT_RPC_ENDPOINTS } from 'common/config';
 import { selectedRpcAtom } from 'stores/settings';
 
-const MenuInput = (props: any) => {
+export const MenuInput = (props: any) => {
   const { role, ...rest } = useMenuItem(props);
   return (
     <Box px='3' role={role}>
