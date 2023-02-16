@@ -51,9 +51,6 @@ function ConfirmButton({
             setShowConfirm(true);
             let signature;
             try {
-              onFinish({
-                type: 'loading',
-              });
               signature = await onClick(value);
             } catch (e: any) {
               console.error(e);

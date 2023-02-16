@@ -173,7 +173,10 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
           ((value ?? '').toString().length +
             (selectedToken.symbol?.length ?? 0));
 
-    const nullAmount = !usdAmount || !usdAmount || usdAmount === 'NaN';
+    const nullAmount =
+      !usdAmount ||
+      inputRef?.current?.textContent === '' ||
+      inputRef?.current?.textContent === 'NaN';
 
     if (value === '' && inputRef?.current?.textContent !== '') {
       // Edge case for resetting the input if the textContent and value don't match
@@ -190,7 +193,10 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
           <Box flexBasis='12.5%'>
             <div
               className={styles.iconContainer}
-              onClick={() => handleMax()}
+              onClick={() => {
+                handleMax();
+                focusMainInput();
+              }}
               aria-hidden='true'
             >
               <ReactSVG src='/max.svg' className={styles.maxButton} />
@@ -240,9 +246,7 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
                 }
               }}
               aria-hidden='true'
-            >
-              {!inputFocused && nullAmount ? 0 : null}
-            </span>
+            />
             {!useUsd && (
               <span onClick={focusMainInput} aria-hidden='true'>
                 {!inputFocused && nullAmount && 0}
@@ -256,7 +260,10 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
             <Flex justify='end'>
               <div
                 className={styles.iconContainer}
-                onClick={() => setUseUsd(!useUsd)}
+                onClick={() => {
+                  setUseUsd(!useUsd);
+                  focusMainInput();
+                }}
                 aria-hidden='true'
               >
                 <ReactSVG src='/switch.svg' className={styles.swapButton} />

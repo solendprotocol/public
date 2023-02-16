@@ -22,6 +22,9 @@ export const supplyConfigs = {
       txn: Transaction,
       connection: Connection,
     ) => Promise<TransactionSignature>,
+    preCallback?: () => void,
+    lendingCallback?: () => void,
+    postCallback?: () => void,
   ) => {
     const solendAction = await SolendAction.buildDepositTxns(
       connection,
@@ -33,7 +36,12 @@ export const supplyConfigs = {
       new PublicKey(selectedReserve.poolAddress),
     );
 
-    return solendAction.sendTransactions(sendTransaction);
+    return solendAction.sendTransactions(
+      sendTransaction,
+      preCallback,
+      lendingCallback,
+      postCallback,
+    );
   },
   getNewCalculations: (
     obligation: ObligationType | null,
@@ -100,7 +108,11 @@ export const borrowConfigs = {
     sendTransaction: (
       txn: Transaction,
       connection: Connection,
+      callback?: () => void,
     ) => Promise<TransactionSignature>,
+    preCallback?: () => void,
+    lendingCallback?: () => void,
+    postCallback?: () => void,
   ) => {
     const solendAction = await SolendAction.buildBorrowTxns(
       connection,
@@ -113,7 +125,12 @@ export const borrowConfigs = {
       new PublicKey(selectedReserve.poolAddress),
     );
 
-    return solendAction.sendTransactions(sendTransaction);
+    return solendAction.sendTransactions(
+      sendTransaction,
+      preCallback,
+      lendingCallback,
+      postCallback,
+    );
   },
   getNewCalculations: (
     obligation: ObligationType | null,
@@ -188,7 +205,11 @@ export const withdrawConfigs = {
     sendTransaction: (
       txn: Transaction,
       connection: Connection,
+      callback?: () => void,
     ) => Promise<TransactionSignature>,
+    preCallback?: () => void,
+    lendingCallback?: () => void,
+    postCallback?: () => void,
   ) => {
     const solendAction = await SolendAction.buildWithdrawTxns(
       connection,
@@ -200,7 +221,12 @@ export const withdrawConfigs = {
       new PublicKey(selectedReserve.poolAddress),
     );
 
-    return solendAction.sendTransactions(sendTransaction);
+    return solendAction.sendTransactions(
+      sendTransaction,
+      preCallback,
+      lendingCallback,
+      postCallback,
+    );
   },
   getNewCalculations: (
     obligation: ObligationType | null,
@@ -286,7 +312,11 @@ export const repayConfigs = {
     sendTransaction: (
       txn: Transaction,
       connection: Connection,
+      callback?: () => void,
     ) => Promise<TransactionSignature>,
+    preCallback?: () => void,
+    lendingCallback?: () => void,
+    postCallback?: () => void,
   ) => {
     const solendAction = await SolendAction.buildRepayTxns(
       connection,
@@ -298,7 +328,12 @@ export const repayConfigs = {
       new PublicKey(selectedReserve.poolAddress),
     );
 
-    return solendAction.sendTransactions(sendTransaction);
+    return solendAction.sendTransactions(
+      sendTransaction,
+      preCallback,
+      lendingCallback,
+      postCallback,
+    );
   },
   getNewCalculations: (
     obligation: ObligationType | null,

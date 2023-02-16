@@ -8,8 +8,8 @@ import { useCallback } from 'react';
 import { ObligationType, selectedObligationAtom } from 'stores/obligations';
 import { connectionAtom, SelectedReserveType } from 'stores/pools';
 import { publicKeyAtom } from 'stores/wallet';
-import BigInput from '../BigInput/BigInput';
 import { U64_MAX } from '@solendprotocol/solend-sdk';
+import BigInput from '../BigInput/BigInput';
 import ConfirmButton from '../ConfirmButton/ConfirmButton';
 import ReserveStats from '../ReserveStats/ReserveStats';
 
