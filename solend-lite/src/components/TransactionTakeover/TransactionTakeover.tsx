@@ -76,7 +76,23 @@ export default function TransactionTakeover() {
                   onFinish={onFinish}
                   value={value}
                   setValue={setValue}
-                  onSubmit={supplyConfigs.action}
+                  onSubmit={(
+                    submittedValue,
+                    publicKey,
+                    submittedSelectedReserve,
+                    connection,
+                    sendTransaction,
+                  ) =>
+                    supplyConfigs.action(
+                      submittedValue,
+                      publicKey,
+                      submittedSelectedReserve,
+                      connection,
+                      sendTransaction,
+                      undefined,
+                      () => setResult({ type: 'loading' }),
+                    )
+                  }
                   selectedReserve={selectedReserve}
                   maxValue={supplyConfigs.calculateMax(
                     selectedReserve,
@@ -91,7 +107,23 @@ export default function TransactionTakeover() {
                   onFinish={onFinish}
                   value={value}
                   setValue={setValue}
-                  onSubmit={borrowConfigs.action}
+                  onSubmit={(
+                    submittedValue,
+                    publicKey,
+                    submittedSelectedReserve,
+                    connection,
+                    sendTransaction,
+                  ) =>
+                    borrowConfigs.action(
+                      submittedValue,
+                      publicKey,
+                      submittedSelectedReserve,
+                      connection,
+                      sendTransaction,
+                      undefined,
+                      () => setResult({ type: 'loading' }),
+                    )
+                  }
                   selectedReserve={selectedReserve}
                   maxValue={borrowConfigs.calculateMax(
                     selectedReserve,
@@ -107,7 +139,23 @@ export default function TransactionTakeover() {
                   onFinish={onFinish}
                   value={value}
                   setValue={setValue}
-                  onSubmit={withdrawConfigs.action}
+                  onSubmit={(
+                    submittedValue,
+                    publicKey,
+                    submittedSelectedReserve,
+                    connection,
+                    sendTransaction,
+                  ) =>
+                    withdrawConfigs.action(
+                      submittedValue,
+                      publicKey,
+                      submittedSelectedReserve,
+                      connection,
+                      sendTransaction,
+                      undefined,
+                      () => setResult({ type: 'loading' }),
+                    )
+                  }
                   selectedReserve={selectedReserve}
                   maxValue={withdrawConfigs.calculateMax(
                     selectedReserve,
@@ -123,7 +171,23 @@ export default function TransactionTakeover() {
                   onFinish={onFinish}
                   value={value}
                   setValue={setValue}
-                  onSubmit={repayConfigs.action}
+                  onSubmit={(
+                    submittedValue,
+                    publicKey,
+                    submittedSelectedReserve,
+                    connection,
+                    sendTransaction,
+                  ) =>
+                    repayConfigs.action(
+                      submittedValue,
+                      publicKey,
+                      submittedSelectedReserve,
+                      connection,
+                      sendTransaction,
+                      undefined,
+                      () => setResult({ type: 'loading' }),
+                    )
+                  }
                   selectedReserve={selectedReserve}
                   maxValue={repayConfigs.calculateMax(
                     selectedReserve,

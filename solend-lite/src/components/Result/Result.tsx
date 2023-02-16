@@ -1,4 +1,4 @@
-import { Button, Flex, Text } from '@chakra-ui/react';
+import { Box, Button, Flex, Text } from '@chakra-ui/react';
 import Loading from 'components/Loading/Loading';
 import React from 'react';
 import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
@@ -70,6 +70,7 @@ export default function Result({ result, setResult }: ResultPropsType) {
           {result.message && formatErrorMsg(result.message)}
         </Text>
         <Button
+          size='md'
           onClick={() => {
             if (result.onBack) result.onBack();
             setResult(null);
@@ -108,6 +109,8 @@ export default function Result({ result, setResult }: ResultPropsType) {
           </a>
         </Text>
         <Button
+          size='md'
+          w='100%'
           onClick={() => {
             if (result.onBack) result.onBack();
             setResult(null);
@@ -119,5 +122,9 @@ export default function Result({ result, setResult }: ResultPropsType) {
     );
   }
 
-  return <Flex>{overridePage}</Flex>;
+  return (
+    <Box px={6} py={2}>
+      {overridePage}
+    </Box>
+  );
 }

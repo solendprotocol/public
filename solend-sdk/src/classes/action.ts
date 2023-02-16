@@ -219,20 +219,16 @@ export class SolendAction {
     // Union of addresses
     const distinctReserveCount =
       [
-        ...Array.from(
-          new Set([
-            ...borrowReserves.map((e) => e.toBase58()),
-            ...(action === "borrow" ? [reserve.address] : []),
-          ])
-        ),
+        ...Array.from(new Set([
+          ...borrowReserves.map((e) => e.toBase58()),
+          ...(action === "borrow" ? [reserve.address] : []),
+        ])),
       ].length +
       [
-        ...Array.from(
-          new Set([
-            ...depositReserves.map((e) => e.toBase58()),
-            ...(action === "deposit" ? [reserve.address] : []),
-          ])
-        ),
+        ...Array.from(new Set([
+          ...depositReserves.map((e) => e.toBase58()),
+          ...(action === "deposit" ? [reserve.address] : []),
+        ])),
       ].length;
 
     if (distinctReserveCount > POSITION_LIMIT) {
@@ -469,22 +465,27 @@ export class SolendAction {
     return txns;
   }
 
+
   async sendTransactions(
     sendTransaction: (
       txn: Transaction,
       connection: Connection
-    ) => Promise<TransactionSignature>
+    ) => Promise<TransactionSignature>,
+    preCallback?: () => void,
+    lendingCallback?: () => void,
+    postCallback?: () => void,
   ) {
     const txns = await this.getTransactions();
 
-    await this.sendSingleTransaction(txns.preLendingTxn, sendTransaction);
+    await this.sendSingleTransaction(txns.preLendingTxn, sendTransaction, preCallback);
 
     const signature = await this.sendSingleTransaction(
       txns.lendingTxn,
-      sendTransaction
+      sendTransaction,
+      lendingCallback
     );
 
-    await this.sendSingleTransaction(txns.postLendingTxn, sendTransaction);
+    await this.sendSingleTransaction(txns.postLendingTxn, sendTransaction, postCallback);
 
     return signature;
   }
@@ -494,11 +495,15 @@ export class SolendAction {
     sendTransaction: (
       txn: Transaction,
       connection: Connection
-    ) => Promise<TransactionSignature>
+    ) => Promise<TransactionSignature>,
+    callback?: () => void,
   ) {
     if (!txn) return "";
 
     const signature = await sendTransaction(txn, this.connection);
+    if (callback) {
+      callback();
+    }
     await this.connection.confirmTransaction(signature);
 
     return signature;
@@ -759,7 +764,7 @@ export class SolendAction {
             this.publicKey,
             this.userTokenAccountAddress,
             this.publicKey,
-            new PublicKey(this.reserve.liquidityToken.mint)
+            new PublicKey(this.reserve.liquidityToken.mint),
           );
 
         if (this.positions === POSITION_LIMIT && this.hostAta) {
@@ -781,7 +786,7 @@ export class SolendAction {
             this.publicKey,
             this.userCollateralAccountAddress,
             this.publicKey,
-            new PublicKey(this.reserve.collateralMintAddress)
+            new PublicKey(this.reserve.collateralMintAddress),
           );
 
         if (this.positions === POSITION_LIMIT && this.symbol === "SOL") {
@@ -884,12 +889,13 @@ export class SolendAction {
         postIxs.push(closeWSOLAccountIx);
       }
     } else {
-      const createUserWSOLAccountIx = createAssociatedTokenAccountInstruction(
-        this.publicKey,
-        this.userTokenAccountAddress,
-        this.publicKey,
-        NATIVE_MINT
-      );
+      const createUserWSOLAccountIx =
+        createAssociatedTokenAccountInstruction(
+          this.publicKey,
+          this.userTokenAccountAddress,
+          this.publicKey,
+          NATIVE_MINT,
+        );
       preIxs.push(createUserWSOLAccountIx);
       postIxs.push(closeWSOLAccountIx);
     }
