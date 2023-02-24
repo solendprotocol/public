@@ -1,9 +1,17 @@
 import { Client, Token } from '@solflare-wallet/utl-sdk';
-import { PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 
-const utl = new Client();
+export const getTokensInfo = async (
+  mints: string[],
+  connection: Connection,
+) => {
+  if (process.env.NEXT_PUBLIC_DEBUG) console.log('getTokensInfo');
+  const defaultConfig = new Client();
+  const utl = new Client({
+    ...defaultConfig.config,
+    connection,
+  });
 
-export const getTokensInfo = async (mints: string[]) => {
   const tokens: Token[] = await utl.fetchMints(
     mints.map((mint) => new PublicKey(mint)),
   );

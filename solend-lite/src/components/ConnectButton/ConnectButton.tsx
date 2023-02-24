@@ -13,7 +13,12 @@ import { useAtom, useSetAtom } from 'jotai';
 import { publicKeyAtom } from 'stores/wallet';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { ChevronDownIcon, CopyIcon, SettingsIcon } from '@chakra-ui/icons';
+import {
+  ChevronDownIcon,
+  CopyIcon,
+  LinkIcon,
+  StarIcon,
+} from '@chakra-ui/icons';
 import Image from 'next/image';
 import { formatAddress } from 'utils/formatUtils';
 import { DEFAULT_RPC_ENDPOINTS } from 'common/config';
@@ -31,15 +36,10 @@ export default function Header({ openAccount }: { openAccount?: () => void }) {
 
   return publicKey ? (
     <Menu gutter={0}>
-      <MenuButton
-        as={Button}
-        style={{
-          borderRight: '1px solid',
-        }}
-      >
+      <MenuButton as={Button} borderRight='1px'>
         <Flex align='center'>
           <Image src='/wallet.svg' alt='wallet logo' width={16} height={16} />{' '}
-          <Text color='neutral'>
+          <Text ml={1} color='neutral'>
             {formatAddress(publicKey, isLargerThan800 ? undefined : 4)}
           </Text>{' '}
           <ChevronDownIcon />
@@ -47,8 +47,11 @@ export default function Header({ openAccount }: { openAccount?: () => void }) {
       </MenuButton>
       <MenuList>
         {[
-          <MenuItem key='copy' onClick={() => disconnect()}>
-            <Text color='neutral'>Disconnect</Text>
+          <MenuItem key='disconnect' onClick={() => disconnect()}>
+            <LinkIcon />{' '}
+            <Text pl={1} color='neutral'>
+              Disconnect
+            </Text>
           </MenuItem>,
           <MenuItem
             key='copy'
@@ -56,11 +59,11 @@ export default function Header({ openAccount }: { openAccount?: () => void }) {
               navigator.clipboard.writeText(publicKey);
             }}
           >
-            <CopyIcon />
+            <CopyIcon mr={1} />
             <Text color='neutral'>Copy address</Text>
           </MenuItem>,
         ].concat(
-          ...(isLargerThan800 && openAccount
+          ...(isLargerThan800 || !openAccount
             ? []
             : [
                 <MenuDivider key='divider1' />,
@@ -70,7 +73,7 @@ export default function Header({ openAccount }: { openAccount?: () => void }) {
                     if (openAccount) openAccount();
                   }}
                 >
-                  <SettingsIcon /> <Text color='neutral'>View account</Text>
+                  <StarIcon mr={1} /> <Text color='neutral'>View account</Text>
                 </MenuItem>,
               ]
                 .concat(<MenuDivider key='divider2' />)
@@ -111,10 +114,12 @@ export default function Header({ openAccount }: { openAccount?: () => void }) {
       </MenuList>
     </Menu>
   ) : (
-    <Button onClick={() => setVisible(true)}>
+    <Button onClick={() => setVisible(true)} borderRight='1px'>
       <Flex>
         <Image src='/wallet.svg' alt='wallet logo' width={16} height={16} />{' '}
-        <Text color='neutral'>Connect wallet</Text>
+        <Text ml={1} color='neutral'>
+          Connect wallet
+        </Text>
       </Flex>
     </Button>
   );

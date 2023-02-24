@@ -1,19 +1,20 @@
 import React, { ReactElement, useCallback, useEffect, useState } from 'react';
-import { Box, Tooltip } from '@chakra-ui/react';
+import { Box, Tooltip, useMediaQuery } from '@chakra-ui/react';
 import { useTimer } from 'react-timer-hook';
 import classNames from 'classnames';
-import {
-  loadPoolsAtom,
-  refreshCounterAtom,
-  unqiueAssetsAtom,
-} from 'stores/pools';
+import { loadPoolsAtom, unqiueAssetsAtom } from 'stores/pools';
 import { useAtom, useSetAtom } from 'jotai';
 import {
   selectedObligationAddressAtom,
   selectedObligationAtom,
 } from 'stores/obligations';
 import { loadMetadataAtom } from 'stores/metadata';
-import { selectedRpcAtom } from 'stores/settings';
+import {
+  refreshCounterAtom,
+  selectedRpcAtom,
+  switchboardAtom,
+} from 'stores/settings';
+import { publicKeyAtom, walletAssetsAtom } from 'stores/wallet';
 
 import styles from './RefreshDataButton.module.scss';
 
@@ -29,26 +30,45 @@ const getNewExpiryTimestamp = (): Date => {
 function RefreshDataButton(): ReactElement {
   const [on, setOn] = useState<boolean>(false);
   const loadPools = useSetAtom(loadPoolsAtom);
+  const [switchboardProgram] = useAtom(switchboardAtom);
   const loadObligation = useSetAtom(selectedObligationAtom);
   const [selectedObligationAddress] = useAtom(selectedObligationAddressAtom);
   const [refreshCounter] = useAtom(refreshCounterAtom);
+  const refreshWallet = useSetAtom(walletAssetsAtom);
   const loadMetadata = useSetAtom(loadMetadataAtom);
   const [unqiueAssets] = useAtom(unqiueAssetsAtom);
   const [selectedRpc] = useAtom(selectedRpcAtom);
+  const [publicKey] = useAtom(publicKeyAtom);
+  const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
-  const loadAll = useCallback(() => {
-    loadPools(true);
-    if (selectedObligationAddress) {
-      loadObligation({
-        newSelectedObligationAddress: selectedObligationAddress,
-      });
+  const loadAll = useCallback(async () => {
+    if (!switchboardProgram) return;
+    try {
+      const reloadPromises = [];
+      reloadPromises.push(loadPools());
+      if (selectedObligationAddress) {
+        reloadPromises.push(loadObligation(selectedObligationAddress));
+      }
+      if (publicKey) {
+        refreshWallet();
+      }
+      await Promise.all(reloadPromises);
+    } finally {
+      restart(getNewExpiryTimestamp());
     }
-  }, [loadPools, loadObligation, selectedObligationAddress]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    loadPools,
+    loadObligation,
+    selectedObligationAddress,
+    switchboardProgram,
+  ]);
 
   const { restart, seconds } = useTimer({
     autoStart: true,
     expiryTimestamp: getNewExpiryTimestamp(),
     onExpire: () => {
+      // This is called on initial page load so we don't refresh first time
       if (on) {
         loadAll();
       } else {
@@ -58,15 +78,13 @@ function RefreshDataButton(): ReactElement {
   });
 
   useEffect(() => {
-    restart(getNewExpiryTimestamp(), true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [on, refreshCounter, selectedRpc]);
-
-  useEffect(() => {
     loadAll();
-  }, [refreshCounter, loadAll]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshCounter, selectedRpc]);
 
   const uniqueAssetsExist = unqiueAssets.length > 0;
+
+  // Initial loads
   useEffect(() => {
     if (uniqueAssetsExist) {
       loadMetadata();
@@ -85,7 +103,11 @@ function RefreshDataButton(): ReactElement {
       ? 'var(--chakra-colors-brandAlt)'
       : 'var(--chakra-colors-brand)';
   return (
-    <Box px={1} className={styles.container}>
+    <Box
+      display={isLargerThan800 ? undefined : 'none'}
+      px={1}
+      className={styles.container}
+    >
       <Tooltip
         label={`Data on this page will auto-refresh in ${seconds} seconds. Click this to trigger a manual refresh.`}
       >

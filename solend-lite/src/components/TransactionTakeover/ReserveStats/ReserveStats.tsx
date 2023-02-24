@@ -1,5 +1,5 @@
 import React, { ReactElement, useState } from 'react';
-import { Divider, Flex, Text, Tooltip } from '@chakra-ui/react';
+import { Box, Divider, Flex, Text, Tooltip } from '@chakra-ui/react';
 import Metric from 'components/Metric/Metric';
 import { formatPercent, formatToken, formatUsd } from 'utils/numberFormatter';
 import { SelectedReserveType } from 'stores/pools';
@@ -59,7 +59,11 @@ function ReserveStats({
   if (newBorrowUtilization) {
     const nbuObj = newBorrowUtilization;
     if (nbuObj.isGreaterThanOrEqualTo(1)) {
-      newUtilizationDisplay = <Text color='brand'>{formatPercent(1)}</Text>;
+      newUtilizationDisplay = (
+        <Text ml={1} color='brand'>
+          {formatPercent(1)}
+        </Text>
+      );
     } else if (nbuObj.isLessThan(0)) {
       newUtilizationDisplay = formatPercent(0);
     } else {
@@ -92,7 +96,7 @@ function ReserveStats({
         label='Utilization'
         row
         value={
-          <>
+          <Flex>
             {formatPercent(utilization ?? 0)}
             {newBorrowUtilization && (
               <>
@@ -100,7 +104,7 @@ function ReserveStats({
                 {newUtilizationDisplay}
               </>
             )}
-          </>
+          </Flex>
         }
       />
       <Metric
@@ -120,7 +124,7 @@ function ReserveStats({
           }
         />
       )}
-      <div
+      <Box
         role='presentation'
         className={styles.collapseButton}
         onKeyDown={() => setShowParams(!showParams)}
@@ -133,7 +137,7 @@ function ReserveStats({
             {showParams ? <ChevronUpIcon /> : <ChevronDownIcon />}
           </Text>
         </Flex>
-      </div>
+      </Box>
       <Flex
         flexDirection='column'
         justify='space-between'

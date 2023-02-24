@@ -27,7 +27,7 @@ export default function Token({
         <Avatar
           width={`${size}px`}
           height={`${size}px`}
-          bg='var(--chakra-colors-brandAlt)'
+          bg='var(--chakra-colors-line)'
           icon={<Text>{reserve.mintAddress[0]}</Text>}
           borderRadius={100}
         />

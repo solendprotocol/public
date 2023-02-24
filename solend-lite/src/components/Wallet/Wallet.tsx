@@ -12,11 +12,8 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import BigNumber from 'bignumber.js';
 import { useAtom, useSetAtom } from 'jotai';
 import { useEffect } from 'react';
-import {
-  configAtom,
-  selectedPoolAtom,
-  selectedReserveAtom,
-} from 'stores/pools';
+import { configAtom } from 'stores/config';
+import { selectedPoolAtom, selectedReserveAtom } from 'stores/pools';
 import { setPublicKeyAtom, walletAssetsAtom } from 'stores/wallet';
 import { formatToken, formatUsd } from 'utils/numberFormatter';
 
@@ -34,10 +31,11 @@ export default function Wallet() {
     setPublicKeyInAtom(pubString ?? null);
   }, [pubString, uniqueConfigHash, setPublicKeyInAtom]);
 
-  const walletContents = walletAssets.filter((asset) =>
-    selectedPool?.reserves
-      .map((reserve) => reserve.mintAddress)
-      .includes(asset.mintAddress),
+  const walletContents = walletAssets.filter(
+    (asset) =>
+      selectedPool?.reserves
+        .map((reserve) => reserve.mintAddress)
+        .includes(asset.mintAddress) && !asset.amount.isZero(),
   );
 
   return (

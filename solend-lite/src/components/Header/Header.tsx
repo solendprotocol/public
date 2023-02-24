@@ -1,10 +1,9 @@
 import { Flex, Box, useMediaQuery } from '@chakra-ui/react';
 import Logo from 'components/Logo/Logo';
 import RpcSwitcher from 'components/RpcSwitcher/RpcSwitcher';
-import { useAtom, useSetAtom } from 'jotai';
-import { useEffect } from 'react';
+import { useAtom } from 'jotai';
 import { obligationsAtom } from 'stores/obligations';
-import { loadPoolsAtom, poolsAtom } from 'stores/pools';
+import { poolsAtom } from 'stores/pools';
 import ConnectButton from 'components/ConnectButton/ConnectButton';
 import Metric from 'components/Metric/Metric';
 import BigNumber from 'bignumber.js';
@@ -23,15 +22,7 @@ export default function Header({
 }) {
   const [pools] = useAtom(poolsAtom);
   const [obligations] = useAtom(obligationsAtom);
-  const loadPools = useSetAtom(loadPoolsAtom);
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
-
-  const poolsExist = Boolean(Object.keys(pools).length > 0);
-  useEffect(() => {
-    if (poolsExist) {
-      loadPools();
-    }
-  }, [poolsExist, loadPools]);
 
   const totalSupplyUsd = Object.values(pools).reduce(
     (acc, p) =>
@@ -58,15 +49,15 @@ export default function Header({
     new BigNumber(0),
   );
 
-  const yourSupply = Object.values(obligations).reduce(
+  const yourSupply = obligations.reduce(
     (acc, o) => o.totalSupplyValue.plus(acc),
     new BigNumber(0),
   );
-  const yourBorrow = Object.values(obligations).reduce(
+  const yourBorrow = obligations.reduce(
     (acc, o) => o.totalBorrowValue.plus(acc),
     new BigNumber(0),
   );
-  const yourPositions = Object.values(obligations).reduce(
+  const yourPositions = obligations.reduce(
     (acc, o) => new BigNumber(o.deposits.length + o.borrows.length).plus(acc),
     new BigNumber(0),
   );
@@ -96,17 +87,17 @@ export default function Header({
           <Flex w='100%' justify='space-around' p={1}>
             <Metric
               label='Total supply'
-              value={formatCompact(totalSupplyUsd)}
+              value={`$${formatCompact(totalSupplyUsd)}`}
               alignCenter
             />
             <Metric
               label='Total borrow'
-              value={formatCompact(totalBorrowUsd)}
+              value={`$${formatCompact(totalBorrowUsd)}`}
               alignCenter
             />
             <Metric
               label='Solend TVL'
-              value={formatCompact(totalAvailableUsd)}
+              value={`$${formatCompact(totalAvailableUsd)}`}
               alignCenter
             />
             <Metric
@@ -130,7 +121,7 @@ export default function Header({
       <Flex justify='end' w={isLargerThan800 ? 400 : undefined} align='center'>
         <ConnectButton openAccount={openAccount} />
         {isLargerThan800 ? <RpcSwitcher /> : null}
-        {isLargerThan800 ? <RefreshDataButton /> : null}
+        <RefreshDataButton />
       </Flex>
     </Flex>
   );

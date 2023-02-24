@@ -31,6 +31,8 @@ export function formatToken(
 
   const contents = bn.toFormat(digits, round ? 4 : 1);
 
+  if (bn.eq(0)) return '0';
+
   return exactTip ? (
     <Tooltip title={formatExact(value)}>{contents}</Tooltip>
   ) : (
@@ -93,6 +95,7 @@ export function formatUsd(
 export function formatPercent(
   value: string | number | BigNumber,
   noTrim?: boolean,
+  decimals: number = 2,
   limit: number = 0.0001,
 ) {
   const bnPercent = new BigNumber(value);
@@ -105,7 +108,7 @@ export function formatPercent(
 
   return noTrim
     ? `${bnPercent.multipliedBy(100)}%`
-    : `${bnPercent.multipliedBy(100).toFormat(2)}%`;
+    : `${bnPercent.multipliedBy(100).toFormat(decimals)}%`;
 }
 
 export function formatCompact(value: BigNumber) {
