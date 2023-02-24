@@ -8,7 +8,6 @@ import {
 } from '@chakra-ui/react';
 import { Suspense } from 'react';
 import Footer from 'components/Footer/Footer';
-import NoSSR from 'react-no-ssr';
 import Nav from 'components/Nav/Nav';
 import Header from 'components/Header/Header';
 import Pools from 'components/Pool/Pool';
@@ -61,62 +60,51 @@ export default function Dashboard() {
       }}
     >
       <Suspense fallback={<Loading />}>
-        <NoSSR>
-          <Suspense>
-            <TransactionTakeover />
-          </Suspense>
-          <Grid
-            templateAreas={`"header header header"
+        <Suspense>
+          <TransactionTakeover />
+        </Suspense>
+        <Grid
+          templateAreas={`"header header header"
                             "nav main side"
                             "nav main side"
                             "footer footer footer"`}
-            gridTemplateRows={'64px 500px 1fr 50px'}
-            gridTemplateColumns={'200px 1fr 400px'}
-            minH='1000px'
-            gap='1px'
-          >
-            <GridItem bg='neutral' area={'header'}>
-              <ErrorBoundary
-                FallbackComponent={ErrorFallback}
-                onReset={() => {}}
-              >
-                <Suspense fallback={<Loading />}>
-                  <Header />
-                </Suspense>
-              </ErrorBoundary>
-            </GridItem>
-            <GridItem area={'nav'}>
-              <ErrorBoundary
-                FallbackComponent={ErrorFallback}
-                onReset={() => {}}
-              >
-                <Suspense fallback={<Loading />}>
-                  <Nav />
-                </Suspense>
-              </ErrorBoundary>
-            </GridItem>
-            <GridItem bg='neutral' area={'main'}>
-              <ErrorBoundary FallbackComponent={ErrorFallback}>
-                <Suspense fallback={<Loading />}>
-                  <Pools selectReserveWithModal={selectReserveWithModal} />
-                </Suspense>
-              </ErrorBoundary>
-            </GridItem>
-            <GridItem bg='neutral' area={'side'}>
-              <ErrorBoundary
-                FallbackComponent={ErrorFallback}
-                onReset={() => {}}
-              >
-                <Suspense fallback={<Loading />}>
-                  <Account />
-                </Suspense>
-              </ErrorBoundary>
-            </GridItem>
-            <GridItem bg='neutral' area={'footer'}>
-              <Footer />
-            </GridItem>
-          </Grid>
-        </NoSSR>
+          gridTemplateRows={'64px 500px 1fr 50px'}
+          gridTemplateColumns={'200px 1fr 400px'}
+          minH='1000px'
+          gap='1px'
+        >
+          <GridItem bg='neutral' area={'header'}>
+            <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => {}}>
+              <Suspense fallback={<Loading />}>
+                <Header />
+              </Suspense>
+            </ErrorBoundary>
+          </GridItem>
+          <GridItem area={'nav'}>
+            <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => {}}>
+              <Suspense fallback={<Loading />}>
+                <Nav />
+              </Suspense>
+            </ErrorBoundary>
+          </GridItem>
+          <GridItem bg='neutral' area={'main'}>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Suspense fallback={<Loading />}>
+                <Pools selectReserveWithModal={selectReserveWithModal} />
+              </Suspense>
+            </ErrorBoundary>
+          </GridItem>
+          <GridItem bg='neutral' area={'side'}>
+            <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => {}}>
+              <Suspense fallback={<Loading />}>
+                <Account />
+              </Suspense>
+            </ErrorBoundary>
+          </GridItem>
+          <GridItem bg='neutral' area={'footer'}>
+            <Footer />
+          </GridItem>
+        </Grid>
       </Suspense>
     </ErrorBoundary>
   );

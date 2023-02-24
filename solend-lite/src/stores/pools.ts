@@ -188,7 +188,7 @@ export const selectedPoolAtom = atom(
       new PublicKey(newSelectedPoolAddress),
       connection,
       switchboardProgram,
-    )
+    );
 
     if (newSelectedObligationAddress) {
       set(selectedObligationAtom, newSelectedObligationAddress);

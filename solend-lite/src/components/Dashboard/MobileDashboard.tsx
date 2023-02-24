@@ -17,14 +17,13 @@ import Account from 'components/Account/Account';
 import { ErrorBoundary } from 'react-error-boundary';
 import TransactionTakeover from 'components/TransactionTakeover/TransactionTakeover';
 import { useCallback } from 'react';
-import { selectedReserveAtom, unqiueAssetsAtom } from 'stores/pools';
+import { selectedReserveAtom } from 'stores/pools';
 import { selectedRpcAtom } from 'stores/settings';
 import { useAtom, useSetAtom } from 'jotai';
 import { DEFAULT_RPC_ENDPOINTS } from 'common/config';
 import Loading from 'components/Loading/Loading';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { setPublicKeyAtom } from 'stores/wallet';
-import { loadMetadataAtom } from 'stores/metadata';
 import { configAtom } from 'stores/config';
 
 function ErrorFallback({
@@ -58,8 +57,6 @@ export default function MobileDashboard() {
   const setSelectedRpc = useSetAtom(selectedRpcAtom);
   const setSelectedReserve = useSetAtom(selectedReserveAtom);
   const [config] = useAtom(configAtom);
-  const loadMetadata = useSetAtom(loadMetadataAtom);
-  const [unqiueAssets] = useAtom(unqiueAssetsAtom);
   const setPublicKeyInAtom = useSetAtom(setPublicKeyAtom);
   const { publicKey } = useWallet();
 
@@ -70,14 +67,6 @@ export default function MobileDashboard() {
     },
     [onOpen, setSelectedReserve],
   );
-
-  const uniqueAssetsExist = unqiueAssets.length > 0;
-  useEffect(() => {
-    if (uniqueAssetsExist) {
-      loadMetadata();
-    }
-  }, [uniqueAssetsExist, loadMetadata]);
-
   const uniqueConfigHash = config.map((c) => c.address).join(',');
   const pubString = publicKey?.toBase58();
   useEffect(() => {
