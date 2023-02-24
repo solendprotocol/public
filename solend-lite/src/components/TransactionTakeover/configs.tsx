@@ -8,9 +8,22 @@ import BigNumber from 'bignumber.js';
 import { ObligationType } from 'stores/obligations';
 import { SelectedReserveType } from 'stores/pools';
 import { WalletType } from 'stores/wallet';
-import { SolendAction, U64_MAX } from '@solendprotocol/solend-sdk';
+import {
+  POSITION_LIMIT,
+  SolendAction,
+  U64_MAX,
+} from '@solendprotocol/solend-sdk';
+import { NATIVE_MINT } from '@solana/spl-token';
 
-const SOL_PADDING_FOR_RENT_AND_FEE = 0.001;
+const SOL_PADDING_FOR_RENT_AND_FEE = 0.02;
+
+export function sufficientSOLForTransaction(wallet: WalletType) {
+  return wallet
+    .find((a) => a.mintAddress === NATIVE_MINT.toBase58())
+    ?.amount?.isGreaterThanOrEqualTo(
+      new BigNumber(SOL_PADDING_FOR_RENT_AND_FEE).times(0.9),
+    );
+}
 
 export const supplyConfigs = {
   action: async (
@@ -42,6 +55,44 @@ export const supplyConfigs = {
       lendingCallback,
       postCallback,
     );
+  },
+  verifyAction: (
+    value: BigNumber,
+    obligation: ObligationType | null,
+    reserve: SelectedReserveType,
+    wallet: WalletType,
+  ) => {
+    if (!obligation) return null;
+
+    // Allow action despite position limit, provided user already has a position in this asset
+    const positionLimitReached =
+      obligation.positions > POSITION_LIMIT &&
+      !obligation.deposits
+        .map((d) => d.reserveAddress)
+        .includes(reserve.address);
+
+    if (positionLimitReached) {
+      return 'Max number of positions reached';
+    }
+    if (
+      reserve.totalSupply.plus(value).isGreaterThan(reserve.reserveSupplyCap)
+    ) {
+      return 'Over reserve deposit limit';
+    }
+    if (
+      value.isGreaterThan(
+        wallet.find((a) => a.mintAddress === reserve.mintAddress)?.amount ?? 0,
+      )
+    ) {
+      return 'Insufficient balance';
+    }
+    if (!sufficientSOLForTransaction(wallet)) {
+      return 'Min 0.02 SOL required for transaction and fees';
+    }
+    if (value.isZero()) {
+      return 'Enter an amount';
+    }
+    return null;
   },
   getNewCalculations: (
     obligation: ObligationType | null,
@@ -78,10 +129,9 @@ export const supplyConfigs = {
     };
   },
   calculateMax: (reserve: SelectedReserveType, wallet: WalletType) => {
-    const supplyCapRemaining = BigNumber.max(
-      reserve.reserveSupplyCap.minus(reserve.totalSupply).minus(0.2),
-      new BigNumber(0),
-    );
+    const supplyCapRemaining = reserve.reserveSupplyCap
+      .minus(reserve.totalSupply)
+      .minus(0.2);
 
     const asset = wallet.find((ass) => ass.mintAddress === reserve.mintAddress);
 
@@ -92,10 +142,10 @@ export const supplyConfigs = {
         ? asset.amount.minus(SOL_PADDING_FOR_RENT_AND_FEE)
         : asset.amount;
 
-    return BigNumber.min(
-      maxSuppliableFromWallet,
-      supplyCapRemaining,
-    ).decimalPlaces(reserve.decimals);
+    return BigNumber.max(
+      BigNumber.min(maxSuppliableFromWallet, supplyCapRemaining),
+      new BigNumber(0),
+    );
   },
 };
 
@@ -131,6 +181,59 @@ export const borrowConfigs = {
       lendingCallback,
       postCallback,
     );
+  },
+  verifyAction: (
+    value: BigNumber,
+    obligation: ObligationType | null,
+    reserve: SelectedReserveType,
+    wallet: WalletType,
+  ) => {
+    if (!obligation) return null;
+
+    const borrowableAmountUntil95utilization = BigNumber.max(
+      new BigNumber(reserve.availableAmount).minus(
+        new BigNumber(reserve.totalSupply).times(new BigNumber(0.05)),
+      ),
+      BigNumber(0),
+    );
+
+    const overBorrowLimit = obligation.borrowLimit
+      .minus(obligation.totalBorrowValue)
+      .dividedBy(reserve.price);
+
+    // Allow action despite position limit, provided user already has a position in this asset
+    const positionLimitReached =
+      obligation.positions > POSITION_LIMIT &&
+      !obligation.borrows
+        .map((d) => d.reserveAddress)
+        .includes(reserve.address);
+
+    if (positionLimitReached) {
+      return 'Max number of positions reached';
+    }
+    if (value.isGreaterThan(reserve.availableAmount)) {
+      return 'Insufficient liquidity to borrow';
+    }
+    if (
+      obligation?.totalBorrowValue
+        .plus(value)
+        .isGreaterThanOrEqualTo(reserve.reserveBorrowCap)
+    ) {
+      return 'Over reserve borrow limit';
+    }
+    if (value.isGreaterThan(borrowableAmountUntil95utilization)) {
+      return 'Cannot borrow if it brings utilization over 95%';
+    }
+    if (value.isGreaterThan(overBorrowLimit)) {
+      return 'Exceeds borrow limit';
+    }
+    if (!sufficientSOLForTransaction(wallet)) {
+      return 'Min 0.02 SOL required for transaction and fees';
+    }
+    if (value.isZero()) {
+      return 'Enter an amount';
+    }
+    return null;
   },
   getNewCalculations: (
     obligation: ObligationType | null,
@@ -179,20 +282,20 @@ export const borrowConfigs = {
       reserve.totalBorrow,
     );
 
-    const borrowableAmountUntil95utilization = BigNumber.max(
-      new BigNumber(reserve.availableAmount).minus(
-        new BigNumber(reserve.totalSupply).times(new BigNumber(0.05)),
+    const borrowableAmountUntil95utilization = new BigNumber(
+      reserve.availableAmount,
+    ).minus(new BigNumber(reserve.totalSupply).times(new BigNumber(0.05)));
+
+    return BigNumber.max(
+      BigNumber.min(
+        obligation.borrowLimit
+          .minus(obligation.totalBorrowValue)
+          .dividedBy(reserve.price),
+        borrowableAmountUntil95utilization,
+        borrowCapRemaining,
       ),
       BigNumber(0),
     );
-
-    return BigNumber.min(
-      obligation.borrowLimit
-        .minus(obligation.totalBorrowValue)
-        .dividedBy(reserve.price),
-      borrowableAmountUntil95utilization,
-      borrowCapRemaining,
-    ).decimalPlaces(reserve.decimals);
   },
 };
 
@@ -227,6 +330,52 @@ export const withdrawConfigs = {
       lendingCallback,
       postCallback,
     );
+  },
+  verifyAction: (
+    value: BigNumber,
+    obligation: ObligationType | null,
+    reserve: SelectedReserveType,
+    wallet: WalletType,
+  ) => {
+    if (!obligation) return null;
+
+    const reserveDepositedAmount = obligation.deposits.find(
+      (d) => d.reserveAddress === reserve.address,
+    )?.amount;
+    if (!reserveDepositedAmount) return null;
+
+    const constantBorrowLimit = obligation.borrowLimit.minus(
+      reserveDepositedAmount
+        .times(reserve.price)
+        .times(reserve.loanToValueRatio),
+    );
+
+    const collateralWithdrawLimit = !(
+      reserve.price.isZero() || !reserve.loanToValueRatio
+    )
+      ? BigNumber.max(
+          reserveDepositedAmount.minus(
+            obligation?.totalBorrowValue
+              .minus(constantBorrowLimit)
+              .dividedBy(reserve.price.times(reserve.loanToValueRatio)),
+          ),
+          0,
+        )
+      : new BigNumber(U64_MAX);
+
+    if (value.isGreaterThan(reserve.availableAmount)) {
+      return 'Insufficient liquidity to withdraw';
+    }
+    if (value.isGreaterThan(collateralWithdrawLimit)) {
+      return 'Cannot withdraw into undercollateralization';
+    }
+    if (value.isGreaterThan(reserveDepositedAmount)) {
+      return 'Cannot withdraw more than deposited supply';
+    }
+    if (!sufficientSOLForTransaction(wallet)) {
+      return 'Min 0.02 SOL required for transaction and fees';
+    }
+    return null;
   },
   getNewCalculations: (
     obligation: ObligationType | null,
@@ -275,31 +424,29 @@ export const withdrawConfigs = {
 
     const reserveDepositedAmount = obligation.deposits.find(
       (d) => d.reserveAddress === reserve.address,
-    );
+    )?.amount;
     if (!reserveDepositedAmount) return BigNumber(0);
 
     const constantBorrowLimit = obligation.borrowLimit.minus(
-      reserveDepositedAmount.amount
+      reserveDepositedAmount
         .times(reserve.price)
         .times(reserve.loanToValueRatio),
     );
 
-    const collateralWithdrawLimit = !reserve.price.isZero()
-      ? BigNumber.max(
-          reserveDepositedAmount.amount.minus(
-            obligation.totalBorrowValue
-              .minus(constantBorrowLimit)
-              .dividedBy(reserve.price.times(reserve.loanToValueRatio)),
-          ),
-          new BigNumber(0),
+    const collateralWithdrawLimit = !(
+      reserve.price.isZero() || !reserve.loanToValueRatio
+    )
+      ? reserveDepositedAmount.minus(
+          obligation.totalBorrowValue
+            .minus(constantBorrowLimit)
+            .dividedBy(reserve.price.times(reserve.loanToValueRatio)),
         )
       : new BigNumber(U64_MAX);
 
-    return BigNumber.min(
-      reserveDepositedAmount.amount,
-      collateralWithdrawLimit,
-      reserve.availableAmount,
-    ).decimalPlaces(reserve.decimals);
+    return BigNumber.max(
+      BigNumber.min(collateralWithdrawLimit, reserve.availableAmount),
+      new BigNumber(0),
+    );
   },
 };
 
@@ -334,6 +481,34 @@ export const repayConfigs = {
       lendingCallback,
       postCallback,
     );
+  },
+  verifyAction: (
+    value: BigNumber,
+    obligation: ObligationType | null,
+    reserve: SelectedReserveType,
+    wallet: WalletType,
+  ) => {
+    if (!obligation) return null;
+
+    const reserveBorrowedAmount = obligation.borrows.find(
+      (b) => b.reserveAddress === reserve.address,
+    )?.amount;
+    if (!reserveBorrowedAmount) return null;
+
+    if (
+      value.isGreaterThan(
+        wallet.find((a) => a.mintAddress === reserve.mintAddress)?.amount ?? 0,
+      )
+    ) {
+      return 'Insufficient balance';
+    }
+    if (value.isGreaterThan(reserveBorrowedAmount)) {
+      return 'Amount exceeded the amount borrowed';
+    }
+    if (!sufficientSOLForTransaction(wallet)) {
+      return 'Min 0.02 SOL required for transaction and fees';
+    }
+    return null;
   },
   getNewCalculations: (
     obligation: ObligationType | null,
@@ -395,9 +570,6 @@ export const repayConfigs = {
           )
         : asset.amount;
 
-    return BigNumber.min(
-      reserveBorrowedAmount.amount,
-      maxRepayableFromWallet,
-    ).decimalPlaces(reserve.decimals);
+    return BigNumber.min(reserveBorrowedAmount.amount, maxRepayableFromWallet);
   },
 };

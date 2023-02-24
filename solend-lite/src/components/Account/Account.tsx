@@ -52,16 +52,14 @@ export default function Account() {
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
-            setSelectedObligation({
-              newSelectedObligationAddress: newObligationAddress,
-            });
+            setSelectedObligation(newObligationAddress);
           }
         }}
       />
       <AccountMetrics />
       <Center mt={4}></Center>
       <Divider my={1} />
-      <TableContainer key='supplyTable'>
+      <TableContainer key='supplyTable' paddingBottom={2}>
         <Table size='sm'>
           <Thead>
             <Tr>
@@ -102,7 +100,7 @@ export default function Account() {
         </Table>
       </TableContainer>
       <Divider my={1} />
-      <TableContainer key='borrowTable'>
+      <TableContainer key='borrowTable' paddingBottom={2}>
         <Table size='sm'>
           <Thead>
             <Tr>

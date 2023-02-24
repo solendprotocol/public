@@ -6,12 +6,14 @@ import { ResultConfigType } from 'components/Result/Result';
 import { useAtom } from 'jotai';
 import { useCallback } from 'react';
 import { ObligationType, selectedObligationAtom } from 'stores/obligations';
-import { connectionAtom, SelectedReserveType } from 'stores/pools';
+import { SelectedReserveType } from 'stores/pools';
 import { publicKeyAtom } from 'stores/wallet';
 import { U64_MAX } from '@solendprotocol/solend-sdk';
 import BigInput from '../BigInput/BigInput';
 import ConfirmButton from '../ConfirmButton/ConfirmButton';
 import ReserveStats from '../ReserveStats/ReserveStats';
+import { titleCase } from 'utils/formatUtils';
+import { connectionAtom } from 'stores/settings';
 
 export default function TransactionTab({
   onFinish,
@@ -21,6 +23,7 @@ export default function TransactionTab({
   selectedReserve,
   maxValue,
   action,
+  invalidMessage,
   getNewCalculations,
 }: {
   onFinish: (res: ResultConfigType) => void;
@@ -39,6 +42,7 @@ export default function TransactionTab({
   selectedReserve: SelectedReserveType;
   maxValue: BigNumber;
   action: 'supply' | 'borrow' | 'withdraw' | 'repay';
+  invalidMessage: string | null;
   getNewCalculations: (
     obligation: ObligationType | null,
     reserve: SelectedReserveType,
@@ -60,8 +64,13 @@ export default function TransactionTab({
     (newValue: string) => {
       if (publicKey && selectedReserve) {
         const useMax = new BigNumber(newValue).isEqualTo(maxValue);
+
         return onSubmit(
-          useMax
+          ((action === 'borrow' || action === 'withdraw') && useMax) ||
+            (action === 'repay' &&
+              selectedObligation?.borrows
+                ?.find((b) => b.reserveAddress === selectedReserve.address)
+                ?.amount.toString() === newValue)
             ? U64_MAX
             : new BigNumber(newValue)
                 .shiftedBy(selectedReserve.decimals)
@@ -69,11 +78,13 @@ export default function TransactionTab({
           publicKey,
           selectedReserve,
           connection,
-          (txn) => sendTransaction(txn, connection),
+          (txn) => sendTransaction(txn, connection, { skipPreflight: true }),
         );
       }
     },
     [
+      selectedObligation?.borrows,
+      action,
       maxValue,
       onSubmit,
       publicKey,
@@ -84,6 +95,15 @@ export default function TransactionTab({
   );
 
   const stats = getNewCalculations(selectedObligation, selectedReserve, value);
+
+  const valueObj = new BigNumber(value);
+  const buttonText =
+    !valueObj.isZero() && !valueObj.isNaN()
+      ? invalidMessage ??
+        `${titleCase(action)} ${new BigNumber(value).toFormat()} ${
+          selectedReserve.symbol
+        }`
+      : 'Enter an amount';
 
   return (
     <Flex direction='column'>
@@ -99,9 +119,9 @@ export default function TransactionTab({
         needsConnect={!publicKey}
         value={value}
         onFinish={onFinish}
-        finishText={'Enter a value'}
+        finishText={publicKey ? buttonText : 'Connect your wallet'}
         action={action}
-        disabled={false}
+        disabled={Boolean(invalidMessage) || valueObj.isZero()}
         symbol={selectedReserve.symbol}
       />
     </Flex>

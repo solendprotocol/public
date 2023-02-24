@@ -3,80 +3,76 @@ import { atom } from 'jotai';
 import { atomFamily, loadable } from 'jotai/utils';
 import { createObligationAddress } from 'utils/utils';
 import {
-  fetchSimulatedObligationByAddress,
   fetchObligationsByAddress,
   fetchObligationByAddress,
+  formatObligation,
 } from 'utils/obligations';
-import { metadataAtom } from './metadata';
-import {
-  configAtom,
-  connectionAtom,
-  poolsFamily,
-  selectedPoolAtom,
-} from './pools';
+import { poolsFamily, poolsWithMetaDataAtom } from './pools';
 import { publicKeyAtom } from './wallet';
+import { connectionAtom } from './settings';
+import { configAtom } from './config';
+import { PublicKey } from '@solana/web3.js';
+import { Obligation } from '@solendprotocol/solend-sdk';
 
-export const obligationsAtom = atom<{ [address: string]: ObligationType }>({});
+export type ObligationType = Awaited<ReturnType<typeof formatObligation>>;
+
+export const rawObligationsAtom = atom<{
+  [address: string]: RawObligationType;
+}>({});
+
+export const obligationsAtom = atom<Array<ObligationType>>((get) => {
+  const pools = get(poolsWithMetaDataAtom);
+  return Object.values(get(rawObligationsAtom))
+    .filter(
+      (o) => o.info && pools[o.info.lendingMarket.toBase58()]?.reserves.length,
+    )
+    .map((o) =>
+      o.info
+        ? formatObligation(
+            o as { pubkey: PublicKey; info: Obligation },
+            pools[o.info.lendingMarket.toBase58()],
+          )
+        : null,
+    )
+    .filter(Boolean) as Array<ObligationType>;
+});
 
 export type Position = {
   reserveAddress: string;
   amount: BigNumber;
 };
 
-export type ObligationType = {
-  address: string;
-  deposits: Array<Position>;
-  borrows: Array<Position>;
-  poolAddress: string;
-  totalSupplyValue: BigNumber;
-  totalBorrowValue: BigNumber;
-  borrowLimit: BigNumber;
-  liquidationThreshold: BigNumber;
-  netAccountValue: BigNumber;
-  liquidationThresholdFactor: BigNumber;
-  borrowLimitFactor: BigNumber;
-  borrowUtilization: BigNumber;
-  isBorrowLimitReached: boolean;
-  borrowOverSupply: BigNumber;
-  borrowLimitOverSupply: BigNumber;
+export type RawObligationType = {
+  pubkey: PublicKey;
+  info: Obligation | null;
 };
 
 export const loadObligationsAtom = atom(
-  (get) => get(obligationsAtom),
+  (get) => get(rawObligationsAtom),
   async (get, set, fullLoad) => {
     const publicKey = get(publicKeyAtom);
     const connection = get(connectionAtom);
     const config = get(configAtom);
 
-    if (!publicKey || !config.length) return;
+    if (!publicKey) return;
 
     const keys = await Promise.all(
       config.map((pool) => createObligationAddress(publicKey, pool.address)),
     );
     const obligations = fullLoad
       ? await fetchObligationsByAddress(keys, connection)
-      : keys.map((o, index) => ({
-          address: o,
-          deposits: [],
-          borrows: [],
-          poolAddress: config[index].address,
-          totalSupplyValue: new BigNumber(0),
-          totalBorrowValue: new BigNumber(0),
-          borrowLimit: new BigNumber(0),
-          liquidationThreshold: new BigNumber(0),
-          netAccountValue: new BigNumber(0),
-          liquidationThresholdFactor: new BigNumber(0),
-          borrowLimitFactor: new BigNumber(0),
-          borrowUtilization: new BigNumber(0),
-          isBorrowLimitReached: false,
-          borrowOverSupply: new BigNumber(0),
-          borrowLimitOverSupply: new BigNumber(0),
+      : keys.map((o) => ({
+          pubkey: new PublicKey(o),
+          info: null,
         }));
 
     set(
-      obligationsAtom,
+      rawObligationsAtom,
       Object.fromEntries(
-        obligations.map((obligation) => [obligation.address, obligation]),
+        obligations.map((obligation) => [
+          obligation.pubkey.toBase58(),
+          obligation,
+        ]),
       ),
     );
   },
@@ -85,11 +81,20 @@ export const loadObligationsAtom = atom(
 const obligationsFamily = atomFamily((address: string) =>
   atom(
     (get) => {
-      return get(obligationsAtom)[address];
+      const rawObligation = get(rawObligationsAtom)[address];
+      if (!rawObligation?.info) return null;
+      const pool = get(
+        poolsFamily(rawObligation.info.lendingMarket.toBase58()),
+      );
+      if (!pool.reserves.length) return null;
+      return formatObligation(
+        rawObligation as { pubkey: PublicKey; info: Obligation },
+        pool,
+      );
     },
-    (get, set, arg: ObligationType) => {
-      const prev = get(obligationsAtom);
-      set(obligationsAtom, {
+    (get, set, arg: RawObligationType) => {
+      const prev = get(rawObligationsAtom);
+      set(rawObligationsAtom, {
         ...prev,
         [address]: { ...prev[address], ...arg },
       });
@@ -103,104 +108,31 @@ export const selectedObligationAtom = atom(
   (get) => {
     const selectedObligationAddress = get(selectedObligationAddressAtom);
     if (!selectedObligationAddress) return null;
-    const metadata = get(metadataAtom);
-    const selectedPool = get(selectedPoolAtom);
+
     const obligation = get(obligationsFamily(selectedObligationAddress));
     if (!obligation) return null;
-    return {
-      ...obligation,
-      deposits:
-        obligation?.deposits?.map((d) => {
-          const reserve = selectedPool?.reserves.find(
-            (r) => r.address === d.reserveAddress,
-          );
 
-          const addressString = reserve?.mintAddress;
-          const tokenMetadata = metadata[addressString ?? ''];
-
-          const decimals = reserve?.decimals ?? 0;
-
-          return {
-            ...d,
-            decimals,
-            amount: d.amount.shiftedBy(-decimals),
-            price: reserve?.price,
-            amountUsd: d.amount.shiftedBy(-decimals).times(reserve?.price ?? 0),
-            symbol: tokenMetadata?.symbol,
-            logo: tokenMetadata?.logoUri,
-          };
-        }) ?? [],
-      borrows:
-        obligation?.borrows?.map((b) => {
-          const reserve = selectedPool?.reserves.find(
-            (r) => r.address === b.reserveAddress,
-          );
-
-          const addressString = reserve?.mintAddress;
-          const tokenMetadata = metadata[addressString ?? ''];
-
-          const decimals = reserve?.decimals ?? 0;
-
-          return {
-            ...b,
-            decimals,
-            amount: b.amount.shiftedBy(-(decimals + 18)),
-            price: reserve?.price,
-            amountUsd: b.amount
-              .shiftedBy(-(decimals + 18))
-              .times(reserve?.price ?? 0),
-            symbol: tokenMetadata?.symbol,
-            logo: tokenMetadata?.logoUri,
-          };
-        }) ?? [],
-    };
+    return obligation;
   },
-  (
-    get,
-    set,
-    payload: {
-      newSelectedObligationAddress: string | null;
-      poolAddress?: string;
-    },
-  ) => {
-    if (!payload.newSelectedObligationAddress) return;
-
+  (get, set, newSelectedObligationAddress: string) => {
     const connection = get(connectionAtom);
 
     const obligationToUpdateAtom = obligationsFamily(
-      payload.newSelectedObligationAddress,
+      newSelectedObligationAddress,
     );
     if (!obligationToUpdateAtom) {
       throw Error('Selected obligation not found');
     }
 
-    const obligation = get(obligationToUpdateAtom);
-    const poolAddress = payload.poolAddress ?? obligation?.poolAddress;
-
-    const pool = get(poolsFamily(poolAddress));
-
-    if (pool?.reserves?.length && poolAddress) {
-      fetchSimulatedObligationByAddress(
-        payload.newSelectedObligationAddress,
-        connection,
-        pool,
-      ).then((ob) => {
+    fetchObligationByAddress(newSelectedObligationAddress, connection).then(
+      (ob) => {
         if (ob) {
           set(obligationToUpdateAtom, ob);
         }
-      });
-    } else {
-      fetchObligationByAddress(
-        payload.newSelectedObligationAddress,
-        connection,
-      ).then((ob) => {
-        if (ob) {
-          set(obligationToUpdateAtom, ob);
-        }
-      });
-    }
+      },
+    );
 
-    set(selectedObligationAddressAtom, payload.newSelectedObligationAddress);
+    set(selectedObligationAddressAtom, newSelectedObligationAddress);
   },
 );
 

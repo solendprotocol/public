@@ -11,11 +11,7 @@ module.exports = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.githubusercontent.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.coingecko.com',
+        hostname: '**',
       },
     ],
   },
