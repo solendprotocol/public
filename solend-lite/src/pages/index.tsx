@@ -8,7 +8,6 @@ import { ENVIRONMENT } from 'common/config';
 import {
   BraveWalletAdapter,
   CoinbaseWalletAdapter,
-  PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
@@ -26,7 +25,6 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 export default function Index() {
   const [rpc] = useAtom(selectedRpcAtom);
   const network = ENVIRONMENT as WalletAdapterNetwork;
-  const phantom = new PhantomWalletAdapter();
   const solflare = new SolflareWalletAdapter({ network });
   const coinbase = new CoinbaseWalletAdapter();
   const brave = new BraveWalletAdapter();
@@ -81,10 +79,7 @@ export default function Index() {
         <meta name='theme-color' content='#ffffff' />
       </Head>
       <ConnectionProvider endpoint={rpc.endpoint}>
-        <WalletProvider
-          wallets={[phantom, solflare, coinbase, brave]}
-          autoConnect
-        >
+        <WalletProvider wallets={[solflare, coinbase, brave]} autoConnect>
           <WalletModalProvider>
             <NoSSR>
               <Suspense fallback={<Loading />}>

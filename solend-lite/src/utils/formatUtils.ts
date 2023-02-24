@@ -7,6 +7,6 @@ export const formatAddress = (address: string, length?: number) => {
   )}...${address.slice(-(length ?? ADDRESS_PREFIX_SUFFIX_LENGTH))}`;
 };
 
-export const formatPoolName = (name: string) => {
+export const titleCase = (name: string) => {
   return name.charAt(0).toUpperCase().concat(name.slice(1));
 };

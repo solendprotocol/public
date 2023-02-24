@@ -9,11 +9,14 @@ import {
   Tr,
   Flex,
   Box,
+  Divider,
 } from '@chakra-ui/react';
 import { useAtom } from 'jotai';
 import { selectedPoolAtom } from 'stores/pools';
 import { formatPercent, formatToken, formatUsd } from 'utils/numberFormatter';
 import Token from 'components/Token/Token';
+import { useState } from 'react';
+import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 
 export default function PoolTable({
   selectReserveWithModal,
@@ -21,6 +24,13 @@ export default function PoolTable({
   selectReserveWithModal: (reserve: string) => void;
 }) {
   const [selectedPool] = useAtom(selectedPoolAtom);
+  const [showDisabled, setShowDisabled] = useState(false);
+  const reserves = showDisabled
+    ? selectedPool.reserves
+    : selectedPool.reserves.filter((r) => !r.disabled);
+  const sortedReserves = reserves.sort((a, b) => {
+    return a.totalSupply.isGreaterThan(b.totalSupply) ? -1 : 1;
+  });
 
   return (
     <TableContainer>
@@ -32,7 +42,7 @@ export default function PoolTable({
                 Asset name
               </Text>
             </Th>
-            <Th>
+            <Th isNumeric>
               <Text color='secondary' variant='caption'>
                 LTV
               </Text>
@@ -60,7 +70,7 @@ export default function PoolTable({
           </Tr>
         </Thead>
         <Tbody>
-          {selectedPool?.reserves.map((reserve) => (
+          {sortedReserves.map((reserve) => (
             <Tr
               key={reserve.address}
               onClick={() => selectReserveWithModal(reserve.address)}
@@ -87,21 +97,25 @@ export default function PoolTable({
                 </Flex>
               </Td>
               <Td isNumeric>
-                <Text>{formatPercent(reserve.loanToValueRatio)}</Text>
+                <Text>{formatPercent(reserve.loanToValueRatio, false, 0)}</Text>
               </Td>
               <Td isNumeric>
-                <Text>{formatToken(reserve.totalSupply)}</Text>
+                <Text>
+                  {formatToken(reserve.totalSupply)} {reserve.symbol}
+                </Text>
                 <Text color='secondary' variant='label'>
-                  {formatToken(reserve.totalSupplyUsd)}
+                  {formatUsd(reserve.totalSupplyUsd)}
                 </Text>
               </Td>
               <Td isNumeric>
                 <Text>{formatPercent(reserve.supplyInterest)}</Text>
               </Td>
               <Td isNumeric>
-                <Text>{formatToken(reserve.totalBorrow)}</Text>
+                <Text>
+                  {formatToken(reserve.totalBorrow)} {reserve.symbol}
+                </Text>
                 <Text color='secondary' variant='label'>
-                  {formatToken(reserve.totalBorrowUsd)}
+                  {formatUsd(reserve.totalBorrowUsd)}
                 </Text>
               </Td>
               <Td isNumeric>
@@ -111,6 +125,23 @@ export default function PoolTable({
           ))}
         </Tbody>
       </Table>
+      {selectedPool.reserves.some((r) => r.disabled) && (
+        <Box
+          role='presentation'
+          cursor='pointer'
+          onKeyDown={() => setShowDisabled(!showDisabled)}
+          mt={2}
+          onClick={() => setShowDisabled(!showDisabled)}
+        >
+          <Divider mb='-22px' pt='12px' />
+          <Flex justify='center' my='8px'>
+            <Text color='secondary' bg='neutral' zIndex={1} px={2}>
+              {showDisabled ? 'Hide deprecated ' : 'Show deprecated '}
+              {showDisabled ? <ChevronUpIcon /> : <ChevronDownIcon />}
+            </Text>
+          </Flex>
+        </Box>
+      )}
     </TableContainer>
   );
 }

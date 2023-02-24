@@ -658,6 +658,7 @@ export class SolendAction {
   }
 
   async addRepayIx() {
+    console.log(this.amount.toString());
     this.lendingIxs.push(
       repayObligationLiquidityInstruction(
         this.amount,

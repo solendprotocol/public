@@ -169,7 +169,7 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
     const fontSize = useUsd
       ? 48 - 1.4 * ((usdAmount ?? '').toString().length + 1)
       : 48 -
-        1.4 *
+        1.2 *
           ((value ?? '').toString().length +
             (selectedToken.symbol?.length ?? 0));
 
