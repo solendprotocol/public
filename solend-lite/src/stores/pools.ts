@@ -82,7 +82,7 @@ export const loadPoolsAtom = atom(
 export const poolsFamily = atomFamily((address: string) =>
   atom(
     (get) => {
-      return get(poolsWithMetaData)[address];
+      return get(poolsWithMetaDataAtom)[address];
     },
     (get, set, arg: PoolType) => {
       const prev = get(poolsAtom);
@@ -101,7 +101,7 @@ export const reserveToMintMapAtom = atom((get) => {
   );
 });
 
-export const poolsWithMetaData = atom((get) => {
+export const poolsWithMetaDataAtom = atom((get) => {
   const metadata = get(metadataAtom);
   const pools = get(poolsAtom);
 
