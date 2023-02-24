@@ -28,7 +28,6 @@ export default function Wallet() {
   const uniqueConfigHash = config.map((c) => c.address).join(',');
   const pubString = publicKey?.toBase58();
   useEffect(() => {
-    console.log('hash:', pubString, uniqueConfigHash);
     setPublicKeyInAtom(pubString ?? null);
   }, [pubString, uniqueConfigHash, setPublicKeyInAtom]);
 

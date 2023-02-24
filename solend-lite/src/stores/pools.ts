@@ -151,8 +151,6 @@ export const selectedPoolAtom = atom(
     if (!selectedPoolAddress) return null;
     const metadata = get(metadataAtom);
     const selectedPool = get(poolsFamily(selectedPoolAddress));
-
-    console.log('preloaded3');
     return {
       ...selectedPool,
       reserves: selectedPool.reserves.map((r) => {
@@ -173,8 +171,6 @@ export const selectedPoolAtom = atom(
       waitForAll([connectionAtom, publicKeyAtom]),
     );
     const switchboardProgram = get(switchboardAtom);
-
-    console.log('preloaded1');
     const poolToUpdateAtom = poolsFamily(newSelectedPoolAddress);
     if (!poolToUpdateAtom) {
       throw Error('Selected pool not found');
@@ -192,8 +188,7 @@ export const selectedPoolAtom = atom(
       new PublicKey(newSelectedPoolAddress),
       connection,
       switchboardProgram,
-    );
-    console.log('preloaded2');
+    )
 
     if (newSelectedObligationAddress) {
       set(selectedObligationAtom, newSelectedObligationAddress);
