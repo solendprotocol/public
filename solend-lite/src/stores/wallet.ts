@@ -35,7 +35,7 @@ export const setPublicKeyAtom = atom(
     set(publicKeyAtom, newPublicKey);
 
     if (!newPublicKey) {
-      set(rawObligationsAtom, []);
+      set(rawObligationsAtom, {});
       set(selectedPoolAtom, null);
       return;
     }

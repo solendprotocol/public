@@ -68,9 +68,9 @@ export default function TransactionTab({
         return onSubmit(
           ((action === 'borrow' || action === 'withdraw') && useMax) ||
             (action === 'repay' &&
-              selectedObligation.borrows
-                .find((b) => b.reserveAddress === selectedReserve.address)
-                .amount.toString() === newValue)
+              selectedObligation?.borrows
+                ?.find((b) => b.reserveAddress === selectedReserve.address)
+                ?.amount.toString() === newValue)
             ? U64_MAX
             : new BigNumber(newValue)
                 .shiftedBy(selectedReserve.decimals)
@@ -83,7 +83,7 @@ export default function TransactionTab({
       }
     },
     [
-      selectedObligation.borrows,
+      selectedObligation?.borrows,
       action,
       maxValue,
       onSubmit,

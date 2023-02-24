@@ -14,7 +14,7 @@ import { lcs } from 'string-comparison';
 import { useState } from 'react';
 import {
   poolsStateAtom,
-  poolsWithMetaData,
+  poolsWithMetaDataAtom,
   ReserveWithMetadataType,
   selectedPoolAtom,
 } from 'stores/pools';
@@ -83,7 +83,7 @@ export default function Nav({ onClose }: { onClose?: () => void }) {
   const [newPoolAddress, setNewPoolAddress] = useState<string>('');
   const [config] = useAtom(configAtom);
   const [poolFilters, setPoolFilters] = useState<Array<string>>([]);
-  const [pools] = useAtom(poolsWithMetaData);
+  const [pools] = useAtom(poolsWithMetaDataAtom);
   const [poolsState] = useAtom(poolsStateAtom);
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
 
@@ -152,7 +152,7 @@ export default function Nav({ onClose }: { onClose?: () => void }) {
               }
 
               const filteredPools = Object.values(pools).filter((market) => {
-                const keywords = [market.name.toLowerCase()];
+                const keywords = [market.name?.toLowerCase() ?? ''];
                 market.reserves.forEach((reserve) =>
                   keywords.push(reserve.symbol.toLowerCase()),
                 );

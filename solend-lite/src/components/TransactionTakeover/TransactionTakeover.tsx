@@ -39,7 +39,7 @@ export default function TransactionTakeover() {
   const [result, setResult] = useState<ResultConfigType | null>(null);
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
-  const handleTabsChange = (index) => {
+  const handleTabsChange = (index: number) => {
     setTabIndex(index);
   };
 

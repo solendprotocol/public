@@ -20,11 +20,12 @@ export default function PoolList({
   const [selectedPool] = useAtom(selectedPoolAtom);
   const [showDisabled, setShowDisabled] = useState(false);
   const reserves = showDisabled
-    ? selectedPool.reserves
-    : selectedPool.reserves.filter((r) => !r.disabled);
-  const sortedReserves = reserves.sort((a, b) => {
-    return a.totalSupplyUsd.isGreaterThan(b.totalSupplyUsd) ? -1 : 1;
-  });
+    ? selectedPool?.reserves
+    : selectedPool?.reserves.filter((r) => !r.disabled);
+  const sortedReserves =
+    reserves?.sort((a, b) => {
+      return a.totalSupplyUsd.isGreaterThan(b.totalSupplyUsd) ? -1 : 1;
+    }) ?? [];
 
   return (
     <List>
@@ -91,7 +92,7 @@ export default function PoolList({
           </Flex>
         </ListItem>
       ))}
-      {selectedPool.reserves.some((r) => r.disabled) && (
+      {selectedPool?.reserves.some((r) => r.disabled) && (
         <Box
           role='presentation'
           cursor='pointer'

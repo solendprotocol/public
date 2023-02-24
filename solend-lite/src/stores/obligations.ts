@@ -7,7 +7,7 @@ import {
   fetchObligationByAddress,
   formatObligation,
 } from 'utils/obligations';
-import { poolsAtom, poolsFamily } from './pools';
+import { poolsFamily, poolsWithMetaDataAtom } from './pools';
 import { publicKeyAtom } from './wallet';
 import { connectionAtom } from './settings';
 import { configAtom } from './config';
@@ -21,12 +21,20 @@ export const rawObligationsAtom = atom<{
 }>({});
 
 export const obligationsAtom = atom<Array<ObligationType>>((get) => {
-  const pools = get(poolsAtom);
+  const pools = get(poolsWithMetaDataAtom);
   return Object.values(get(rawObligationsAtom))
     .filter(
       (o) => o.info && pools[o.info.lendingMarket.toBase58()]?.reserves.length,
     )
-    .map((o) => formatObligation(o, pools[o.info.lendingMarket.toBase58()]));
+    .map((o) =>
+      o.info
+        ? formatObligation(
+            o as { pubkey: PublicKey; info: Obligation },
+            pools[o.info.lendingMarket.toBase58()],
+          )
+        : null,
+    )
+    .filter(Boolean) as Array<ObligationType>;
 });
 
 export type Position = {
@@ -45,6 +53,8 @@ export const loadObligationsAtom = atom(
     const publicKey = get(publicKeyAtom);
     const connection = get(connectionAtom);
     const config = get(configAtom);
+
+    if (!publicKey) return;
 
     const keys = await Promise.all(
       config.map((pool) => createObligationAddress(publicKey, pool.address)),
@@ -77,7 +87,10 @@ const obligationsFamily = atomFamily((address: string) =>
         poolsFamily(rawObligation.info.lendingMarket.toBase58()),
       );
       if (!pool.reserves.length) return null;
-      return formatObligation(rawObligation, pool);
+      return formatObligation(
+        rawObligation as { pubkey: PublicKey; info: Obligation },
+        pool,
+      );
     },
     (get, set, arg: RawObligationType) => {
       const prev = get(rawObligationsAtom);

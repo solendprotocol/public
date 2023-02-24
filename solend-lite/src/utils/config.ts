@@ -5,7 +5,7 @@ import { titleCase } from './formatUtils';
 
 export async function fetchConfig(
   connection: Connection,
-): Promise<Array<{ name: string; address: string; owner: string }>> {
+): Promise<Array<{ name: string | null; address: string; owner: string }>> {
   if (process.env.NEXT_PUBLIC_DEBUG) console.log('fetchConfig');
   const configResponse = await fetch(
     `https://api.solend.fi/v1/markets/configs?scope=all&deployment=production`,
