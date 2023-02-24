@@ -1,4 +1,4 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { atom } from 'jotai';
 import {
   atomFamily,
@@ -6,21 +6,16 @@ import {
   selectAtom,
   waitForAll,
 } from 'jotai/utils';
-import { selectedObligationAtom } from './obligations';
-import { fetchPools, getPoolsFromChain, getReservesOfPool } from 'utils/pools';
+import { fetchPools, formatReserve, getReservesOfPool } from 'utils/pools';
 import { publicKeyAtom } from './wallet';
-import { selectedRpcAtom } from './settings';
+import { connectionAtom, switchboardAtom } from './settings';
 import { createObligationAddress } from 'utils/utils';
 import { metadataAtom } from './metadata';
-import SwitchboardProgram from '@switchboard-xyz/sbv2-lite';
-import { formatPoolName } from 'utils/formatUtils';
+import { selectedObligationAtom } from './obligations';
+import { configAtom } from './config';
+import BigNumber from 'bignumber.js';
 
-export type ConfigType = {
-  name: string | null;
-  address: string;
-};
-
-export type ReserveType = Awaited<ReturnType<typeof getReservesOfPool>>[0];
+export type ReserveType = Awaited<ReturnType<typeof formatReserve>>;
 export type ReserveWithMetadataType = Awaited<
   ReturnType<typeof getReservesOfPool>
 >[0] & {
@@ -34,47 +29,16 @@ export type SelectedReserveType = ReserveType & {
 };
 
 export type PoolType = {
+  name: string | null;
   address: string;
   reserves: Array<ReserveType>;
 };
 
-export type SelectedPoolType =
-  | PoolType
-  | {
-      address: string;
-      reserves: Array<SelectedReserveType>;
-    };
-
-export const connectionAtom = atom<Connection>((get) => {
-  const rpc = get(selectedRpcAtom);
-  return new Connection(rpc.endpoint, 'confirmed');
-});
-
-async function fetchConfig(connection: Connection): Promise<Array<ConfigType>> {
-  const configResponse = await fetch(
-    `https://api.solend.fi/v1/markets/configs?scope=all&deployment=production`,
-  );
-  if (!configResponse.ok) {
-    // fallback
-    return getPoolsFromChain(connection);
-  }
-
-  const configData = await configResponse.json();
-  return configData.map((c: { name: string; address: string }) => ({
-    name: formatPoolName(c.name),
-    address: c.address,
-  }));
-}
-
-export const refreshCounterAtom = atom(0);
-
-export const configAtom = atom(
-  async (get) => {
-    const connection = get(connectionAtom);
-    return fetchConfig(connection);
-  },
-  (_, set) => set(refreshCounterAtom, (i) => i + 1),
-);
+export type SelectedPoolType = {
+  name: string | null;
+  address: string;
+  reserves: Array<SelectedReserveType>;
+};
 
 export const poolsStateAtom = atom<'initial' | 'loading' | 'error' | 'done'>(
   (get) =>
@@ -94,6 +58,7 @@ export const poolsAtom = atomWithDefault<{ [address: string]: PoolType }>(
       config.map((pool) => [
         pool.address,
         {
+          name: pool.name,
           address: pool.address,
           reserves: [],
         },
@@ -108,23 +73,16 @@ export const loadPoolsAtom = atom(
   },
   async (get, set) => {
     const [connection, config] = get(waitForAll([connectionAtom, configAtom]));
-    const switchboardProgram = await SwitchboardProgram.loadMainnet(connection);
+    const switchboardProgram = get(switchboardAtom);
 
-    set(
-      poolsAtom,
-      await fetchPools(
-        config.map((pool) => pool.address),
-        connection,
-        switchboardProgram,
-      ),
-    );
+    set(poolsAtom, await fetchPools(config, connection, switchboardProgram));
   },
 );
 
 export const poolsFamily = atomFamily((address: string) =>
   atom(
     (get) => {
-      return get(poolsAtom)[address];
+      return get(poolsWithMetaData)[address];
     },
     (get, set, arg: PoolType) => {
       const prev = get(poolsAtom);
@@ -146,11 +104,16 @@ export const reserveToMintMapAtom = atom((get) => {
 export const poolsWithMetaData = atom((get) => {
   const metadata = get(metadataAtom);
   const pools = get(poolsAtom);
+
   return Object.fromEntries(
     Object.values(pools).map((p) => [
       p.address,
       {
         ...p,
+        totalSupplyUsd: p.reserves.reduce(
+          (acc, r) => r.totalSupplyUsd.plus(acc),
+          BigNumber(0),
+        ),
         reserves: p.reserves.map((r) => ({
           ...r,
           symbol: metadata[r.mintAddress]?.symbol,
@@ -189,6 +152,7 @@ export const selectedPoolAtom = atom(
     const metadata = get(metadataAtom);
     const selectedPool = get(poolsFamily(selectedPoolAddress));
 
+    console.log('preloaded3');
     return {
       ...selectedPool,
       reserves: selectedPool.reserves.map((r) => {
@@ -208,14 +172,13 @@ export const selectedPoolAtom = atom(
     const [connection, publicKey] = get(
       waitForAll([connectionAtom, publicKeyAtom]),
     );
-    const switchboardProgram = await SwitchboardProgram.loadMainnet(connection);
+    const switchboardProgram = get(switchboardAtom);
 
+    console.log('preloaded1');
     const poolToUpdateAtom = poolsFamily(newSelectedPoolAddress);
     if (!poolToUpdateAtom) {
       throw Error('Selected pool not found');
     }
-
-    const poolLoaded = Boolean(get(poolToUpdateAtom).reserves.length);
 
     let newSelectedObligationAddress: string | null = null;
     if (publicKey) {
@@ -229,27 +192,23 @@ export const selectedPoolAtom = atom(
       new PublicKey(newSelectedPoolAddress),
       connection,
       switchboardProgram,
-    ).then((updatedReserves) => {
-      set(poolToUpdateAtom, {
-        address: newSelectedPoolAddress,
-        reserves: updatedReserves,
-      });
+    );
+    console.log('preloaded2');
 
-      if (!poolLoaded && newSelectedObligationAddress) {
-        set(selectedObligationAtom, {
-          newSelectedObligationAddress,
-          poolAddress: newSelectedPoolAddress,
-        });
-      }
-    });
-
-    if (poolLoaded && newSelectedObligationAddress) {
-      set(selectedObligationAtom, {
-        newSelectedObligationAddress,
-        poolAddress: newSelectedPoolAddress,
-      });
+    if (newSelectedObligationAddress) {
+      set(selectedObligationAtom, newSelectedObligationAddress);
     }
 
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set('pool', newSelectedPoolAddress);
+    const newurl =
+      window.location.protocol +
+      '//' +
+      window.location.host +
+      window.location.pathname +
+      '?' +
+      searchParams.toString();
+    window.history.pushState({ path: newurl }, '', newurl);
     set(selectedPoolAddressAtom, newSelectedPoolAddress);
   },
 );
@@ -259,6 +218,7 @@ export const selectedPoolStateAtom = atom<
 >((get) =>
   (get(selectedPoolAtom)?.reserves?.length ?? 0) === 0 ? 'loading' : 'done',
 );
+
 export const unqiueAssetsAtom = selectAtom(
   poolsAtom,
   (pools) => {

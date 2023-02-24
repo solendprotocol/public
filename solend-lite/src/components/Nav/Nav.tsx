@@ -10,16 +10,17 @@ import {
   Avatar,
 } from '@chakra-ui/react';
 import { useAtom } from 'jotai';
+import { lcs } from 'string-comparison';
 import { useState } from 'react';
 import {
-  configAtom,
+  poolsStateAtom,
   poolsWithMetaData,
   ReserveWithMetadataType,
   selectedPoolAtom,
 } from 'stores/pools';
 import { formatAddress } from 'utils/formatUtils';
 import Token from 'components/Token/Token';
-import { CopyIcon } from '@chakra-ui/icons';
+import { configAtom } from 'stores/config';
 
 function PoolRow({ reserves }: { reserves: Array<ReserveWithMetadataType> }) {
   const shownIcons = reserves.slice(0, 12);
@@ -35,14 +36,26 @@ function PoolRow({ reserves }: { reserves: Array<ReserveWithMetadataType> }) {
         ))
         .concat(
           extraIcons.length > 1 ? (
-            <Box>
-              <Tooltip label={'a'}>
+            <Box key='extra'>
+              <Tooltip
+                label={
+                  <Flex p={1} gap={1}>
+                    {extraIcons.map((reserve) => (
+                      <Token
+                        key={reserve.address}
+                        reserve={reserve}
+                        size={18}
+                      />
+                    ))}
+                  </Flex>
+                }
+              >
                 <Avatar
                   icon={
                     <Avatar
                       width='18px'
                       height='18px'
-                      bg='var(--chakra-colors-brandAlt)'
+                      bg='var(--chakra-colors-line)'
                       icon={<Text fontSize={10}>+{extraIcons.length}</Text>}
                       borderRadius={100}
                     />
@@ -56,10 +69,10 @@ function PoolRow({ reserves }: { reserves: Array<ReserveWithMetadataType> }) {
                 />
               </Tooltip>
             </Box>
-          ) : extraIcons.length > 1 ? (
-            <Token reserve={extraIcons[0]} size={18} />
+          ) : extraIcons.length === 1 ? (
+            <Token key='extra' reserve={extraIcons[0]} size={18} />
           ) : (
-            <Box />
+            <Box key='extra' />
           ),
         )}
     </Flex>
@@ -69,8 +82,24 @@ function PoolRow({ reserves }: { reserves: Array<ReserveWithMetadataType> }) {
 export default function Nav({ onClose }: { onClose?: () => void }) {
   const [newPoolAddress, setNewPoolAddress] = useState<string>('');
   const [config] = useAtom(configAtom);
+  const [poolFilters, setPoolFilters] = useState<Array<string>>([]);
   const [pools] = useAtom(poolsWithMetaData);
+  const [poolsState] = useAtom(poolsStateAtom);
   const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
+
+  const searchedFilteredPools = poolFilters.length
+    ? config.filter((c) => poolFilters.includes(c.address))
+    : config;
+  const visiblePools = searchedFilteredPools.filter(
+    (p) => poolsState === 'loading' || pools[p.address].reserves.length,
+  );
+  const sortedVisiblePools = visiblePools.sort((a, b) => {
+    return pools[a.address].totalSupplyUsd.isGreaterThan(
+      pools[b.address].totalSupplyUsd,
+    )
+      ? -1
+      : 1;
+  });
 
   return (
     <Box
@@ -111,9 +140,52 @@ export default function Nav({ onClose }: { onClose?: () => void }) {
             }}
           />
         </Center>
+        <Center px={2} paddingBottom={3} h={50}>
+          <Input
+            placeholder='Filter by name/tokens...'
+            borderColor='var(--chakra-colors-line)'
+            fontSize={11}
+            onChange={(e) => {
+              if (!e.target.value) {
+                setPoolFilters([]);
+                return;
+              }
 
+              const filteredPools = Object.values(pools).filter((market) => {
+                const keywords = [market.name.toLowerCase()];
+                market.reserves.forEach((reserve) =>
+                  keywords.push(reserve.symbol.toLowerCase()),
+                );
+                const searchTerms = e.target.value.split(' ');
+                let shouldDisplay = false;
+                searchTerms.forEach((term) => {
+                  const similarities = lcs.sortMatch(term, keywords);
+                  for (const sim of similarities) {
+                    if (sim.rating > 0.86) {
+                      shouldDisplay = true;
+                      return;
+                    }
+                  }
+                  const similarities2 = lcs.sortMatch(
+                    term,
+                    keywords.map((x) => x.slice(0, term.length)),
+                  );
+                  for (const sim of similarities2) {
+                    if (sim.rating > 0.86) {
+                      shouldDisplay = true;
+                      return;
+                    }
+                  }
+                });
+
+                return shouldDisplay;
+              });
+              setPoolFilters(filteredPools.map((p) => p.address));
+            }}
+          />
+        </Center>
         <List>
-          {config.map((pool) => (
+          {sortedVisiblePools.map((pool) => (
             <ListItem
               key={pool.address}
               borderTop='1px'
@@ -134,26 +206,29 @@ export default function Nav({ onClose }: { onClose?: () => void }) {
               }}
             >
               {
-                <Tooltip closeOnClick label={pool.address}>
+                <Tooltip
+                  closeOnClick
+                  label='Click to copy address to clipboard'
+                >
                   <Box>
-                    <Flex gap={1} alignItems='center'>
-                      <Text>{pool.name ?? formatAddress(pool.address)}</Text>{' '}
-                      <CopyIcon
-                        mb='2px'
-                        color='primary'
-                        onClick={(e: any) => {
-                          navigator.clipboard.writeText(pool.address);
-                          e.stopPropagation();
-                        }}
-                      />
-                    </Flex>
+                    <Text
+                      overflow='hidden'
+                      textOverflow='ellipsis'
+                      whiteSpace='nowrap'
+                    >
+                      {pool.name ?? formatAddress(pool.address)}
+                    </Text>{' '}
                   </Box>
                 </Tooltip>
               }
               <Flex>
                 <PoolRow
                   key={pool.address}
-                  reserves={pools[pool.address]?.reserves ?? []}
+                  reserves={
+                    pools[pool.address]?.reserves.sort((r) =>
+                      r.symbol ? 1 : -1,
+                    ) ?? []
+                  }
                 />
               </Flex>
             </ListItem>

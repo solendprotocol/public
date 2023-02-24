@@ -3,22 +3,82 @@ import BigNumber from 'bignumber.js';
 import { PoolType } from 'stores/pools';
 import { Obligation, parseObligation } from '@solendprotocol/solend-sdk';
 import { getBatchMultipleAccountsInfo } from 'utils/utils';
-import { simulateRefreshObligation } from './simulateTransaction';
 
-function formatObligation(obligation: { pubkey: PublicKey; info: Obligation }) {
+export function formatObligation(
+  obligation: { pubkey: PublicKey; info: Obligation },
+  pool: PoolType,
+) {
   const poolAddress = obligation.info.lendingMarket.toBase58();
-  const totalSupplyValue = new BigNumber(
-    obligation.info.depositedValue.toString(),
-  ).shiftedBy(-18);
-  const totalBorrowValue = new BigNumber(
-    obligation.info.borrowedValue.toString(),
-  ).shiftedBy(-18);
-  const borrowLimit = new BigNumber(
-    obligation.info.allowedBorrowValue.toString(),
-  ).shiftedBy(-18);
-  const liquidationThreshold = new BigNumber(
-    obligation.info.unhealthyBorrowValue.toString(),
-  ).shiftedBy(-18);
+
+  const deposits = obligation.info.deposits
+    .filter((d) => d.depositedAmount.toString() !== '0')
+    .map((d) => {
+      const reserveAddress = d.depositReserve.toBase58();
+      const reserve = pool.reserves.find((r) => r.address === reserveAddress);
+
+      if (!reserve)
+        throw Error('Deposit in obligation does not exist in the pool');
+
+      const amount = new BigNumber(d.depositedAmount.toString())
+        .shiftedBy(-reserve.decimals)
+        .times(reserve.cTokenExchangeRate);
+      const amountUsd = amount.times(reserve.price);
+
+      return {
+        liquidationThreshold: reserve.liquidationThreshold,
+        loanToValueRatio: reserve.loanToValueRatio,
+        symbol: reserve.symbol,
+        price: reserve.price,
+        reserveAddress,
+        amount,
+        amountUsd,
+      };
+    });
+
+  const borrows = obligation.info.borrows
+    .filter((b) => b.borrowedAmountWads.toString() !== '0')
+    .map((b) => {
+      const reserveAddress = b.borrowReserve.toBase58();
+      const reserve = pool.reserves.find((r) => r.address === reserveAddress);
+      if (!reserve)
+        throw Error('Borrow in obligation does not exist in the pool');
+
+      const amount = new BigNumber(b.borrowedAmountWads.toString())
+        .shiftedBy(-18 - reserve.decimals)
+        .times(reserve.cumulativeBorrowRate)
+        .dividedBy(
+          new BigNumber(b.cumulativeBorrowRateWads.toString()).shiftedBy(-18),
+        );
+      const amountUsd = amount.times(reserve.price);
+
+      return {
+        liquidationThreshold: reserve.liquidationThreshold,
+        loanToValueRatio: reserve.loanToValueRatio,
+        symbol: reserve.symbol,
+        price: reserve.price,
+        reserveAddress,
+        amount,
+        amountUsd,
+      };
+    });
+
+  const totalSupplyValue = deposits.reduce(
+    (acc, d) => acc.plus(d.amountUsd),
+    new BigNumber(0),
+  );
+  const totalBorrowValue = borrows.reduce(
+    (acc, b) => acc.plus(b.amountUsd),
+    new BigNumber(0),
+  );
+
+  const borrowLimit = deposits.reduce(
+    (acc, d) => d.amountUsd.times(d.loanToValueRatio).plus(acc),
+    BigNumber(0),
+  );
+  const liquidationThreshold = deposits.reduce(
+    (acc, d) => d.amountUsd.times(d.liquidationThreshold).plus(acc),
+    BigNumber(0),
+  );
   const netAccountValue = totalSupplyValue.minus(totalBorrowValue);
   const liquidationThresholdFactor = totalSupplyValue.isZero()
     ? new BigNumber(0)
@@ -39,18 +99,16 @@ function formatObligation(obligation: { pubkey: PublicKey; info: Obligation }) {
     ? new BigNumber(0)
     : borrowLimit.dividedBy(totalSupplyValue);
 
+  const positions =
+    obligation.info.deposits.filter((d) => !d.depositedAmount.isZero()).length +
+    obligation.info.borrows.filter((b) => !b.borrowedAmountWads.isZero())
+      .length;
+
   return {
     address: obligation.pubkey.toBase58(),
-    deposits: obligation.info.deposits.map((d) => ({
-      reserveAddress: d.depositReserve.toBase58(),
-      amount: new BigNumber(d.depositedAmount.toString()),
-      amountUsd: new BigNumber(d.depositedAmount.toString()),
-    })),
-    borrows: obligation.info.borrows.map((b) => ({
-      reserveAddress: b.borrowReserve.toBase58(),
-      amount: new BigNumber(b.borrowedAmountWads.toString()),
-      amountUsd: new BigNumber(b.borrowedAmountWads.toString()),
-    })),
+    positions,
+    deposits,
+    borrows,
     poolAddress,
     totalSupplyValue,
     totalBorrowValue,
@@ -66,27 +124,11 @@ function formatObligation(obligation: { pubkey: PublicKey; info: Obligation }) {
   };
 }
 
-export async function fetchSimulatedObligationByAddress(
-  obligationAddress: string,
-  connection: Connection,
-  pool: PoolType,
-) {
-  const parsedObligation = await simulateRefreshObligation(
-    pool,
-    connection,
-    new PublicKey(obligationAddress),
-  );
-  if (!parsedObligation) {
-    return null;
-  }
-
-  return formatObligation(parsedObligation);
-}
-
 export async function fetchObligationByAddress(
   obligationAddress: string,
   connection: Connection,
 ) {
+  if (process.env.NEXT_PUBLIC_DEBUG) console.log('fetchObligationByAddress');
   const rawObligationData = await connection.getAccountInfo(
     new PublicKey(obligationAddress),
   );
@@ -104,13 +146,15 @@ export async function fetchObligationByAddress(
     return null;
   }
 
-  return formatObligation(parsedObligation);
+  return parsedObligation;
 }
 
 export async function fetchObligationsByAddress(
   obligationAddresses: Array<string>,
   connection: Connection,
 ) {
+  if (process.env.NEXT_PUBLIC_DEBUG)
+    console.log('fetchObligationsByAddress', obligationAddresses.length);
   const rawObligations = await getBatchMultipleAccountsInfo(
     obligationAddresses,
     connection,
@@ -124,5 +168,5 @@ export async function fetchObligationsByAddress(
     )
     .filter(Boolean) as Array<{ info: Obligation; pubkey: PublicKey }>;
 
-  return parsedObligations.map((obligation) => formatObligation(obligation));
+  return parsedObligations;
 }

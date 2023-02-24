@@ -5,7 +5,7 @@ import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 import { formatToken } from 'utils/numberFormatter';
 import { ENVIRONMENT } from 'common/config';
 import { formatErrorMsg } from 'utils/utils';
-import { formatPoolName } from 'utils/formatUtils';
+import { titleCase } from 'utils/formatUtils';
 
 type LoadingResultType = {
   type: 'loading';
@@ -71,6 +71,7 @@ export default function Result({ result, setResult }: ResultPropsType) {
         </Text>
         <Button
           size='md'
+          w='100%'
           onClick={() => {
             if (result.onBack) result.onBack();
             setResult(null);
@@ -95,7 +96,7 @@ export default function Result({ result, setResult }: ResultPropsType) {
       >
         <CheckCircleIcon color='brandAlt' fontSize={96} />
         <Text textAlign='center' variant='title'>
-          {formatPoolName(result.action)} successful
+          {titleCase(result.action)} successful
           <br />
           {formatToken(result.amountString)} {result.symbol}
         </Text>

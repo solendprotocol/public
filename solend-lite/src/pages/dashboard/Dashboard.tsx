@@ -1,4 +1,11 @@
-import { Text, Grid, GridItem, useDisclosure } from '@chakra-ui/react';
+import {
+  Text,
+  Grid,
+  GridItem,
+  useDisclosure,
+  Button,
+  Box,
+} from '@chakra-ui/react';
 import { Suspense } from 'react';
 import Footer from 'components/Footer/Footer';
 import NoSSR from 'react-no-ssr';
@@ -23,11 +30,13 @@ function ErrorFallback({
   resetErrorBoundary: () => void;
 }) {
   return (
-    <div role='alert'>
+    <Box role='alert'>
       <Text>Something went wrong:</Text>
       <Text variant='secondary'>{error.message}</Text>
-      <button onClick={resetErrorBoundary}>Try again</button>
-    </div>
+      <Button onClick={resetErrorBoundary}>
+        <Text>Try again</Text>
+      </Button>
+    </Box>
   );
 }
 
@@ -58,9 +67,9 @@ export default function Dashboard() {
           </Suspense>
           <Grid
             templateAreas={`"header header header"
-                    "nav main side"
-                  "nav main side"
-                    "footer footer footer"`}
+                            "nav main side"
+                            "nav main side"
+                            "footer footer footer"`}
             gridTemplateRows={'64px 500px 1fr 50px'}
             gridTemplateColumns={'200px 1fr 400px'}
             minH='1000px'

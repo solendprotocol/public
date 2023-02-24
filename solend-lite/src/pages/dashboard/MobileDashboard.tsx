@@ -17,11 +17,7 @@ import Account from 'components/Account/Account';
 import { ErrorBoundary } from 'react-error-boundary';
 import TransactionTakeover from 'components/TransactionTakeover/TransactionTakeover';
 import { useCallback } from 'react';
-import {
-  configAtom,
-  selectedReserveAtom,
-  unqiueAssetsAtom,
-} from 'stores/pools';
+import { selectedReserveAtom, unqiueAssetsAtom } from 'stores/pools';
 import { selectedRpcAtom } from 'stores/settings';
 import { useAtom, useSetAtom } from 'jotai';
 import { DEFAULT_RPC_ENDPOINTS } from 'common/config';
@@ -29,6 +25,7 @@ import Loading from 'components/Loading/Loading';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { setPublicKeyAtom } from 'stores/wallet';
 import { loadMetadataAtom } from 'stores/metadata';
+import { configAtom } from 'stores/config';
 
 function ErrorFallback({
   error,
