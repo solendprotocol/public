@@ -1,6 +1,6 @@
 import { Text, Flex, Box, Divider, useMediaQuery } from '@chakra-ui/react';
 import { useAtom } from 'jotai';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   poolsAtom,
   selectedPoolAtom,
@@ -10,9 +10,13 @@ import { formatCompact } from 'utils/numberFormatter';
 import Metric from 'components/Metric/Metric';
 import Loading from 'components/Loading/Loading';
 import BigNumber from 'bignumber.js';
+import { switchboardAtom } from 'stores/settings';
+import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import PoolTable from './PoolTable/PoolTable';
 import PoolList from './PoolList/PoolList';
-import { switchboardAtom } from 'stores/settings';
+
+export const ASSET_SUPPLY_LIMIT_TOOLTIP = 'Asset deposit limit reached.';
+export const ASSET_BORROW_LIMIT_TOOLTIP = 'Asset borrow limit reached.';
 
 export default function Pool({
   selectReserveWithModal,
@@ -28,6 +32,15 @@ export default function Pool({
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
   const defaultPool = poolParam ?? Object.values(pools)[0].address;
+
+  const [showDisabled, setShowDisabled] = useState(false);
+  const reserves = showDisabled
+    ? selectedPool?.reserves
+    : selectedPool?.reserves.filter((r) => !r.disabled);
+  const sortedReserves =
+    reserves?.sort((a, b) => {
+      return a.totalSupply.isGreaterThan(b.totalSupply) ? -1 : 1;
+    }) ?? [];
 
   useEffect(() => {
     if (!switchboardProgram) return;
@@ -83,9 +96,32 @@ export default function Pool({
         <Text variant='headline'>Assets</Text>
         <Divider my={1} />
         {isLargerThan800 ? (
-          <PoolTable selectReserveWithModal={selectReserveWithModal} />
+          <PoolTable
+            reserves={sortedReserves}
+            selectReserveWithModal={selectReserveWithModal}
+          />
         ) : (
-          <PoolList selectReserveWithModal={selectReserveWithModal} />
+          <PoolList
+            reserves={sortedReserves}
+            selectReserveWithModal={selectReserveWithModal}
+          />
+        )}
+        {selectedPool?.reserves.some((r) => r.disabled) && (
+          <Box
+            role='presentation'
+            cursor='pointer'
+            onKeyDown={() => setShowDisabled(!showDisabled)}
+            mt={2}
+            onClick={() => setShowDisabled(!showDisabled)}
+          >
+            <Divider mb='-22px' pt='12px' />
+            <Flex justify='center' my='8px'>
+              <Text color='secondary' bg='neutral' zIndex={1} px={2}>
+                {showDisabled ? 'Hide deprecated ' : 'Show deprecated '}
+                {showDisabled ? <ChevronUpIcon /> : <ChevronDownIcon />}
+              </Text>
+            </Flex>
+          </Box>
         )}
       </Box>
     </Box>
