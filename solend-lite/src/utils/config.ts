@@ -7,22 +7,28 @@ export async function fetchConfig(
   connection: Connection,
 ): Promise<Array<{ name: string | null; address: string; owner: string }>> {
   if (process.env.NEXT_PUBLIC_DEBUG) console.log('fetchConfig');
-  const configResponse = await fetch(
-    `https://api.solend.fi/v1/markets/configs?scope=all&deployment=production`,
-  );
-  if (!configResponse.ok) {
-    // fallback
+
+  try {
+    const configResponse = await fetch(
+      `https://api.solend.fi/v1/markets/configs?scope=all&deployment=production`,
+    );
+    if (!configResponse.ok) {
+      // fallback
+      throw Error('Solend backend configs failed.')
+    }
+  
+    const configData = await configResponse.json();
+    return configData.map(
+      (c: { name: string; address: string; owner: string }) => ({
+        name: titleCase(c.name),
+        owner: c.owner,
+        address: c.address,
+      }),
+    );
+
+  } catch (e) {
     return getPoolsFromChain(connection);
   }
-
-  const configData = await configResponse.json();
-  return configData.map(
-    (c: { name: string; address: string; owner: string }) => ({
-      name: titleCase(c.name),
-      owner: c.owner,
-      address: c.address,
-    }),
-  );
 }
 
 export const getPoolsFromChain = async (connection: Connection) => {
