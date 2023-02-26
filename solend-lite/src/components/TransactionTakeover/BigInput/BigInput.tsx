@@ -80,7 +80,7 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
             : '';
         }
       }
-    }, [useUsd, exchangeRate, value, formatToken, usdAmount]);
+    }, [useUsd, exchangeRate]);
 
     const focusMainInput = () => {
       const input = inputRef.current;
@@ -173,10 +173,7 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
           ((value ?? '').toString().length +
             (selectedToken.symbol?.length ?? 0));
 
-    const nullAmount =
-      !usdAmount ||
-      inputRef?.current?.textContent === '' ||
-      inputRef?.current?.textContent === 'NaN';
+    const nullAmount = !usdAmount || Number.isNaN(Number(usdAmount));
 
     if (value === '' && inputRef?.current?.textContent !== '') {
       // Edge case for resetting the input if the textContent and value don't match
