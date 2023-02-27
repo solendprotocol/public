@@ -8,11 +8,10 @@ import { useCallback } from 'react';
 import { ObligationType, selectedObligationAtom } from 'stores/obligations';
 import { SelectedReserveType } from 'stores/pools';
 import { publicKeyAtom } from 'stores/wallet';
-import { U64_MAX } from '@solendprotocol/solend-sdk';
+import { titleCase, U64_MAX } from '@solendprotocol/solend-sdk';
 import BigInput from '../BigInput/BigInput';
 import ConfirmButton from '../ConfirmButton/ConfirmButton';
 import ReserveStats from '../ReserveStats/ReserveStats';
-import { titleCase } from 'utils/formatUtils';
 import { connectionAtom } from 'stores/settings';
 
 export default function TransactionTab({

@@ -1,10 +1,10 @@
 import { atom } from 'jotai';
-import { fetchConfig } from 'utils/config';
+import { fetchPoolMetadata } from '@solendprotocol/solend-sdk';
 import { connectionAtom } from './settings';
-
-export type ConfigType = Awaited<ReturnType<typeof fetchConfig>>[0];
+import { ENVIRONMENT, DEBUG_MODE } from 'common/config';
 
 export const configAtom = atom(async (get) => {
   const connection = get(connectionAtom);
-  return fetchConfig(connection);
+
+  return fetchPoolMetadata(connection, ENVIRONMENT, true, DEBUG_MODE);
 });

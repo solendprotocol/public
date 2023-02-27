@@ -3,8 +3,9 @@ import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import { parseReserve } from "../state/reserve";
 import BN from "bn.js";
-import { WAD, WANG, SLOTS_PER_YEAR } from "./constants";
+import { WAD, WANG } from "./constants";
 import { ReserveConfigType, RewardsDataType, ReserveDataType } from "./shared";
+import { SLOTS_PER_YEAR } from "../core/constants";
 
 type ParsedReserve = NonNullable<ReturnType<typeof parseReserve>>["info"];
 

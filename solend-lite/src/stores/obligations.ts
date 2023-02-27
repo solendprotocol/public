@@ -1,18 +1,19 @@
 import BigNumber from 'bignumber.js';
 import { atom } from 'jotai';
 import { atomFamily, loadable } from 'jotai/utils';
-import { createObligationAddress } from 'utils/utils';
-import {
-  fetchObligationsByAddress,
-  fetchObligationByAddress,
-  formatObligation,
-} from 'utils/obligations';
 import { poolsFamily, poolsWithMetaDataAtom } from './pools';
 import { publicKeyAtom } from './wallet';
 import { connectionAtom } from './settings';
 import { configAtom } from './config';
 import { PublicKey } from '@solana/web3.js';
-import { Obligation } from '@solendprotocol/solend-sdk';
+import {
+  createObligationAddress,
+  fetchObligationByAddress,
+  fetchObligationsByAddress,
+  formatObligation,
+  Obligation,
+} from '@solendprotocol/solend-sdk';
+import { DEBUG_MODE, PROGRAM_ID } from 'common/config';
 
 export type ObligationType = Awaited<ReturnType<typeof formatObligation>>;
 
@@ -57,10 +58,12 @@ export const loadObligationsAtom = atom(
     if (!publicKey) return;
 
     const keys = await Promise.all(
-      config.map((pool) => createObligationAddress(publicKey, pool.address)),
+      config.map((pool) =>
+        createObligationAddress(publicKey, pool.address, PROGRAM_ID),
+      ),
     );
     const obligations = fullLoad
-      ? await fetchObligationsByAddress(keys, connection)
+      ? await fetchObligationsByAddress(keys, connection, DEBUG_MODE)
       : keys.map((o) => ({
           pubkey: new PublicKey(o),
           info: null,

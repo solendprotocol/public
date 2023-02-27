@@ -10,6 +10,7 @@ export async function fetchPrices(
   parsedReserves: Array<{ info: Reserve; pubkey: PublicKey }>,
   connection: Connection,
   switchboardProgram: SwitchboardProgram,
+  debug?: boolean,
 ) {
   if (process.env.NEXT_PUBLIC_DEBUG) console.log('fetchPrices');
   const oracles = parsedReserves

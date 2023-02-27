@@ -7,7 +7,7 @@ import BigNumber from 'bignumber.js';
 import styles from './ReserveStats.module.scss';
 import classNames from 'classnames';
 import { ChevronDownIcon, ChevronUpIcon, CopyIcon } from '@chakra-ui/icons';
-import { computeExtremeRates } from 'utils/rates';
+import { computeExtremeRates } from '@solendprotocol/solend-sdk';
 
 // certain oracles do not match their underlying asset, hence this mapping
 const PYTH_ORACLE_MAPPING: Record<string, string> = {
