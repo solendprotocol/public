@@ -80,6 +80,7 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
             : '';
         }
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [useUsd, exchangeRate]);
 
     const focusMainInput = () => {

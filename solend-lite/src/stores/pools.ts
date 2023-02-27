@@ -6,19 +6,21 @@ import {
   selectAtom,
   waitForAll,
 } from 'jotai/utils';
-import { fetchPools, formatReserve, getReservesOfPool } from 'utils/pools';
 import { publicKeyAtom } from './wallet';
 import { connectionAtom, switchboardAtom } from './settings';
-import { createObligationAddress } from 'utils/utils';
 import { metadataAtom } from './metadata';
 import { selectedObligationAtom } from './obligations';
 import { configAtom } from './config';
 import BigNumber from 'bignumber.js';
+import {
+  createObligationAddress,
+  ReserveType,
+  fetchPools,
+  getReservesOfPool,
+} from '@solendprotocol/solend-sdk';
+import { DEBUG_MODE, PROGRAM_ID } from 'common/config';
 
-export type ReserveType = Awaited<ReturnType<typeof formatReserve>>;
-export type ReserveWithMetadataType = Awaited<
-  ReturnType<typeof getReservesOfPool>
->[0] & {
+export type ReserveWithMetadataType = ReserveType & {
   symbol: string;
   logo: string | null;
 };
@@ -60,7 +62,7 @@ export const poolsAtom = atomWithDefault<{ [address: string]: PoolType }>(
         {
           name: pool.name,
           address: pool.address,
-          reserves: [],
+          reserves: [] as Array<ReserveType>,
         },
       ]),
     );
@@ -75,7 +77,16 @@ export const loadPoolsAtom = atom(
     const [connection, config] = get(waitForAll([connectionAtom, configAtom]));
     const switchboardProgram = get(switchboardAtom);
 
-    set(poolsAtom, await fetchPools(config, connection, switchboardProgram));
+    set(
+      poolsAtom,
+      await fetchPools(
+        config,
+        connection,
+        switchboardProgram,
+        PROGRAM_ID,
+        DEBUG_MODE,
+      ),
+    );
   },
 );
 
@@ -181,6 +192,7 @@ export const selectedPoolAtom = atom(
       newSelectedObligationAddress = await createObligationAddress(
         publicKey,
         newSelectedPoolAddress,
+        PROGRAM_ID,
       );
     }
 
@@ -188,6 +200,8 @@ export const selectedPoolAtom = atom(
       new PublicKey(newSelectedPoolAddress),
       connection,
       switchboardProgram,
+      PROGRAM_ID,
+      DEBUG_MODE,
     );
 
     if (newSelectedObligationAddress) {

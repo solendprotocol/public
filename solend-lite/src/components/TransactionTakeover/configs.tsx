@@ -7,11 +7,11 @@ import {
 import BigNumber from 'bignumber.js';
 import { ObligationType } from 'stores/obligations';
 import { SelectedReserveType } from 'stores/pools';
-import { WalletType } from 'stores/wallet';
 import {
   POSITION_LIMIT,
   SolendAction,
   U64_MAX,
+  WalletType,
 } from '@solendprotocol/solend-sdk';
 import { NATIVE_MINT } from '@solana/spl-token';
 

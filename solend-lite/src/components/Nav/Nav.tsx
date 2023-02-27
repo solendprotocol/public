@@ -18,9 +18,9 @@ import {
   ReserveWithMetadataType,
   selectedPoolAtom,
 } from 'stores/pools';
-import { formatAddress } from 'utils/formatUtils';
 import Token from 'components/Token/Token';
 import { configAtom } from 'stores/config';
+import { formatAddress } from '@solendprotocol/solend-sdk';
 
 function PoolRow({ reserves }: { reserves: Array<ReserveWithMetadataType> }) {
   const shownIcons = reserves.slice(0, 12);
