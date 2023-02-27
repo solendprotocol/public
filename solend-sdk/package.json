@@ -1,6 +1,7 @@
 {
   "name": "@solendprotocol/solend-sdk",
   "version": "0.6.9",
+  "private": true,
   "main": "src/index.ts",
   "module": "src/index.ts",
   "types": "src/index.ts",
@@ -16,7 +17,8 @@
     "test": "yarn jest",
     "watch": "tsc --watch",
     "coverage": "jest --coverage",
-    "lint": "prettier --write .; prettier --check .;eslint ."
+    "lint": "prettier --write .; prettier --check .;eslint .",
+    "release": "yarn build; ts-node ./prepublish.ts; yarn --cwd ./dist publish"
   },
   "dependencies": {
     "@marinade.finance/marinade-ts-sdk": "^3.1.1",
@@ -42,6 +44,7 @@
     "@orca-so/sdk": "^1.2.25",
     "@types/bs58": "^4.0.1",
     "@types/jest": "^29.2.3",
+    "@types/node": "^18.14.2",
     "@types/node-fetch": "^2.6.2",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
