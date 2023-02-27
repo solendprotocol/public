@@ -1,12 +1,12 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
-import { SelectedPoolType } from 'stores/pools';
-import { Obligation, parseObligation } from '@solendprotocol/solend-sdk';
-import { getBatchMultipleAccountsInfo } from 'utils/utils';
+import { Obligation, parseObligation } from '../../state';
+import { PoolType } from '../types';
+import { getBatchMultipleAccountsInfo } from './utils';
 
 export function formatObligation(
   obligation: { pubkey: PublicKey; info: Obligation },
-  pool: SelectedPoolType,
+  pool: PoolType,
 ) {
   const poolAddress = obligation.info.lendingMarket.toBase58();
 
@@ -152,8 +152,9 @@ export async function fetchObligationByAddress(
 export async function fetchObligationsByAddress(
   obligationAddresses: Array<string>,
   connection: Connection,
+  debug?: boolean,
 ) {
-  if (process.env.NEXT_PUBLIC_DEBUG)
+  if (debug)
     console.log('fetchObligationsByAddress', obligationAddresses.length);
   const rawObligations = await getBatchMultipleAccountsInfo(
     obligationAddresses,

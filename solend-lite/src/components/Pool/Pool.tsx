@@ -45,6 +45,7 @@ export default function Pool({
   useEffect(() => {
     if (!switchboardProgram) return;
     setSelectedPool(defaultPool);
+    // Don't reset to defaultPool after it changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setSelectedPool, switchboardProgram]);
 

@@ -20,11 +20,11 @@ import {
   StarIcon,
 } from '@chakra-ui/icons';
 import Image from 'next/image';
-import { formatAddress } from 'utils/formatUtils';
 import { DEFAULT_RPC_ENDPOINTS } from 'common/config';
 import { selectedRpcAtom } from 'stores/settings';
 import { useState } from 'react';
 import { MenuInput } from 'components/RpcSwitcher/RpcSwitcher';
+import { formatAddress } from '@solendprotocol/solend-sdk';
 
 export default function Header({ openAccount }: { openAccount?: () => void }) {
   const { disconnect } = useWallet();

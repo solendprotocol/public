@@ -1,19 +1,19 @@
-import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
-import { parseReserve, Reserve } from '@solendprotocol/solend-sdk';
 import SwitchboardProgram from '@switchboard-xyz/sbv2-lite';
-import { MAIN_POOL_RESERVES_ADDRESSES, PROGRAM_ID } from 'common/config';
-import { ReserveType } from 'stores/pools';
 import { fetchPrices } from './prices';
 import { calculateBorrowInterest, calculateSupplyInterest } from './rates';
-import { ConfigType } from 'stores/config';
+import { PoolMetadataCoreType, ReserveType } from '../types';
+import { parseReserve, Reserve } from '../../state';
 
 export async function fetchPools(
-  config: Array<ConfigType>,
+  config: Array<PoolMetadataCoreType>,
   connection: Connection,
   switchboardProgram: SwitchboardProgram,
+  programId: string,
+  debug?: boolean,
 ) {
-  const reserves = await getReservesFromChain(connection, switchboardProgram);
+  const reserves = await getReservesFromChain(connection, switchboardProgram, programId, debug);
 
   const pools = Object.fromEntries(
     config.map((c) => [
@@ -115,6 +115,7 @@ export function formatReserve(
     address,
     mintAddress: reserve.info.liquidity.mintPubkey.toBase58(),
     decimals,
+    symbol: undefined,
     price: priceResolved,
     poolAddress: reserve.info.lendingMarket.toBase58(),
     pythOracle: reserve.info.liquidity.pythOracle.toBase58(),
@@ -126,14 +127,17 @@ export const getReservesOfPool = async (
   lendingMarketPubkey: PublicKey,
   connection: Connection,
   switchboardProgram: SwitchboardProgram,
+  programId: string,
+  debug?: boolean
 ) => {
-  if (process.env.NEXT_PUBLIC_DEBUG) console.log('getReservesOfPool');
+  if (debug) console.log('getReservesOfPool');
+
   const filters = [
     { dataSize: 619 },
     { memcmp: { offset: 10, bytes: lendingMarketPubkey.toBase58() } },
   ];
 
-  const rawReserves = await connection.getProgramAccounts(PROGRAM_ID, {
+  const rawReserves = await connection.getProgramAccounts(new PublicKey(programId), {
     commitment: connection.commitment,
     filters,
     encoding: 'base64',
@@ -159,11 +163,14 @@ export const getReservesOfPool = async (
 export const getReservesFromChain = async (
   connection: Connection,
   switchboardProgram: SwitchboardProgram,
+  programId: string,
+  debug?: boolean,
 ) => {
-  if (process.env.NEXT_PUBLIC_DEBUG) console.log('getReservesFromChain');
+  if (debug) console.log('getReservesFromChain');
+
   const filters = [{ dataSize: 619 }];
 
-  const rawReserves = await connection.getProgramAccounts(PROGRAM_ID, {
+  const rawReserves = await connection.getProgramAccounts(new PublicKey(programId), {
     commitment: connection.commitment,
     filters,
     encoding: 'base64',
@@ -184,26 +191,4 @@ export const getReservesFromChain = async (
   return parsedReserves.map((r) =>
     formatReserve(r, prices[r.pubkey.toBase58()]),
   );
-};
-
-export const reorderMainPoolReserves = (
-  reserves: { pubkey: PublicKey; account: AccountInfo<Buffer> }[],
-) => {
-  const reservesMap = new Map<
-    string,
-    { pubkey: PublicKey; account: AccountInfo<Buffer> }
-  >();
-  reserves.forEach((reserve) => {
-    reservesMap.set(reserve.pubkey.toBase58(), reserve);
-  });
-
-  let reorderedReserves: { pubkey: PublicKey; account: AccountInfo<Buffer> }[] =
-    [];
-  MAIN_POOL_RESERVES_ADDRESSES.forEach((reserveAddress) => {
-    const reserve = reservesMap.get(reserveAddress);
-    if (reserve) {
-      reorderedReserves = [...reorderedReserves, reserve];
-    }
-  });
-  return reorderedReserves;
 };
