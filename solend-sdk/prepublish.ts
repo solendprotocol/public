@@ -6,6 +6,7 @@ const newPackageJson = Object.assign({}, packageJson);
 newPackageJson['main'] = './index.js';
 newPackageJson['module'] = './index.js';
 newPackageJson['types'] = './index.js';
+newPackageJson['files'] = ['.'];
 newPackageJson['private'] = false;
 
 fs.writeFile('./dist/package.json', JSON.stringify(newPackageJson), 'utf8',  (err: any) => {

@@ -1,7 +1,10 @@
-import BigNumber from 'bignumber.js';
+import {
+  createObligationAddress,
+  fetchWalletAssets,
+  formatWalletAssets,
+} from '@solendprotocol/solend-sdk';
+import { PROGRAM_ID } from 'common/config';
 import { atom } from 'jotai';
-import { createObligationAddress } from 'utils/utils';
-import { fetchWalletAssets, formatWalletAssets } from 'utils/wallet';
 import { metadataAtom } from './metadata';
 import {
   loadObligationsAtom,
@@ -15,16 +18,6 @@ import {
 } from './pools';
 import { connectionAtom } from './settings';
 import { atomWithRefresh } from './shared';
-
-type WalletAssetType = {
-  amount: BigNumber;
-  mintAddress: string;
-  symbol: string;
-  decimals: number;
-  address: string;
-};
-
-export type WalletType = Array<WalletAssetType>;
 
 export const publicKeyAtom = atom<string | null>(null);
 
@@ -44,7 +37,11 @@ export const setPublicKeyAtom = atom(
     if (selectedPoolAddress) {
       set(
         selectedObligationAtom,
-        await createObligationAddress(newPublicKey, selectedPoolAddress),
+        await createObligationAddress(
+          newPublicKey,
+          selectedPoolAddress,
+          PROGRAM_ID,
+        ),
       );
     }
     set(loadObligationsAtom, true);

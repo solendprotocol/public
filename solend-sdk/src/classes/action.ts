@@ -37,8 +37,7 @@ import {
 import { U64_MAX, WAD, getProgramId } from "./constants";
 import { parseReserve } from "../state/reserve";
 import { ReserveConfigType, MarketConfigType, ConfigType } from "./shared";
-
-export const POSITION_LIMIT = 6;
+import { POSITION_LIMIT } from "../core/constants";
 
 const API_ENDPOINT = "https://api.solend.fi";
 

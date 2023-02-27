@@ -5,7 +5,7 @@ import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 import { formatToken } from 'utils/numberFormatter';
 import { ENVIRONMENT } from 'common/config';
 import { formatErrorMsg } from 'utils/utils';
-import { titleCase } from 'utils/formatUtils';
+import { titleCase } from '@solendprotocol/solend-sdk';
 
 type LoadingResultType = {
   type: 'loading';

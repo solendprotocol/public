@@ -26,7 +26,6 @@
     "@solana/wallet-adapter-wallets": "^0.19.10",
     "@solana/web3.js": "^1.70.1",
     "@solendprotocol/solend-sdk": "*",
-    "@solflare-wallet/utl-sdk": "^1.4.0",
     "@switchboard-xyz/sbv2-lite": "^0.1.6",
     "@tanstack/react-table": "^8.7.9",
     "@types/node": "18.11.15",

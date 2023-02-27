@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js';
-import { Reserve, SLOTS_PER_YEAR } from '@solendprotocol/solend-sdk';
+import { Reserve } from '../../state';
+import { SLOTS_PER_YEAR } from '../constants';
 
 const calculateSupplyAPR = (reserve: Reserve) => {
   const currentUtilization = calculateUtilizationRatio(reserve);
