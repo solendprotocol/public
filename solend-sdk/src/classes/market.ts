@@ -8,7 +8,7 @@ import {
   ExternalRewardStatType,
   MarketConfigType,
 } from "./shared";
-import { simulateRefreshObligation } from "../utils/simulateTransaction";
+import { parseObligation } from "../state";
 
 type Config = Array<MarketConfigType>;
 
@@ -83,11 +83,17 @@ export class SolendMarket {
       this.programId
     );
 
-    const parsedObligation = await simulateRefreshObligation(
-      this.config,
-      this.connection,
-      publicKey,
-      this.programId
+    const rawObligationData = await this.connection.getAccountInfo(
+      obligationAddress
+    );
+
+    if (!rawObligationData) {
+      return null;
+    }
+
+    const parsedObligation = parseObligation(
+      PublicKey.default,
+      rawObligationData!
     );
 
     if (!parsedObligation) {
@@ -98,10 +104,12 @@ export class SolendMarket {
       await this.loadReserves();
     }
 
+    const obligationInfo = parsedObligation.info;
+
     return new SolendObligation(
       publicKey,
       obligationAddress,
-      parsedObligation,
+      obligationInfo,
       reserves
     );
   }
