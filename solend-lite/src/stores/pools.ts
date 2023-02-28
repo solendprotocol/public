@@ -33,6 +33,7 @@ export type SelectedReserveType = ReserveType & {
 export type PoolType = {
   name: string | null;
   address: string;
+  authorityAddress: string;
   reserves: Array<ReserveType>;
 };
 
@@ -61,6 +62,7 @@ export const poolsAtom = atomWithDefault<{ [address: string]: PoolType }>(
         pool.address,
         {
           name: pool.name,
+          authorityAddress: pool.authorityAddress,
           address: pool.address,
           reserves: [] as Array<ReserveType>,
         },

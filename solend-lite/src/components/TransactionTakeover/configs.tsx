@@ -8,12 +8,14 @@ import BigNumber from 'bignumber.js';
 import { ObligationType } from 'stores/obligations';
 import { SelectedReserveType } from 'stores/pools';
 import {
+  PoolType,
   POSITION_LIMIT,
-  SolendAction,
+  SolendActionCore,
   U64_MAX,
   WalletType,
 } from '@solendprotocol/solend-sdk';
-import { NATIVE_MINT } from '@solana/spl-token';
+import { getAssociatedTokenAddress, NATIVE_MINT } from '@solana/spl-token';
+import { ENVIRONMENT, HOST_ATA } from 'common/config';
 
 const SOL_PADDING_FOR_RENT_AND_FEE = 0.02;
 
@@ -29,6 +31,7 @@ export const supplyConfigs = {
   action: async (
     value: string,
     publicKey: string,
+    pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
     sendTransaction: (
@@ -39,14 +42,13 @@ export const supplyConfigs = {
     lendingCallback?: () => void,
     postCallback?: () => void,
   ) => {
-    const solendAction = await SolendAction.buildDepositTxns(
+    const solendAction = await SolendActionCore.buildDepositTxns(
+      pool,
+      selectedReserve,
       connection,
       value,
-      // Should use reserve address
-      selectedReserve.symbol,
       new PublicKey(publicKey),
-      'production',
-      new PublicKey(selectedReserve.poolAddress),
+      ENVIRONMENT,
     );
 
     return solendAction.sendTransactions(
@@ -153,26 +155,41 @@ export const borrowConfigs = {
   action: async (
     value: string,
     publicKey: string,
+    pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
     sendTransaction: (
       txn: Transaction,
       connection: Connection,
-      callback?: () => void,
     ) => Promise<TransactionSignature>,
     preCallback?: () => void,
     lendingCallback?: () => void,
     postCallback?: () => void,
   ) => {
-    const solendAction = await SolendAction.buildBorrowTxns(
+    let hostAta = undefined;
+    if (HOST_ATA) {
+      const hostTokenAccountAddress = await getAssociatedTokenAddress(
+        new PublicKey(selectedReserve.mintAddress),
+        new PublicKey(HOST_ATA),
+      );
+
+      const hostTokenAccountInfo = await connection.getAccountInfo(
+        hostTokenAccountAddress,
+      );
+
+      if (hostTokenAccountInfo) {
+        hostAta = hostTokenAccountAddress;
+      }
+    }
+
+    const solendAction = await SolendActionCore.buildBorrowTxns(
+      pool,
+      selectedReserve,
       connection,
       value,
-      // Should use reserve address
-      selectedReserve.symbol,
       new PublicKey(publicKey),
-      'production',
-      undefined,
-      new PublicKey(selectedReserve.poolAddress),
+      ENVIRONMENT,
+      hostAta,
     );
 
     return solendAction.sendTransactions(
@@ -303,25 +320,24 @@ export const withdrawConfigs = {
   action: async (
     value: string,
     publicKey: string,
+    pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
     sendTransaction: (
       txn: Transaction,
       connection: Connection,
-      callback?: () => void,
     ) => Promise<TransactionSignature>,
     preCallback?: () => void,
     lendingCallback?: () => void,
     postCallback?: () => void,
   ) => {
-    const solendAction = await SolendAction.buildWithdrawTxns(
+    const solendAction = await SolendActionCore.buildWithdrawTxns(
+      pool,
+      selectedReserve,
       connection,
       value,
-      // Should use reserve address
-      selectedReserve.symbol,
       new PublicKey(publicKey),
-      'production',
-      new PublicKey(selectedReserve.poolAddress),
+      ENVIRONMENT,
     );
 
     return solendAction.sendTransactions(
@@ -454,25 +470,24 @@ export const repayConfigs = {
   action: async (
     value: string,
     publicKey: string,
+    pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
     sendTransaction: (
       txn: Transaction,
       connection: Connection,
-      callback?: () => void,
     ) => Promise<TransactionSignature>,
     preCallback?: () => void,
     lendingCallback?: () => void,
     postCallback?: () => void,
   ) => {
-    const solendAction = await SolendAction.buildRepayTxns(
+    const solendAction = await SolendActionCore.buildRepayTxns(
+      pool,
+      selectedReserve,
       connection,
       value,
-      // Should use reserve address
-      selectedReserve.symbol,
       new PublicKey(publicKey),
-      'production',
-      new PublicKey(selectedReserve.poolAddress),
+      ENVIRONMENT,
     );
 
     return solendAction.sendTransactions(

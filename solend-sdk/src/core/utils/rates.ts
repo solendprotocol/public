@@ -1,13 +1,13 @@
-import BigNumber from 'bignumber.js';
-import { Reserve } from '../../state';
-import { SLOTS_PER_YEAR } from '../constants';
+import BigNumber from "bignumber.js";
+import { Reserve } from "../../state";
+import { SLOTS_PER_YEAR } from "../constants";
 
 const calculateSupplyAPR = (reserve: Reserve) => {
   const currentUtilization = calculateUtilizationRatio(reserve);
 
   const borrowAPR = calculateBorrowAPR(reserve);
   const protocolTakePercentage = BigNumber(1).minus(
-    reserve.config.protocolTakeRate / 100,
+    reserve.config.protocolTakeRate / 100
   );
 
   return currentUtilization.times(borrowAPR).times(protocolTakePercentage);
@@ -15,10 +15,10 @@ const calculateSupplyAPR = (reserve: Reserve) => {
 
 const calculateUtilizationRatio = (reserve: Reserve) => {
   const borrowedAmount = new BigNumber(
-    reserve.liquidity.borrowedAmountWads.toString(),
+    reserve.liquidity.borrowedAmountWads.toString()
   ).shiftedBy(-18);
   const totalSupply = borrowedAmount.plus(
-    reserve.liquidity.availableAmount.toString(),
+    reserve.liquidity.availableAmount.toString()
   );
   const currentUtilization = borrowedAmount.dividedBy(totalSupply);
 
@@ -28,7 +28,7 @@ const calculateUtilizationRatio = (reserve: Reserve) => {
 const calculateBorrowAPR = (reserve: Reserve) => {
   const currentUtilization = calculateUtilizationRatio(reserve);
   const optimalUtilization = new BigNumber(
-    reserve.config.optimalUtilizationRate / 100,
+    reserve.config.optimalUtilizationRate / 100
   );
 
   let borrowAPR;
@@ -38,7 +38,7 @@ const calculateBorrowAPR = (reserve: Reserve) => {
   ) {
     const normalizedFactor = currentUtilization.dividedBy(optimalUtilization);
     const optimalBorrowRate = new BigNumber(
-      reserve.config.optimalBorrowRate / 100,
+      reserve.config.optimalBorrowRate / 100
     );
     const minBorrowRate = new BigNumber(reserve.config.minBorrowRate / 100);
     borrowAPR = normalizedFactor
@@ -47,7 +47,7 @@ const calculateBorrowAPR = (reserve: Reserve) => {
   } else {
     if (reserve.config.optimalBorrowRate === reserve.config.maxBorrowRate) {
       return new BigNumber(
-        computeExtremeRates(reserve.config.maxBorrowRate / 100),
+        computeExtremeRates(reserve.config.maxBorrowRate / 100)
       );
     }
     const normalizedFactor = currentUtilization
@@ -96,7 +96,7 @@ export function computeExtremeRates(configRate: number) {
   let cleanRate = configRate;
 
   if (configRate >= 2.47) {
-    cleanRate = Number(configRate.toString().replace('.', ''));
+    cleanRate = Number(configRate.toString().replace(".", ""));
   }
 
   switch (cleanRate) {
