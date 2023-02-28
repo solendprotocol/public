@@ -49,26 +49,46 @@ export default function TransactionTakeover() {
     setTabIndex(index);
   };
 
-  const supplyMax = useMemo(() => selectedReserve ? supplyConfigs.calculateMax(selectedReserve, walletAssets) : BigNumber(0),[
-    selectedReserve,
-    walletAssets,
-    supplyConfigs
-  ])
-  const borrowMax = useMemo(() => selectedReserve ? borrowConfigs.calculateMax(selectedReserve, walletAssets, selectedObligation) : BigNumber(0),[
-    selectedReserve,
-    walletAssets,
-    borrowConfigs
-  ])
-  const withdrawMax = useMemo(() => selectedReserve ? withdrawConfigs.calculateMax(selectedReserve, walletAssets, selectedObligation) : BigNumber(0), [
-    selectedReserve,
-    walletAssets,
-    withdrawConfigs
-  ])
-  const repayMax = useMemo(() => selectedReserve ? repayConfigs.calculateMax(selectedReserve, walletAssets, selectedObligation) : BigNumber(0),[
-    selectedReserve,
-    walletAssets,
-    repayConfigs
-  ])
+  const supplyMax = useMemo(
+    () =>
+      selectedReserve
+        ? supplyConfigs.calculateMax(selectedReserve, walletAssets)
+        : BigNumber(0),
+    [selectedReserve, walletAssets],
+  );
+  const borrowMax = useMemo(
+    () =>
+      selectedReserve
+        ? borrowConfigs.calculateMax(
+            selectedReserve,
+            walletAssets,
+            selectedObligation,
+          )
+        : BigNumber(0),
+    [selectedReserve, walletAssets, selectedObligation],
+  );
+  const withdrawMax = useMemo(
+    () =>
+      selectedReserve
+        ? withdrawConfigs.calculateMax(
+            selectedReserve,
+            walletAssets,
+            selectedObligation,
+          )
+        : BigNumber(0),
+    [selectedReserve, walletAssets, selectedObligation],
+  );
+  const repayMax = useMemo(
+    () =>
+      selectedReserve
+        ? repayConfigs.calculateMax(
+            selectedReserve,
+            walletAssets,
+            selectedObligation,
+          )
+        : BigNumber(0),
+    [selectedReserve, walletAssets, selectedObligation],
+  );
 
   if (!selectedReserve) {
     return null;
@@ -94,7 +114,7 @@ export default function TransactionTakeover() {
         setValue('');
         handleTabsChange(index);
       }}
-      overflow={isLargerThan800 ? undefined : "overlay"}
+      overflow={isLargerThan800 ? undefined : 'overlay'}
     >
       <TabList mb={2}>
         <Tab>
@@ -119,19 +139,19 @@ export default function TransactionTakeover() {
             setValue={setValue}
             onSubmit={() => {
               if (publicKey && selectedReserve && selectedPool) {
-                  return supplyConfigs.action(
-                    new BigNumber(value)
-                  .shiftedBy(selectedReserve.decimals)
-                  .toFixed(0, BigNumber.ROUND_FLOOR),
-                    publicKey,
-                    selectedPool,
-                    selectedReserve,
-                    connection,
-                    sendTransaction,
-                    undefined,
-                    () => setResult({ type: 'loading' }),
-                  ) 
-                }
+                return supplyConfigs.action(
+                  new BigNumber(value)
+                    .shiftedBy(selectedReserve.decimals)
+                    .toFixed(0, BigNumber.ROUND_FLOOR),
+                  publicKey,
+                  selectedPool,
+                  selectedReserve,
+                  connection,
+                  sendTransaction,
+                  undefined,
+                  () => setResult({ type: 'loading' }),
+                );
+              }
             }}
             selectedReserve={selectedReserve}
             maxValue={supplyMax}
@@ -154,19 +174,21 @@ export default function TransactionTakeover() {
               if (publicKey && selectedReserve && selectedPool) {
                 const useMax = new BigNumber(value).isEqualTo(borrowMax);
 
-                  return borrowConfigs.action(
-                    useMax ? U64_MAX : new BigNumber(value)
-                    .shiftedBy(selectedReserve.decimals)
-                    .toFixed(0, BigNumber.ROUND_FLOOR),
-                    publicKey,
-                    selectedPool,
-                    selectedReserve,
-                    connection,
-                    sendTransaction,
-                    undefined,
-                    () => setResult({ type: 'loading' }),
-                  ) 
-                }
+                return borrowConfigs.action(
+                  useMax
+                    ? U64_MAX
+                    : new BigNumber(value)
+                        .shiftedBy(selectedReserve.decimals)
+                        .toFixed(0, BigNumber.ROUND_FLOOR),
+                  publicKey,
+                  selectedPool,
+                  selectedReserve,
+                  connection,
+                  sendTransaction,
+                  undefined,
+                  () => setResult({ type: 'loading' }),
+                );
+              }
             }}
             selectedReserve={selectedReserve}
             maxValue={borrowMax}
@@ -189,19 +211,21 @@ export default function TransactionTakeover() {
               if (publicKey && selectedReserve && selectedPool) {
                 const useMax = new BigNumber(value).isEqualTo(withdrawMax);
 
-                  return withdrawConfigs.action(
-                    useMax ? U64_MAX : new BigNumber(value)
-                    .shiftedBy(selectedReserve.decimals)
-                    .toFixed(0, BigNumber.ROUND_FLOOR),
-                    publicKey,
-                    selectedPool,
-                    selectedReserve,
-                    connection,
-                    sendTransaction,
-                    undefined,
-                    () => setResult({ type: 'loading' }),
-                  ) 
-                }
+                return withdrawConfigs.action(
+                  useMax
+                    ? U64_MAX
+                    : new BigNumber(value)
+                        .shiftedBy(selectedReserve.decimals)
+                        .toFixed(0, BigNumber.ROUND_FLOOR),
+                  publicKey,
+                  selectedPool,
+                  selectedReserve,
+                  connection,
+                  sendTransaction,
+                  undefined,
+                  () => setResult({ type: 'loading' }),
+                );
+              }
             }}
             selectedReserve={selectedReserve}
             maxValue={withdrawMax}
@@ -222,23 +246,26 @@ export default function TransactionTakeover() {
             setValue={setValue}
             onSubmit={() => {
               if (publicKey && selectedReserve && selectedPool) {
-                const useMax = (selectedObligation?.borrows
-                  ?.find((b) => b.reserveAddress === selectedReserve.address)
-                  ?.amount.toString() === value);
+                const useMax =
+                  selectedObligation?.borrows
+                    ?.find((b) => b.reserveAddress === selectedReserve.address)
+                    ?.amount.toString() === value;
 
-                  return repayConfigs.action(
-                    useMax ? U64_MAX : new BigNumber(value)
-                    .shiftedBy(selectedReserve.decimals)
-                    .toFixed(0, BigNumber.ROUND_FLOOR),
-                    publicKey,
-                    selectedPool,
-                    selectedReserve,
-                    connection,
-                    sendTransaction,
-                    undefined,
-                    () => setResult({ type: 'loading' }),
-                  ) 
-                }
+                return repayConfigs.action(
+                  useMax
+                    ? U64_MAX
+                    : new BigNumber(value)
+                        .shiftedBy(selectedReserve.decimals)
+                        .toFixed(0, BigNumber.ROUND_FLOOR),
+                  publicKey,
+                  selectedPool,
+                  selectedReserve,
+                  connection,
+                  sendTransaction,
+                  undefined,
+                  () => setResult({ type: 'loading' }),
+                );
+              }
             }}
             selectedReserve={selectedReserve}
             maxValue={repayMax}
