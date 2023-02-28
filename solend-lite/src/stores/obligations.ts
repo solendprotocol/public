@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js';
 import { atom } from 'jotai';
 import { atomFamily, loadable } from 'jotai/utils';
-import { poolsFamily, poolsWithMetaDataAtom } from './pools';
+import { poolsFamily, poolsWithMetaDataAtom, selectedPoolAtom } from './pools';
 import { publicKeyAtom } from './wallet';
 import { connectionAtom } from './settings';
 import { configAtom } from './config';
@@ -133,6 +133,10 @@ export const selectedObligationAtom = atom(
       DEBUG_MODE,
     ).then((ob) => {
       if (ob) {
+        const selectedPool = get(selectedPoolAtom);
+        if (ob.info.lendingMarket.toBase58() !== selectedPool?.address) {
+          set(selectedPoolAtom, ob.info.lendingMarket.toBase58());
+        }
         set(obligationToUpdateAtom, ob);
       }
     });

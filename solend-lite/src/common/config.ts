@@ -2,6 +2,7 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { EnvironmentType, getProgramId } from '@solendprotocol/solend-sdk';
 
 export const DEBUG_MODE = Boolean(process.env.NEXT_PUBLIC_DEBUG);
+export const SKIP_PREFLIGHT = Boolean(process.env.NEXT_PUBLIC_SKIP_PREFLIGHT);
 export const ENVIRONMENT =
   (process.env.NEXT_PUBLIC_REACT_APP_NETWORK as EnvironmentType) ||
   WalletAdapterNetwork.Devnet;

@@ -27,9 +27,11 @@ import { publicKeyAtom, walletAssetsAtom } from 'stores/wallet';
 import Result, { ResultConfigType } from 'components/Result/Result';
 import BigNumber from 'bignumber.js';
 import { connectionAtom, refreshPageAtom } from 'stores/settings';
-import { selectedPoolAtom, selectedReserveAtom } from 'stores/pools';
+import { selectedPoolAtom } from 'stores/pools';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { U64_MAX } from '@solendprotocol/solend-sdk';
+import { SKIP_PREFLIGHT } from 'common/config';
+import { selectedModalTabAtom, selectedReserveAtom } from 'stores/modal';
 
 export default function TransactionTakeover() {
   const { sendTransaction } = useWallet();
@@ -37,17 +39,13 @@ export default function TransactionTakeover() {
   const [connection] = useAtom(connectionAtom);
   const [selectedObligation] = useAtom(selectedObligationAtom);
   const [walletAssets] = useAtom(walletAssetsAtom);
-  const [tabIndex, setTabIndex] = useState(0);
   const refresh = useSetAtom(refreshPageAtom);
   const [selectedPool] = useAtom(selectedPoolAtom);
   const [selectedReserve, setSelectedReserve] = useAtom(selectedReserveAtom);
+  const [selectedModalTab, setSelectedModalTab] = useAtom(selectedModalTabAtom);
   const [value, setValue] = useState('');
   const [result, setResult] = useState<ResultConfigType | null>(null);
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
-
-  const handleTabsChange = (index: number) => {
-    setTabIndex(index);
-  };
 
   const supplyMax = useMemo(
     () =>
@@ -109,10 +107,10 @@ export default function TransactionTakeover() {
     <Result result={result} setResult={setResult} />
   ) : (
     <Tabs
-      index={tabIndex}
+      index={selectedModalTab}
       onChange={(index) => {
         setValue('');
-        handleTabsChange(index);
+        setSelectedModalTab(index);
       }}
       overflow={isLargerThan800 ? undefined : 'overlay'}
     >
@@ -221,7 +219,12 @@ export default function TransactionTakeover() {
                   selectedPool,
                   selectedReserve,
                   connection,
-                  sendTransaction,
+                  SKIP_PREFLIGHT
+                    ? (transaction) =>
+                        sendTransaction(transaction, connection, {
+                          skipPreflight: true,
+                        })
+                    : sendTransaction,
                   undefined,
                   () => setResult({ type: 'loading' }),
                 );

@@ -1,11 +1,4 @@
-import {
-  Text,
-  Grid,
-  GridItem,
-  useDisclosure,
-  Button,
-  Box,
-} from '@chakra-ui/react';
+import { Grid, GridItem, useDisclosure } from '@chakra-ui/react';
 import { Suspense } from 'react';
 import Footer from 'components/Footer/Footer';
 import Nav from 'components/Nav/Nav';
@@ -15,41 +8,26 @@ import Account from 'components/Account/Account';
 import { ErrorBoundary } from 'react-error-boundary';
 import TransactionTakeover from 'components/TransactionTakeover/TransactionTakeover';
 import { useCallback } from 'react';
-import { selectedReserveAtom } from 'stores/pools';
 import { selectedRpcAtom } from 'stores/settings';
 import { useSetAtom } from 'jotai';
 import { DEFAULT_RPC_ENDPOINTS } from 'common/config';
 import Loading from 'components/Loading/Loading';
-
-function ErrorFallback({
-  error,
-  resetErrorBoundary,
-}: {
-  error: Error;
-  resetErrorBoundary: () => void;
-}) {
-  return (
-    <Box role='alert'>
-      <Text>Something went wrong:</Text>
-      <Text variant='secondary'>{error.message}</Text>
-      <Button onClick={resetErrorBoundary}>
-        <Text>Try again</Text>
-      </Button>
-    </Box>
-  );
-}
+import { ErrorFallback } from 'components/ErrorFallback/ErrorFallback';
+import { selectedModalTabAtom, selectedReserveAtom } from 'stores/modal';
 
 export default function Dashboard() {
   const { onOpen } = useDisclosure();
   const setSelectedRpc = useSetAtom(selectedRpcAtom);
   const setSelectedReserve = useSetAtom(selectedReserveAtom);
+  const setSelectedModalTab = useSetAtom(selectedModalTabAtom);
 
   const selectReserveWithModal = useCallback(
     (reserveAddress: string) => {
+      setSelectedModalTab(0);
       setSelectedReserve(reserveAddress);
       onOpen();
     },
-    [onOpen, setSelectedReserve],
+    [onOpen, setSelectedReserve, setSelectedModalTab],
   );
 
   return (
