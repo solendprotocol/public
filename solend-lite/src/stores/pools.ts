@@ -33,7 +33,7 @@ export type SelectedReserveType = ReserveType & {
 export type PoolType = {
   name: string | null;
   address: string;
-  authorityAddress: string,
+  authorityAddress: string;
   reserves: Array<ReserveType>;
 };
 

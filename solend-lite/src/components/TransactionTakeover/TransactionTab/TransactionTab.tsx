@@ -1,18 +1,14 @@
 import { Flex } from '@chakra-ui/react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection, Transaction, TransactionSignature } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { ResultConfigType } from 'components/Result/Result';
 import { useAtom } from 'jotai';
-import { useCallback } from 'react';
 import { ObligationType, selectedObligationAtom } from 'stores/obligations';
-import { selectedPoolAtom, SelectedReserveType } from 'stores/pools';
+import { SelectedReserveType } from 'stores/pools';
 import { publicKeyAtom } from 'stores/wallet';
-import { PoolType, titleCase, U64_MAX } from '@solendprotocol/solend-sdk';
+import { titleCase } from '@solendprotocol/solend-sdk';
 import BigInput from '../BigInput/BigInput';
 import ConfirmButton from '../ConfirmButton/ConfirmButton';
 import ReserveStats from '../ReserveStats/ReserveStats';
-import { connectionAtom } from 'stores/settings';
 
 export default function TransactionTab({
   onFinish,

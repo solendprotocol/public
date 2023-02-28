@@ -15,7 +15,6 @@ import {
   WalletType,
 } from '@solendprotocol/solend-sdk';
 import { getAssociatedTokenAddress, NATIVE_MINT } from '@solana/spl-token';
-import { BN } from '@coral-xyz/anchor';
 import { ENVIRONMENT, HOST_ATA } from 'common/config';
 
 const SOL_PADDING_FOR_RENT_AND_FEE = 0.02;
@@ -47,7 +46,7 @@ export const supplyConfigs = {
       pool,
       selectedReserve,
       connection,
-      new BN(value),
+      value,
       new PublicKey(publicKey),
       ENVIRONMENT,
     );
@@ -178,8 +177,6 @@ export const borrowConfigs = {
         hostTokenAccountAddress,
       );
 
-      // When self referring, user might not have the ATA for the borrow but we can assume it will be created
-      // in the same transaction
       if (hostTokenAccountInfo) {
         hostAta = hostTokenAccountAddress;
       }
@@ -189,10 +186,10 @@ export const borrowConfigs = {
       pool,
       selectedReserve,
       connection,
-      new BN(value),
+      value,
       new PublicKey(publicKey),
       ENVIRONMENT,
-      hostAta
+      hostAta,
     );
 
     return solendAction.sendTransactions(
@@ -338,7 +335,7 @@ export const withdrawConfigs = {
       pool,
       selectedReserve,
       connection,
-      new BN(value),
+      value,
       new PublicKey(publicKey),
       ENVIRONMENT,
     );
@@ -488,7 +485,7 @@ export const repayConfigs = {
       pool,
       selectedReserve,
       connection,
-      new BN(value),
+      value,
       new PublicKey(publicKey),
       ENVIRONMENT,
     );

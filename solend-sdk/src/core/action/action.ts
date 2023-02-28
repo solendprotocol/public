@@ -232,7 +232,7 @@ export class SolendActionCore {
     pool: PoolType,
     reserve: ReserveType,
     connection: Connection,
-    amount: BN,
+    amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production"
   ) {
@@ -240,7 +240,7 @@ export class SolendActionCore {
       pool,
       reserve,
       "deposit",
-      amount,
+      new BN(amount),
       publicKey,
       connection,
       environment
@@ -256,7 +256,7 @@ export class SolendActionCore {
     pool: PoolType,
     reserve: ReserveType,
     connection: Connection,
-    amount: BN,
+    amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production",
     hostAta?: PublicKey
@@ -265,7 +265,7 @@ export class SolendActionCore {
       pool,
       reserve,
       "borrow",
-      amount,
+      new BN(amount),
       publicKey,
       connection,
       environment,
@@ -281,7 +281,7 @@ export class SolendActionCore {
     pool: PoolType,
     reserve: ReserveType,
     connection: Connection,
-    amount: BN,
+    amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production"
   ) {
@@ -289,7 +289,7 @@ export class SolendActionCore {
       pool,
       reserve,
       "mint",
-      amount,
+      new BN(amount),
       publicKey,
       connection,
       environment
@@ -303,7 +303,7 @@ export class SolendActionCore {
     pool: PoolType,
     reserve: ReserveType,
     connection: Connection,
-    amount: BN,
+    amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production"
   ) {
@@ -311,7 +311,7 @@ export class SolendActionCore {
       pool,
       reserve,
       "redeem",
-      amount,
+      new BN(amount),
       publicKey,
       connection,
       environment
@@ -325,7 +325,7 @@ export class SolendActionCore {
     pool: PoolType,
     reserve: ReserveType,
     connection: Connection,
-    amount: BN,
+    amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production"
   ) {
@@ -333,7 +333,7 @@ export class SolendActionCore {
       pool,
       reserve,
       "depositCollateral",
-      amount,
+      new BN(amount),
       publicKey,
       connection,
       environment
@@ -347,7 +347,7 @@ export class SolendActionCore {
     pool: PoolType,
     reserve: ReserveType,
     connection: Connection,
-    amount: BN,
+    amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production"
   ) {
@@ -355,7 +355,7 @@ export class SolendActionCore {
       pool,
       reserve,
       "withdrawCollateral",
-      amount,
+      new BN(amount),
       publicKey,
       connection,
       environment
@@ -371,7 +371,7 @@ export class SolendActionCore {
     pool: PoolType,
     reserve: ReserveType,
     connection: Connection,
-    amount: BN,
+    amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production"
   ) {
@@ -379,7 +379,7 @@ export class SolendActionCore {
       pool,
       reserve,
       "withdraw",
-      amount,
+      new BN(amount),
       publicKey,
       connection,
       environment
@@ -395,7 +395,7 @@ export class SolendActionCore {
     pool: PoolType,
     reserve: ReserveType,
     connection: Connection,
-    amount: BN,
+    amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production"
   ) {
@@ -403,7 +403,7 @@ export class SolendActionCore {
       pool,
       reserve,
       "repay",
-      amount,
+      new BN(amount),
       publicKey,
       connection,
       environment

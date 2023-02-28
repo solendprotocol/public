@@ -127,13 +127,15 @@ export const selectedObligationAtom = atom(
       throw Error('Selected obligation not found');
     }
 
-    fetchObligationByAddress(newSelectedObligationAddress, connection, DEBUG_MODE).then(
-      (ob) => {
-        if (ob) {
-          set(obligationToUpdateAtom, ob);
-        }
-      },
-    );
+    fetchObligationByAddress(
+      newSelectedObligationAddress,
+      connection,
+      DEBUG_MODE,
+    ).then((ob) => {
+      if (ob) {
+        set(obligationToUpdateAtom, ob);
+      }
+    });
 
     set(selectedObligationAddressAtom, newSelectedObligationAddress);
   },

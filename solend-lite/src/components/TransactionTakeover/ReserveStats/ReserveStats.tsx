@@ -96,7 +96,7 @@ function ReserveStats({
         label='Utilization'
         row
         value={
-          <Text display="flex">
+          <Text display='flex'>
             {formatPercent(utilization ?? 0)}
             {newBorrowUtilization && (
               <>
