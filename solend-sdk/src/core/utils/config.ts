@@ -21,7 +21,7 @@ export async function fetchPoolMetadata(
 
   try {
     const configResponse = await fetch(
-      `https://api.sol23end.fi/v1/markets/configs?scope=all&deployment=${
+      `https://api.solend.fi/v1/markets/configs?scope=all&deployment=${
         environment === "mainnet-beta" ? "production" : environment
       }`
     );
