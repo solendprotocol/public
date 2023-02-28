@@ -14,7 +14,7 @@ import {
   selectedRpcAtom,
   switchboardAtom,
 } from 'stores/settings';
-import { publicKeyAtom, walletAssetsAtom } from 'stores/wallet';
+import { publicKeyAtom, rawWalletDataAtom } from 'stores/wallet';
 
 import styles from './RefreshDataButton.module.scss';
 
@@ -34,7 +34,7 @@ function RefreshDataButton(): ReactElement {
   const loadObligation = useSetAtom(selectedObligationAtom);
   const [selectedObligationAddress] = useAtom(selectedObligationAddressAtom);
   const [refreshCounter] = useAtom(refreshCounterAtom);
-  const refreshWallet = useSetAtom(walletAssetsAtom);
+  const refreshWallet = useSetAtom(rawWalletDataAtom);
   const loadMetadata = useSetAtom(loadMetadataAtom);
   const [unqiueAssets] = useAtom(unqiueAssetsAtom);
   const [selectedRpc] = useAtom(selectedRpcAtom);

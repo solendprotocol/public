@@ -1,66 +1,78 @@
-import { Cluster, Connection } from '@solana/web3.js';
-import { EnvironmentType, getProgramId, LENDING_MARKET_SIZE } from '@solendprotocol/solend-sdk';
-import { SOLEND_ADDRESSES } from '../constants';
-import { titleCase } from './utils';
-import { PoolMetadataCoreType } from '@solendprotocol/solend-sdk';
+import { Connection, PublicKey } from "@solana/web3.js";
+import {
+  EnvironmentType,
+  getProgramId,
+  LENDING_MARKET_SIZE,
+} from "@solendprotocol/solend-sdk";
+import { SOLEND_ADDRESSES } from "../constants";
+import { titleCase } from "./utils";
+import { PoolMetadataCoreType } from "@solendprotocol/solend-sdk";
 
 export async function fetchPoolMetadata(
   connection: Connection,
-  environment: EnvironmentType = 'production',
+  environment: EnvironmentType = "production",
   useApi?: Boolean,
-  debug?: Boolean,
+  debug?: Boolean
 ): Promise<Array<PoolMetadataCoreType>> {
-  if (debug) console.log('fetchConfig');
+  if (debug) console.log("fetchConfig");
 
-  if (!useApi) return fetchPoolMetadataFromChain(connection, environment);
+  const programId = getProgramId(environment);
+  if (!useApi) return fetchPoolMetadataFromChain(connection, programId, debug);
 
   try {
     const configResponse = await fetch(
-      `https://api.solend.fi/v1/markets/configs?scope=all&deployment=${environment === 'mainnet-beta' ? 'production' : environment}`,
+      `https://api.sol23end.fi/v1/markets/configs?scope=all&deployment=${
+        environment === "mainnet-beta" ? "production" : environment
+      }`
     );
     if (!configResponse.ok) {
       // fallback
-      throw Error('Solend backend configs failed.')
+      throw Error("Solend backend configs failed.");
     }
-  
+
     const configData = await configResponse.json();
     return configData.map(
       (c: { name: string; address: string; owner: string }) => ({
         name: titleCase(c.name),
         owner: c.owner,
         address: c.address,
-      }),
+        bumpSeed: 123,
+      })
     );
-
   } catch (e) {
-    return fetchPoolMetadataFromChain(connection, environment);
+    return fetchPoolMetadataFromChain(connection, programId, debug);
   }
 }
 
-export const fetchPoolMetadataFromChain = async (connection: Connection, environment: EnvironmentType) => {
-  if (process.env.NEXT_PUBLIC_DEBUG) console.log('fetchPoolsFromChain');
-  const filters = [
-    { dataSize: LENDING_MARKET_SIZE },
-  ];
+export const fetchPoolMetadataFromChain = async (
+  connection: Connection,
+  programId: PublicKey,
+  debug?: Boolean
+) => {
+  if (debug) console.log("fetchPoolsFromChain");
+  const filters = [{ dataSize: LENDING_MARKET_SIZE }];
 
-  const pools = await connection.getProgramAccounts(getProgramId(environment), {
+  const pools = await connection.getProgramAccounts(programId, {
     commitment: connection.commitment,
     filters,
-    encoding: 'base64',
+    encoding: "base64",
   });
 
-  const poolList = pools.map((pool) => {
-    return {
-      owner: pool.account.owner.toBase58(),
-      address: pool.pubkey.toBase58(),
-    };
-  });
+  return pools
+    .sort((a, _b) =>
+      a.account.owner.toBase58() === SOLEND_ADDRESSES[0] ? 1 : -1
+    )
+    .map((pool) => {
+      const [authorityAddress, _bumpSeed] = PublicKey.findProgramAddressSync(
+        [pool.pubkey.toBytes()],
+        programId
+      );
 
-  return poolList
-    .sort((a, _b) => (a.owner === SOLEND_ADDRESSES[0] ? 1 : -1))
-    .map((pool) => ({
-      name: null,
-      owner: pool.owner,
-      address: pool.address,
-    }));
+      return {
+        name: null,
+        owner: pool.account.owner.toBase58(),
+        authorityAddress: authorityAddress.toBase58(),
+        address: pool.pubkey.toBase58(),
+      };
+    });
 };

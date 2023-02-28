@@ -5,7 +5,7 @@ const ADDRESS_PREFIX_SUFFIX_LENGTH = 6;
 export const formatAddress = (address: string, length?: number) => {
   return `${address.slice(
     0,
-    length ?? ADDRESS_PREFIX_SUFFIX_LENGTH,
+    length ?? ADDRESS_PREFIX_SUFFIX_LENGTH
   )}...${address.slice(-(length ?? ADDRESS_PREFIX_SUFFIX_LENGTH))}`;
 };
 
@@ -15,7 +15,7 @@ export const titleCase = (name: string) => {
 
 export async function getBatchMultipleAccountsInfo(
   addresses: Array<string | PublicKey>,
-  connection: Connection,
+  connection: Connection
 ) {
   const keys = addresses.map((add) => new PublicKey(add));
   const res = keys.reduce((acc, _curr, i) => {
@@ -29,8 +29,8 @@ export async function getBatchMultipleAccountsInfo(
   return (
     await Promise.all(
       res.map((accountGroup) =>
-        connection.getMultipleAccountsInfo(accountGroup, 'processed'),
-      ),
+        connection.getMultipleAccountsInfo(accountGroup, "processed")
+      )
     )
   ).flatMap((x) => x);
 }
@@ -38,13 +38,13 @@ export async function getBatchMultipleAccountsInfo(
 export async function createObligationAddress(
   publicKey: string,
   marketAddress: string,
-  programId: string,
+  programId: string
 ) {
   return (
     await PublicKey.createWithSeed(
       new PublicKey(publicKey),
       marketAddress.slice(0, 32),
-      new PublicKey(programId),
+      new PublicKey(programId)
     )
   ).toBase58();
 }
@@ -54,7 +54,7 @@ export function computeExtremeRates(configRate: number) {
   let cleanRate = configRate;
 
   if (configRate >= 2.47) {
-    cleanRate = Number(configRate.toString().replace('.', ''));
+    cleanRate = Number(configRate.toString().replace(".", ""));
   }
 
   switch (cleanRate) {

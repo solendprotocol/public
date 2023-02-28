@@ -96,7 +96,7 @@ function ReserveStats({
         label='Utilization'
         row
         value={
-          <Flex>
+          <Text display="flex">
             {formatPercent(utilization ?? 0)}
             {newBorrowUtilization && (
               <>
@@ -104,7 +104,7 @@ function ReserveStats({
                 {newUtilizationDisplay}
               </>
             )}
-          </Flex>
+          </Text>
         }
       />
       <Metric

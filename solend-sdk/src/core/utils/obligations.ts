@@ -1,23 +1,23 @@
-import { Connection, PublicKey } from '@solana/web3.js';
-import BigNumber from 'bignumber.js';
-import { Obligation, parseObligation } from '../../state';
-import { PoolType } from '../types';
-import { getBatchMultipleAccountsInfo } from './utils';
+import { Connection, PublicKey } from "@solana/web3.js";
+import BigNumber from "bignumber.js";
+import { Obligation, parseObligation } from "../../state";
+import { PoolType } from "../types";
+import { getBatchMultipleAccountsInfo } from "./utils";
 
 export function formatObligation(
   obligation: { pubkey: PublicKey; info: Obligation },
-  pool: PoolType,
+  pool: PoolType
 ) {
   const poolAddress = obligation.info.lendingMarket.toBase58();
 
   const deposits = obligation.info.deposits
-    .filter((d) => d.depositedAmount.toString() !== '0')
+    .filter((d) => d.depositedAmount.toString() !== "0")
     .map((d) => {
       const reserveAddress = d.depositReserve.toBase58();
       const reserve = pool.reserves.find((r) => r.address === reserveAddress);
 
       if (!reserve)
-        throw Error('Deposit in obligation does not exist in the pool');
+        throw Error("Deposit in obligation does not exist in the pool");
 
       const amount = new BigNumber(d.depositedAmount.toString())
         .shiftedBy(-reserve.decimals)
@@ -36,18 +36,18 @@ export function formatObligation(
     });
 
   const borrows = obligation.info.borrows
-    .filter((b) => b.borrowedAmountWads.toString() !== '0')
+    .filter((b) => b.borrowedAmountWads.toString() !== "0")
     .map((b) => {
       const reserveAddress = b.borrowReserve.toBase58();
       const reserve = pool.reserves.find((r) => r.address === reserveAddress);
       if (!reserve)
-        throw Error('Borrow in obligation does not exist in the pool');
+        throw Error("Borrow in obligation does not exist in the pool");
 
       const amount = new BigNumber(b.borrowedAmountWads.toString())
         .shiftedBy(-18 - reserve.decimals)
         .times(reserve.cumulativeBorrowRate)
         .dividedBy(
-          new BigNumber(b.cumulativeBorrowRateWads.toString()).shiftedBy(-18),
+          new BigNumber(b.cumulativeBorrowRateWads.toString()).shiftedBy(-18)
         );
       const amountUsd = amount.times(reserve.price);
 
@@ -64,20 +64,20 @@ export function formatObligation(
 
   const totalSupplyValue = deposits.reduce(
     (acc, d) => acc.plus(d.amountUsd),
-    new BigNumber(0),
+    new BigNumber(0)
   );
   const totalBorrowValue = borrows.reduce(
     (acc, b) => acc.plus(b.amountUsd),
-    new BigNumber(0),
+    new BigNumber(0)
   );
 
   const borrowLimit = deposits.reduce(
     (acc, d) => d.amountUsd.times(d.loanToValueRatio).plus(acc),
-    BigNumber(0),
+    BigNumber(0)
   );
   const liquidationThreshold = deposits.reduce(
     (acc, d) => d.amountUsd.times(d.liquidationThreshold).plus(acc),
-    BigNumber(0),
+    BigNumber(0)
   );
   const netAccountValue = totalSupplyValue.minus(totalBorrowValue);
   const liquidationThresholdFactor = totalSupplyValue.isZero()
@@ -90,7 +90,7 @@ export function formatObligation(
     ? new BigNumber(0)
     : totalBorrowValue.dividedBy(borrowLimit);
   const isBorrowLimitReached = borrowUtilization.isGreaterThanOrEqualTo(
-    new BigNumber('1'),
+    new BigNumber("1")
   );
   const borrowOverSupply = totalSupplyValue.isZero()
     ? new BigNumber(0)
@@ -127,10 +127,12 @@ export function formatObligation(
 export async function fetchObligationByAddress(
   obligationAddress: string,
   connection: Connection,
+  debug?: boolean
 ) {
-  if (process.env.NEXT_PUBLIC_DEBUG) console.log('fetchObligationByAddress');
+  if (debug) console.log("fetchObligationByAddress");
+
   const rawObligationData = await connection.getAccountInfo(
-    new PublicKey(obligationAddress),
+    new PublicKey(obligationAddress)
   );
 
   if (!rawObligationData) {
@@ -139,7 +141,7 @@ export async function fetchObligationByAddress(
 
   const parsedObligation = parseObligation(
     PublicKey.default,
-    rawObligationData!,
+    rawObligationData!
   );
 
   if (!parsedObligation) {
@@ -152,20 +154,20 @@ export async function fetchObligationByAddress(
 export async function fetchObligationsByAddress(
   obligationAddresses: Array<string>,
   connection: Connection,
-  debug?: boolean,
+  debug?: boolean
 ) {
   if (debug)
-    console.log('fetchObligationsByAddress', obligationAddresses.length);
+    console.log("fetchObligationsByAddress", obligationAddresses.length);
   const rawObligations = await getBatchMultipleAccountsInfo(
     obligationAddresses,
-    connection,
+    connection
   );
 
   const parsedObligations = rawObligations
     .map((obligation, index) =>
       obligation
         ? parseObligation(new PublicKey(obligationAddresses[index]), obligation)
-        : null,
+        : null
     )
     .filter(Boolean) as Array<{ info: Obligation; pubkey: PublicKey }>;
 
