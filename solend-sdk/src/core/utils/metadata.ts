@@ -1,12 +1,12 @@
-import { Client, Token } from '@solflare-wallet/utl-sdk';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Client, Token } from "@solflare-wallet/utl-sdk";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 export const fetchTokensInfo = async (
   mints: string[],
   connection: Connection,
-  debug?: boolean,
+  debug?: boolean
 ) => {
-  if (debug) console.log('getTokensInfo');
+  if (debug) console.log("getTokensInfo");
 
   const defaultConfig = new Client();
   const utl = new Client({
@@ -15,7 +15,7 @@ export const fetchTokensInfo = async (
   });
 
   const tokens: Token[] = await utl.fetchMints(
-    mints.map((mint) => new PublicKey(mint)),
+    mints.map((mint) => new PublicKey(mint))
   );
 
   return Object.fromEntries(
@@ -30,8 +30,8 @@ export const fetchTokensInfo = async (
                 decimals: token.decimals ?? 0,
               },
             ]
-          : [],
+          : []
       )
-      .filter((x) => x.length),
+      .filter((x) => x.length)
   );
 };

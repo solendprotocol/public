@@ -6,6 +6,7 @@ export const ENVIRONMENT =
   (process.env.NEXT_PUBLIC_REACT_APP_NETWORK as EnvironmentType) ||
   WalletAdapterNetwork.Devnet;
 export const PROGRAM_ID = getProgramId(ENVIRONMENT).toBase58();
+export const HOST_ATA = process.env.NEXT_PUBLIC_REACT_HOST_ATA;
 export const DEFAULT_RPC_ENDPOINTS = [
   {
     name: 'RPCPool',
