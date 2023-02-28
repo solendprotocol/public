@@ -140,7 +140,7 @@ export async function fetchObligationByAddress(
   }
 
   const parsedObligation = parseObligation(
-    PublicKey.default,
+    new PublicKey(obligationAddress),
     rawObligationData!
   );
 

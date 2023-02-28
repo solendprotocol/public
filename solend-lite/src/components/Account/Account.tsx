@@ -17,8 +17,8 @@ import AccountMetrics from 'components/AccountMetrics/AccountMetrics';
 import Wallet from 'components/Wallet/Wallet';
 import { useAtom, useSetAtom } from 'jotai';
 import { useEffect, useState } from 'react';
+import { selectedReserveAtom, selectedModalTabAtom } from 'stores/modal';
 import { selectedObligationAtom } from 'stores/obligations';
-import { selectedReserveAtom } from 'stores/pools';
 import { formatToken, formatUsd } from 'utils/numberFormatter';
 
 export default function Account() {
@@ -28,8 +28,9 @@ export default function Account() {
     selectedObligationAtom,
   );
   const setSelectedReserve = useSetAtom(selectedReserveAtom);
+  const setSelectedModalTab = useSetAtom(selectedModalTabAtom);
   useEffect(() => {
-    if (selectedObligation?.address?.length && changed) {
+    if (changed) {
       setNewObligationAddress(selectedObligation?.address ?? '');
     }
   }, [selectedObligation?.address, changed]);
@@ -80,7 +81,11 @@ export default function Account() {
               <Tr
                 cursor='pointer'
                 key={position.reserveAddress}
-                onClick={() => setSelectedReserve(position.reserveAddress)}
+                onClick={() => {
+                  // withdraw
+                  setSelectedModalTab(2);
+                  setSelectedReserve(position.reserveAddress);
+                }}
               >
                 <Td>
                   <Text>{position.symbol ?? 'Loading...'}</Text>
@@ -121,7 +126,11 @@ export default function Account() {
               <Tr
                 cursor='pointer'
                 key={position.reserveAddress}
-                onClick={() => setSelectedReserve(position.reserveAddress)}
+                onClick={() => {
+                  // repay
+                  setSelectedModalTab(3);
+                  setSelectedReserve(position.reserveAddress);
+                }}
               >
                 <Td>
                   <Text>{position.symbol}</Text>

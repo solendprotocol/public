@@ -51,7 +51,7 @@ function Metric({
           )}
         </Flex>
       )}
-      <Text>{value}</Text>
+      <Text display='flex'>{value}</Text>
       {secondary && (
         <>
           <Text color='secondary' variant='caption'>

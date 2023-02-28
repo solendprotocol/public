@@ -144,20 +144,6 @@ export const selectedPoolAddressAtom = atomWithDefault<string | null>((get) => {
 
 export const selectedReserveAddressAtom = atom<string | null>(null);
 
-export const selectedReserveAtom = atom(
-  (get) => {
-    const pool = get(selectedPoolAtom);
-    const selectedReserveAddress = get(selectedReserveAddressAtom);
-    const reserve = pool?.reserves?.find(
-      (r) => r.address === selectedReserveAddress,
-    );
-    return reserve;
-  },
-  (_get, set, newSelectedPoolAddress: string | null) => {
-    set(selectedReserveAddressAtom, newSelectedPoolAddress);
-  },
-);
-
 export const selectedPoolAtom = atom(
   (get) => {
     const selectedPoolAddress = get(selectedPoolAddressAtom);
