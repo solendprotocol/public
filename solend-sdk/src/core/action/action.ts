@@ -684,7 +684,7 @@ export class SolendActionCore {
         new PublicKey(this.pool.address),
         new PublicKey(this.pool.authorityAddress),
         this.userTokenAccountAddress, // destinationLiquidity
-        new PublicKey(this.reserve.cTokenLiquidityAddress),
+        new PublicKey(this.reserve.cTokenMint),
         new PublicKey(this.reserve.liquidityAddress),
         this.publicKey, // obligationOwner
         this.publicKey, // transferAuthority

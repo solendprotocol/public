@@ -13,7 +13,8 @@ import BigNumber from 'bignumber.js';
 import { useAtom, useSetAtom } from 'jotai';
 import { useEffect } from 'react';
 import { configAtom } from 'stores/config';
-import { selectedPoolAtom, selectedReserveAtom } from 'stores/pools';
+import { selectedModalTabAtom, selectedReserveAtom } from 'stores/modal';
+import { selectedPoolAtom } from 'stores/pools';
 import { setPublicKeyAtom, walletAssetsAtom } from 'stores/wallet';
 import { formatToken, formatUsd } from 'utils/numberFormatter';
 
@@ -24,6 +25,7 @@ export default function Wallet() {
   const { publicKey } = useWallet();
   const setPublicKeyInAtom = useSetAtom(setPublicKeyAtom);
   const setSelectedReserve = useSetAtom(selectedReserveAtom);
+  const setSelectedModalTab = useSetAtom(selectedModalTabAtom);
 
   const uniqueConfigHash = config.map((c) => c.address).join(',');
   const pubString = publicKey?.toBase58();
@@ -64,13 +66,14 @@ export default function Wallet() {
             return (
               <Tr
                 key={mint.mintAddress}
-                onClick={() =>
+                onClick={() => {
+                  setSelectedModalTab(0);
                   setSelectedReserve(
                     selectedPool?.reserves?.find(
                       (r) => r.mintAddress === mint.mintAddress,
                     )?.address ?? null,
-                  )
-                }
+                  );
+                }}
                 cursor='pointer'
               >
                 <Td>

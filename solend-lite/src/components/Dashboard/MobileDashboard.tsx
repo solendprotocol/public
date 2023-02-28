@@ -1,5 +1,4 @@
 import {
-  Text,
   Grid,
   GridItem,
   useDisclosure,
@@ -17,7 +16,6 @@ import Account from 'components/Account/Account';
 import { ErrorBoundary } from 'react-error-boundary';
 import TransactionTakeover from 'components/TransactionTakeover/TransactionTakeover';
 import { useCallback } from 'react';
-import { selectedReserveAtom } from 'stores/pools';
 import { selectedRpcAtom } from 'stores/settings';
 import { useAtom, useSetAtom } from 'jotai';
 import { DEFAULT_RPC_ENDPOINTS } from 'common/config';
@@ -25,22 +23,8 @@ import Loading from 'components/Loading/Loading';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { setPublicKeyAtom } from 'stores/wallet';
 import { configAtom } from 'stores/config';
-
-function ErrorFallback({
-  error,
-  resetErrorBoundary,
-}: {
-  error: Error;
-  resetErrorBoundary: () => void;
-}) {
-  return (
-    <div role='alert'>
-      <Text>Something went wrong:</Text>
-      <Text variant='secondary'>{error.message}</Text>
-      <button onClick={resetErrorBoundary}>Try again</button>
-    </div>
-  );
-}
+import { selectedModalTabAtom, selectedReserveAtom } from 'stores/modal';
+import { ErrorFallback } from 'components/ErrorFallback/ErrorFallback';
 
 export default function MobileDashboard() {
   const {
@@ -59,13 +43,15 @@ export default function MobileDashboard() {
   const [config] = useAtom(configAtom);
   const setPublicKeyInAtom = useSetAtom(setPublicKeyAtom);
   const { publicKey } = useWallet();
+  const setSelectedModalTab = useSetAtom(selectedModalTabAtom);
 
   const selectReserveWithModal = useCallback(
     (reserveAddress: string) => {
+      setSelectedModalTab(0);
       setSelectedReserve(reserveAddress);
       onOpen();
     },
-    [onOpen, setSelectedReserve],
+    [onOpen, setSelectedReserve, setSelectedModalTab],
   );
   const uniqueConfigHash = config.map((c) => c.address).join(',');
   const pubString = publicKey?.toBase58();
