@@ -1,4 +1,4 @@
-**Note: The Solend TS is in early stages of release and is subject to changes and improvements. To report any bugs or feature requests, the #dev-support channel in the [Solend Discord](https://discord.gg/aGXvPNGXDT) is the fastest way to get a response.**
+**Note: The Solend TS SDK is in early stages of release and is subject to changes and improvements. To report any bugs or feature requests, the #dev-support channel in the [Solend Discord](https://discord.gg/aGXvPNGXDT) is the fastest way to get a response.**
 
 ## Installation
 
