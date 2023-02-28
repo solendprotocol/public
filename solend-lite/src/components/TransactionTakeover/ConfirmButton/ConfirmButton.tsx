@@ -10,7 +10,7 @@ interface ConfirmButtonPropsType {
   action: string;
   disabled?: boolean;
   needsConnect?: boolean;
-  onClick: (value: string) => Promise<string | undefined> | undefined;
+  onClick: () => Promise<string | undefined> | undefined;
   canShowCanceled?: boolean;
   symbol: string;
 }
@@ -51,7 +51,7 @@ function ConfirmButton({
             setShowConfirm(true);
             let signature;
             try {
-              signature = await onClick(value);
+              signature = await onClick();
             } catch (e: any) {
               console.error(e);
               onFinish({

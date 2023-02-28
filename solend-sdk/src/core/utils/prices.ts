@@ -1,22 +1,22 @@
-import { Connection, PublicKey } from '@solana/web3.js';
-import { parsePriceData } from '@pythnetwork/client';
-import SwitchboardProgram from '@switchboard-xyz/sbv2-lite';
-import { Reserve } from '@solendprotocol/solend-sdk/src/state';
-import { getBatchMultipleAccountsInfo } from './utils';
+import { Connection, PublicKey } from "@solana/web3.js";
+import { parsePriceData } from "@pythnetwork/client";
+import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
+import { Reserve } from "@solendprotocol/solend-sdk/src/state";
+import { getBatchMultipleAccountsInfo } from "./utils";
 
-const SBV2_MAINNET = 'SW1TCH7qEPTdLsDHRgPuMQjbQxKdH2aBStViMFnt64f';
+const SBV2_MAINNET = "SW1TCH7qEPTdLsDHRgPuMQjbQxKdH2aBStViMFnt64f";
 
 export async function fetchPrices(
   parsedReserves: Array<{ info: Reserve; pubkey: PublicKey }>,
   connection: Connection,
   switchboardProgram: SwitchboardProgram,
-  debug?: boolean,
+  debug?: boolean
 ) {
-  if (process.env.NEXT_PUBLIC_DEBUG) console.log('fetchPrices');
+  if (debug) console.log("fetchPrices");
   const oracles = parsedReserves
     .map((reserve) => reserve.info.liquidity.pythOracle)
     .concat(
-      parsedReserves.map((reserve) => reserve.info.liquidity.switchboardOracle),
+      parsedReserves.map((reserve) => reserve.info.liquidity.switchboardOracle)
     );
 
   const priceAccounts = await getBatchMultipleAccountsInfo(oracles, connection);
@@ -29,7 +29,7 @@ export async function fetchPrices(
 
     if (pythOracleData) {
       const { price, previousPrice } = parsePriceData(
-        pythOracleData.data as Buffer,
+        pythOracleData.data as Buffer
       );
 
       if (price || previousPrice) {

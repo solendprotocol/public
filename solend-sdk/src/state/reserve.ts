@@ -51,7 +51,7 @@ export interface ReserveConfig {
   };
   depositLimit: BN;
   borrowLimit: BN;
-  feeReceiver?: PublicKey;
+  feeReceiver: PublicKey;
   protocolLiquidationFee: number;
   protocolTakeRate: number;
   accumulatedProtocolFeesWads: string;
