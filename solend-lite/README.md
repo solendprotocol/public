@@ -12,6 +12,9 @@ To contribute to Solend LITE, it is encouraged to run as a monorepo
 3. Create a `.env` file based on the included `.env.example`. Check out [`/src/common/config.ts`](https://github.com/solendprotocol/public/blob/master/solend-lite/src/common/config.ts) for possible `ENV` configurations
 4. To host, use a provider like Vercel/Netlify and configure build environment variables accordingly. Make sure to set base directory as `solend-lite`
 
+<img width="400" alt="image" src="https://user-images.githubusercontent.com/89805726/222011604-cc44d4ab-c258-444f-abd1-45dd9166fd6f.png">
+
+
 ### "Eject" to fork your own project
 Solend LITE is designed to be forked. Simply move the `solend-lite` repo out of `public` and `solend-lite` will function as a standalone package, pulling `solend-sdk` dependencies from the npm registry.
 
