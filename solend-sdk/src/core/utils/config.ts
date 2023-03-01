@@ -21,7 +21,7 @@ export async function fetchPoolMetadata(
 
   try {
     const configResponse = await fetch(
-      `https://api.sol23end.fi/v1/markets/configs?scope=all&deployment=${
+      `https://api.solend.fi/v1/markets/configs?scope=all&deployment=${
         environment === "mainnet-beta" ? "production" : environment
       }`
     );
@@ -32,11 +32,11 @@ export async function fetchPoolMetadata(
 
     const configData = await configResponse.json();
     return configData.map(
-      (c: { name: string; address: string; owner: string }) => ({
+      (c: { name: string; address: string; owner: string, authorityAddress: string }) => ({
         name: titleCase(c.name),
         owner: c.owner,
         address: c.address,
-        bumpSeed: 123,
+        authorityAddress: c.authorityAddress,
       })
     );
   } catch (e) {
