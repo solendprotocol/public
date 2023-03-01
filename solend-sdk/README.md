@@ -19,6 +19,8 @@ For the full set of developer tools, check out the brand new
 
 ## Basic usage
 
+Checkout [Solend LITE](https://github.com/solendprotocol/public/tree/master/solend-lite) for examples of real uses with the SDK!
+
 ### Reading data
 
 ```typescript
