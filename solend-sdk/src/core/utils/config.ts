@@ -32,11 +32,11 @@ export async function fetchPoolMetadata(
 
     const configData = await configResponse.json();
     return configData.map(
-      (c: { name: string; address: string; owner: string }) => ({
+      (c: { name: string; address: string; owner: string, authorityAddress: string }) => ({
         name: titleCase(c.name),
         owner: c.owner,
         address: c.address,
-        bumpSeed: 123,
+        authorityAddress: c.authorityAddress,
       })
     );
   } catch (e) {
