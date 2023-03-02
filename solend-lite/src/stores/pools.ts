@@ -76,13 +76,13 @@ export const loadPoolsAtom = atom(
     get(poolsAtom);
   },
   async (get, set) => {
-    const [connection, config] = get(waitForAll([connectionAtom, configAtom]));
+    const [connection, pools] = get(waitForAll([connectionAtom, poolsAtom]));
     const switchboardProgram = get(switchboardAtom);
 
     set(
       poolsAtom,
       await fetchPools(
-        config,
+        Object.values(pools),
         connection,
         switchboardProgram,
         PROGRAM_ID,
