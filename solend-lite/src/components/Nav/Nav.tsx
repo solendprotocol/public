@@ -8,10 +8,13 @@ import {
   Text,
   Tooltip,
   Avatar,
+  InputRightElement,
+  Button,
+  InputGroup,
 } from '@chakra-ui/react';
 import { useAtom } from 'jotai';
 import { lcs } from 'string-comparison';
-import { useState } from 'react';
+import { createRef, RefObject, useState } from 'react';
 import {
   poolsStateAtom,
   poolsWithMetaDataAtom,
@@ -81,6 +84,7 @@ function PoolRow({ reserves }: { reserves: Array<ReserveWithMetadataType> }) {
 
 export default function Nav({ onClose }: { onClose?: () => void }) {
   const [newPoolAddress, setNewPoolAddress] = useState<string>('');
+  const [showCustom, setShowCustom] = useState<boolean>(false);
   const [config] = useAtom(configAtom);
   const [poolFilters, setPoolFilters] = useState<Array<string>>([]);
   const [pools] = useAtom(poolsWithMetaDataAtom);
@@ -100,6 +104,11 @@ export default function Nav({ onClose }: { onClose?: () => void }) {
       ? -1
       : 1;
   });
+
+  const refs = sortedVisiblePools.reduce((acc, value) => {
+    acc[value.address] = createRef();
+    return acc;
+  }, {} as { [key: string]: RefObject<any> });
 
   return (
     <Box
@@ -126,67 +135,96 @@ export default function Nav({ onClose }: { onClose?: () => void }) {
         left={0}
         borderRight='1px solid var(--chakra-colors-line)'
       >
-        <Center px={2} py={3} h={50}>
-          <Input
-            placeholder='Enter custom address...'
-            borderColor='var(--chakra-colors-line)'
-            fontSize={11}
-            value={newPoolAddress}
-            onChange={(event) => setNewPoolAddress(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                setSelectedPool(newPoolAddress);
-              }
-            }}
-          />
-        </Center>
-        <Center px={2} paddingBottom={3} h={50}>
-          <Input
-            placeholder='Filter by name/tokens...'
-            borderColor='var(--chakra-colors-line)'
-            fontSize={11}
-            onChange={(e) => {
-              if (!e.target.value) {
-                setPoolFilters([]);
-                return;
-              }
+        <Center px={2} my={2}>
+          <InputGroup size='md'>
+            <Input
+              placeholder='Filter pools...'
+              borderColor='var(--chakra-colors-line)'
+              fontSize={11}
+              onChange={(e) => {
+                if (!e.target.value) {
+                  setPoolFilters([]);
+                  return;
+                }
 
-              const filteredPools = Object.values(pools).filter((market) => {
-                const keywords = [market.name?.toLowerCase() ?? ''];
-                market.reserves.forEach((reserve) =>
-                  keywords.push(reserve.symbol.toLowerCase()),
-                );
-                const searchTerms = e.target.value.split(' ');
-                let shouldDisplay = false;
-                searchTerms.forEach((term) => {
-                  const similarities = lcs.sortMatch(term, keywords);
-                  for (const sim of similarities) {
-                    if (sim.rating > 0.86) {
-                      shouldDisplay = true;
-                      return;
-                    }
-                  }
-                  const similarities2 = lcs.sortMatch(
-                    term,
-                    keywords.map((x) => x.slice(0, term.length)),
+                const filteredPools = Object.values(pools).filter((market) => {
+                  const keywords = [market.name?.toLowerCase() ?? ''];
+                  market.reserves.forEach((reserve) =>
+                    keywords.push(reserve.symbol.toLowerCase()),
                   );
-                  for (const sim of similarities2) {
-                    if (sim.rating > 0.86) {
-                      shouldDisplay = true;
-                      return;
+                  const searchTerms = e.target.value.split(' ');
+                  let shouldDisplay = false;
+                  searchTerms.forEach((term) => {
+                    const similarities = lcs.sortMatch(term, keywords);
+                    for (const sim of similarities) {
+                      if (sim.rating > 0.86) {
+                        shouldDisplay = true;
+                        return;
+                      }
                     }
-                  }
-                });
+                    const similarities2 = lcs.sortMatch(
+                      term,
+                      keywords.map((x) => x.slice(0, term.length)),
+                    );
+                    for (const sim of similarities2) {
+                      if (sim.rating > 0.86) {
+                        shouldDisplay = true;
+                        return;
+                      }
+                    }
+                  });
 
-                return shouldDisplay;
-              });
-              setPoolFilters(filteredPools.map((p) => p.address));
-            }}
-          />
+                  return shouldDisplay;
+                });
+                setPoolFilters(filteredPools.map((p) => p.address));
+              }}
+            />
+            <InputRightElement w={16}>
+              <Button
+                variant='ghost'
+                bg='var(--chakra-colors-neutral)'
+                borderRadius='100px'
+                border='1px'
+                borderColor='var(--chakra-colors-line)'
+                size='xs'
+                px={4}
+                mr={2}
+                onClick={() => setShowCustom(!showCustom)}
+              >
+                <Text variant='caption' color='secondary'>
+                  {showCustom ? 'Hide' : 'Custom'}
+                </Text>
+              </Button>
+            </InputRightElement>
+          </InputGroup>
         </Center>
+
+        {showCustom && (
+          <Center px={2} my={2}>
+            <Input
+              placeholder='Enter custom address...'
+              borderColor='var(--chakra-colors-line)'
+              fontSize={11}
+              value={newPoolAddress}
+              onChange={(event) => setNewPoolAddress(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  setSelectedPool(newPoolAddress);
+                }
+                if (refs[newPoolAddress].current) {
+                  refs[newPoolAddress].current.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  });
+                }
+              }}
+            />
+          </Center>
+        )}
         <List>
           {sortedVisiblePools.map((pool) => (
             <ListItem
+              ref={refs[pool.address]}
               key={pool.address}
               borderTop='1px'
               borderBottom='1px'
