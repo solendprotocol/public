@@ -5,6 +5,7 @@
 ## How to run
 
 ### Working on Solend LITE
+
 To contribute to Solend LITE, it is encouraged to run as a monorepo
 
 1. Clone the solendprotocol`/public` repo
@@ -14,10 +15,10 @@ To contribute to Solend LITE, it is encouraged to run as a monorepo
 
 <img width="400" alt="image" src="https://user-images.githubusercontent.com/89805726/222011604-cc44d4ab-c258-444f-abd1-45dd9166fd6f.png">
 
-
 ### "Eject" to fork your own project
+
 Solend LITE is designed to be forked. Simply move the `solend-lite` repo out of `public` and `solend-lite` will function as a standalone package, pulling `solend-sdk` dependencies from the npm registry.
 
 # FAQ
-As always, come checkout the #dev-support channel in the [Solend Discord](https://discord.com/channels/839224914720325703/879615939484725259) for any questions or requests
 
+As always, come checkout the #dev-support channel in the [Solend Discord](https://discord.com/channels/839224914720325703/879615939484725259) for any questions or requests
