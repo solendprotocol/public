@@ -68,7 +68,11 @@ export default function Pool({
     ) ?? new BigNumber(0);
 
   return (
-    <Box px={isLargerThan800 ? 8 : 4} py={isLargerThan800 ? 8 : 4}>
+    <Box
+      minHeight='1050px'
+      px={isLargerThan800 ? 8 : 4}
+      py={isLargerThan800 ? 8 : 4}
+    >
       <Box mb={8}>
         <Text variant='headline'>
           {selectedPool?.name ? `${selectedPool.name} Pool` : 'Pool overview'}

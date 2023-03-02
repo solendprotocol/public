@@ -42,7 +42,7 @@ export default function Result({ result, setResult }: ResultPropsType) {
 
   if (result?.type === 'loading') {
     overridePage = (
-      <Flex w='100%' justify='center' align='center' py={48} direction='column'>
+      <Flex w='100%' justify='center' align='center' py={24} direction='column'>
         <Loading />
         <Text mt={4} color='secondary'>
           Waiting for confirmation...
@@ -54,7 +54,7 @@ export default function Result({ result, setResult }: ResultPropsType) {
   if (result?.type === 'error') {
     overridePage = (
       <Flex
-        py={48}
+        py={24}
         justify='center'
         align='center'
         w='100%'
@@ -86,7 +86,7 @@ export default function Result({ result, setResult }: ResultPropsType) {
   if (result?.type === 'success') {
     overridePage = (
       <Flex
-        py={48}
+        py={24}
         justify='center'
         align='center'
         w='100%'
