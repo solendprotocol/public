@@ -52,7 +52,6 @@ function RefreshDataButton(): ReactElement {
       if (publicKey) {
         reloadPromises.push(await refreshWallet());
       }
-      console.log(reloadPromises);
       await Promise.all(reloadPromises);
     } finally {
       restart(getNewExpiryTimestamp());
