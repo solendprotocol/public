@@ -3,11 +3,11 @@ import BigNumber from "bignumber.js";
 import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
 import { fetchPrices } from "./prices";
 import { calculateBorrowInterest, calculateSupplyInterest } from "./rates";
-import { PoolMetadataCoreType, ReserveType } from "../types";
+import { PoolType, ReserveType } from "../types";
 import { parseReserve, Reserve } from "../../state";
 
 export async function fetchPools(
-  config: Array<PoolMetadataCoreType>,
+  oldPools: Array<PoolType>,
   connection: Connection,
   switchboardProgram: SwitchboardProgram,
   programId: string,
@@ -21,7 +21,7 @@ export async function fetchPools(
   );
 
   const pools = Object.fromEntries(
-    config.map((c) => [
+    oldPools.map((c) => [
       c.address,
       {
         name: c.name,
@@ -34,7 +34,7 @@ export async function fetchPools(
 
   reserves
     .filter((reserve) =>
-      config.map((c) => c.address).includes(reserve.poolAddress)
+      oldPools.map((c) => c.address).includes(reserve.poolAddress)
     )
     .forEach((reserve) => {
       pools[reserve.poolAddress].reserves.push(reserve);

@@ -1,6 +1,6 @@
 import { inputAnatomy } from '@chakra-ui/anatomy';
 import { IBM_Plex_Sans, IBM_Plex_Mono } from '@next/font/google';
-import { createMultiStyleConfigHelpers } from '@chakra-ui/react';
+import { createMultiStyleConfigHelpers, defineStyle } from '@chakra-ui/react';
 import { modalTheme } from './modal';
 import { tabsTheme } from './tab';
 
@@ -73,11 +73,33 @@ const tableTheme = defineMultiStyleConfig({
   baseStyle: baseTableStyle,
 });
 
+const variantGhost = defineStyle({
+  borderRadius: 'md',
+  transitionProperty: 'common',
+  transitionDuration: 'normal',
+  _focusVisible: {
+    boxShadow: 'outline',
+  },
+  _disabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed',
+    boxShadow: 'none',
+  },
+  _hover: {
+    backgroundColor: 'var(--chakra-colors-line) !important',
+  },
+  fontSize: 14,
+  fontWeight: 500,
+  lineHeight: '24px',
+  fontFamily: ibmFont.style.fontFamily,
+});
+
 export const themeConfig = {
   semanticTokens: {
     colors: {
       'chakra-border-color': { _light: 'var(--chakra-colors-line)' },
       'tabs-border-color': { _light: 'var(--chakra-colors-line)' },
+      'chakra-placeholder-color': { _light: 'var(--chakra-colors-secondary)' },
     },
   },
   radii: 0,
@@ -102,15 +124,7 @@ export const themeConfig = {
     Table: tableTheme,
     Tabs: tabsTheme,
     Input: inputTheme,
-    Button: {
-      baseStyle: {
-        fontSize: 14,
-        fontWeight: 500,
-        lineHeight: '24px',
-        fontFamily: ibmFont.style.fontFamily,
-        height: 36,
-      },
-    },
+    Button: { variants: { ghost: variantGhost } },
     Text: {
       baseStyle: {
         color: 'primary',
