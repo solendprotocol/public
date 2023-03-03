@@ -23,13 +23,9 @@ export default function Pool({
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
   const [showDisabled, setShowDisabled] = useState(false);
-  const reserves = showDisabled
+  const reserves = (showDisabled
     ? selectedPool?.reserves
-    : selectedPool?.reserves.filter((r) => !r.disabled);
-  const sortedReserves =
-    reserves?.sort((a, b) => {
-      return a.totalSupply.isGreaterThan(b.totalSupply) ? -1 : 1;
-    }) ?? [];
+    : selectedPool?.reserves.filter((r) => !r.disabled)) ?? [];
 
   if (selectedPoolState === 'loading') return <Loading />;
 
@@ -84,12 +80,12 @@ export default function Pool({
         <Divider my={1} />
         {isLargerThan800 ? (
           <PoolTable
-            reserves={sortedReserves}
+            reserves={reserves}
             selectReserveWithModal={selectReserveWithModal}
           />
         ) : (
           <PoolList
-            reserves={sortedReserves}
+            reserves={reserves}
             selectReserveWithModal={selectReserveWithModal}
           />
         )}
