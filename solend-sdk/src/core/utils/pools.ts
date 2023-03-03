@@ -58,9 +58,11 @@ export function formatReserve(
     reserve.info.liquidity.borrowedAmountWads.toString()
   ).shiftedBy(-18 - decimals);
   const accumulatedProtocolFees = new BigNumber(
-    reserve.info.config.accumulatedProtocolFeesWads.toString()
+    reserve.info.liquidity.accumulatedProtocolFeesWads.toString()
   ).shiftedBy(-18 - decimals);
-  const totalSupply = totalBorrow.plus(availableAmount).minus(accumulatedProtocolFees);
+  const totalSupply = totalBorrow
+    .plus(availableAmount)
+    .minus(accumulatedProtocolFees);
   const address = reserve.pubkey.toBase58();
   const priceResolved = price
     ? BigNumber(price)
