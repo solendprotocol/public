@@ -196,7 +196,6 @@ export const selectedPoolAtom = atom(
     );
 
     if (newSelectedObligationAddress) {
-      console.log('ping2', newSelectedPoolAddress);
       set(selectedObligationAtom, newSelectedObligationAddress);
     }
 
