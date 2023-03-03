@@ -139,7 +139,10 @@ export const poolsWithMetaDataAtom = atom((get) => {
 
 export const selectedPoolAddressAtom = atomWithDefault<string | null>((get) => {
   const config = get(configAtom);
-  return config[0].address;
+  const queryParams = new URLSearchParams(window.location.search);
+  const poolParam = queryParams.get('pool');
+
+  return poolParam ?? config[0].address;
 });
 
 export const selectedReserveAddressAtom = atom<string | null>(null);
@@ -193,6 +196,7 @@ export const selectedPoolAtom = atom(
     );
 
     if (newSelectedObligationAddress) {
+      console.log('ping2', newSelectedPoolAddress);
       set(selectedObligationAtom, newSelectedObligationAddress);
     }
 

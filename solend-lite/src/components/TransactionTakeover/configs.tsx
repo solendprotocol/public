@@ -371,14 +371,18 @@ export const withdrawConfigs = {
     )
       ? BigNumber.max(
           reserveDepositedAmount.minus(
-            obligation?.totalBorrowValue
-              .minus(constantBorrowLimit)
-              .dividedBy(reserve.price.times(reserve.loanToValueRatio)),
+            BigNumber.max(
+              BigNumber(0),
+              obligation?.totalBorrowValue
+                .minus(constantBorrowLimit)
+                .dividedBy(reserve.price.times(reserve.loanToValueRatio)),
+            ),
           ),
           0,
         )
       : new BigNumber(U64_MAX);
 
+    console.log(value.toString(), collateralWithdrawLimit.toString());
     if (value.isGreaterThan(reserve.availableAmount)) {
       return 'Insufficient liquidity to withdraw';
     }
@@ -453,9 +457,12 @@ export const withdrawConfigs = {
       reserve.price.isZero() || !reserve.loanToValueRatio
     )
       ? reserveDepositedAmount.minus(
-          obligation.totalBorrowValue
-            .minus(constantBorrowLimit)
-            .dividedBy(reserve.price.times(reserve.loanToValueRatio)),
+          BigNumber.max(
+            BigNumber(0),
+            obligation.totalBorrowValue
+              .minus(constantBorrowLimit)
+              .dividedBy(reserve.price.times(reserve.loanToValueRatio)),
+          ),
         )
       : new BigNumber(U64_MAX);
 
