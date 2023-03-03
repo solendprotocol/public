@@ -1,16 +1,11 @@
 import { Text, Flex, Box, Divider, useMediaQuery } from '@chakra-ui/react';
 import { useAtom } from 'jotai';
-import { useEffect, useState } from 'react';
-import {
-  poolsAtom,
-  selectedPoolAtom,
-  selectedPoolStateAtom,
-} from 'stores/pools';
+import { useState } from 'react';
+import { selectedPoolAtom, selectedPoolStateAtom } from 'stores/pools';
 import { formatCompact } from 'utils/numberFormatter';
 import Metric from 'components/Metric/Metric';
 import Loading from 'components/Loading/Loading';
 import BigNumber from 'bignumber.js';
-import { switchboardAtom } from 'stores/settings';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import PoolTable from './PoolTable/PoolTable';
 import PoolList from './PoolList/PoolList';
@@ -23,15 +18,9 @@ export default function Pool({
 }: {
   selectReserveWithModal: (reserve: string) => void;
 }) {
-  const queryParams = new URLSearchParams(window.location.search);
-  const poolParam = queryParams.get('pool');
-  const [switchboardProgram] = useAtom(switchboardAtom);
-  const [selectedPool, setSelectedPool] = useAtom(selectedPoolAtom);
+  const [selectedPool] = useAtom(selectedPoolAtom);
   const [selectedPoolState] = useAtom(selectedPoolStateAtom);
-  const [pools] = useAtom(poolsAtom);
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
-
-  const defaultPool = poolParam ?? Object.values(pools)[0].address;
 
   const [showDisabled, setShowDisabled] = useState(false);
   const reserves = showDisabled
@@ -41,13 +30,6 @@ export default function Pool({
     reserves?.sort((a, b) => {
       return a.totalSupply.isGreaterThan(b.totalSupply) ? -1 : 1;
     }) ?? [];
-
-  useEffect(() => {
-    if (!switchboardProgram) return;
-    setSelectedPool(defaultPool);
-    // Don't reset to defaultPool after it changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setSelectedPool, switchboardProgram]);
 
   if (selectedPoolState === 'loading') return <Loading />;
 
