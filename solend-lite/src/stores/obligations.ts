@@ -134,11 +134,6 @@ export const selectedObligationAtom = atom(
     ).then((ob) => {
       if (ob) {
         const selectedPool = get(selectedPoolAtom);
-        console.log(
-          'ping selOb, selPool',
-          ob.info.lendingMarket.toBase58(),
-          selectedPool?.address,
-        );
         if (ob.info.lendingMarket.toBase58() !== selectedPool?.address) {
           set(selectedPoolAtom, ob.info.lendingMarket.toBase58());
         }

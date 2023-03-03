@@ -29,6 +29,7 @@ function PoolRow({ reserves }: { reserves: Array<ReserveWithMetadataType> }) {
   const shownIcons = reserves.slice(0, 12);
   const extraIcons = reserves.slice(12);
 
+  if (!reserves.length) return <Text mt={1} variant="label" color="secondary">-</Text>
   return (
     <Flex>
       {shownIcons
@@ -98,11 +99,19 @@ export default function Nav({ onClose }: { onClose?: () => void }) {
     (p) => poolsState === 'loading' || pools[p.address].reserves.length,
   );
   const sortedVisiblePools = visiblePools.sort((a, b) => {
-    return pools[a.address].totalSupplyUsd.isGreaterThan(
-      pools[b.address].totalSupplyUsd,
-    )
-      ? -1
-      : 1;
+    const poolA = pools[a.address];
+    const poolB = pools[b.address];
+    const poolADeprecated = Number(Boolean(poolA.reserves.every(r => r.disabled)));
+    const poolBDeprecated = Number(Boolean(poolB.reserves.every(r => r.disabled)));
+
+      if (poolADeprecated === poolBDeprecated) {
+        return poolA.totalSupplyUsd.isGreaterThan(
+          poolB.totalSupplyUsd,
+        )
+          ? -1
+          : 1;
+      }
+      return (poolADeprecated > poolBDeprecated) ? 1 : -1;
   });
 
   const refs = sortedVisiblePools.reduce((acc, value) => {
@@ -265,7 +274,7 @@ export default function Nav({ onClose }: { onClose?: () => void }) {
                   reserves={
                     pools[pool.address]?.reserves.sort((r) =>
                       r.symbol ? 1 : -1,
-                    ) ?? []
+                    )?.filter((r) => !r.disabled) ?? []
                   }
                 />
               </Flex>
