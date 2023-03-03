@@ -145,7 +145,12 @@ export default function TransactionTakeover() {
                   selectedPool,
                   selectedReserve,
                   connection,
-                  sendTransaction,
+                  SKIP_PREFLIGHT
+                    ? (transaction) =>
+                        sendTransaction(transaction, connection, {
+                          skipPreflight: true,
+                        })
+                    : sendTransaction,
                   undefined,
                   () => setResult({ type: 'loading' }),
                 );
@@ -182,7 +187,12 @@ export default function TransactionTakeover() {
                   selectedPool,
                   selectedReserve,
                   connection,
-                  sendTransaction,
+                  SKIP_PREFLIGHT
+                    ? (transaction) =>
+                        sendTransaction(transaction, connection, {
+                          skipPreflight: true,
+                        })
+                    : sendTransaction,
                   undefined,
                   () => setResult({ type: 'loading' }),
                 );
@@ -264,7 +274,12 @@ export default function TransactionTakeover() {
                   selectedPool,
                   selectedReserve,
                   connection,
-                  sendTransaction,
+                  SKIP_PREFLIGHT
+                    ? (transaction) =>
+                        sendTransaction(transaction, connection, {
+                          skipPreflight: true,
+                        })
+                    : sendTransaction,
                   undefined,
                   () => setResult({ type: 'loading' }),
                 );

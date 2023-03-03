@@ -26,7 +26,6 @@ export interface ReserveLiquidity {
   availableAmount: BN;
   borrowedAmountWads: BN;
   cumulativeBorrowRateWads: BN;
-  accumulatedProtocolFeesWads: string;
   marketPrice: BN;
 }
 
@@ -54,7 +53,7 @@ export interface ReserveConfig {
   feeReceiver: PublicKey;
   protocolLiquidationFee: number;
   protocolTakeRate: number;
-  accumulatedProtocolFeesWads: string;
+  accumulatedProtocolFeesWads: BN;
 }
 
 export const ReserveConfigLayout = BufferLayout.struct(
