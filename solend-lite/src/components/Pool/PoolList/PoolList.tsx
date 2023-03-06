@@ -22,7 +22,7 @@ export default function PoolList({
 }) {
   return (
     <List>
-      {reserves.map((reserve) => {
+      {reserves.map((reserve, index) => {
         const atSupplyLimit =
           reserve.reserveSupplyCap.eq(0) ||
           reserve.totalSupply.isGreaterThanOrEqualTo(
@@ -44,7 +44,7 @@ export default function PoolList({
             key={reserve.address}
             onClick={() => selectReserveWithModal(reserve.address)}
             cursor='pointer'
-            borderBottom='1px'
+            borderTop={index === 0 ? undefined :'1px'}
             py={2}
           >
             <Flex align='center' justify='space-between'>

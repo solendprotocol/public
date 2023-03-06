@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import BigNumber from 'bignumber.js';
-import { Tooltip } from '@chakra-ui/react';
+import { Tooltip, Text } from '@chakra-ui/react';
 
 export function formatExact(value: string | number | BigNumber) {
   const bignum = new BigNumber(value);
@@ -25,7 +25,7 @@ export function formatToken(
     !bn.isLessThanOrEqualTo(new BigNumber(0))
   ) {
     return (
-      <Tooltip title={formatExact(value)}>{`< ${1 / 10 ** digits}`}</Tooltip>
+      <Tooltip title={formatExact(value)}><Text whiteSpace="nowrap">{`< ${1 / 10 ** digits}`}</Text></Tooltip>
     );
   }
 
@@ -97,13 +97,13 @@ export function formatPercent(
   noTrim?: boolean,
   decimals: number = 2,
   limit: number = 0.0001,
-) {
+): ReactNode {
   const bnPercent = new BigNumber(value);
   if (
     bnPercent.isLessThan(limit) &&
     !bnPercent.isLessThanOrEqualTo(new BigNumber(0))
   ) {
-    return '< 0.01%';
+    return <Text whiteSpace="nowrap">{'< 0.01%'}</Text>;
   }
 
   return noTrim

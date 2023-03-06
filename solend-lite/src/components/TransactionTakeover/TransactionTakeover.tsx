@@ -140,16 +140,14 @@ export default function TransactionTakeover() {
                 return supplyConfigs.action(
                   new BigNumber(value)
                     .shiftedBy(selectedReserve.decimals)
-                    .toFixed(0, BigNumber.ROUND_FLOOR),
+                    .toFixed(0),
                   publicKey,
                   selectedPool,
                   selectedReserve,
                   connection,
                   SKIP_PREFLIGHT
                     ? (transaction) =>
-                        sendTransaction(transaction, connection, {
-                          skipPreflight: true,
-                        })
+                        sendTransaction(transaction, connection)
                     : sendTransaction,
                   undefined,
                   () => setResult({ type: 'loading' }),
@@ -175,23 +173,21 @@ export default function TransactionTakeover() {
             setValue={setValue}
             onSubmit={() => {
               if (publicKey && selectedReserve && selectedPool) {
-                const useMax = new BigNumber(value).isEqualTo(borrowMax);
+                const useMax = new BigNumber(value).isGreaterThanOrEqualTo(borrowMax);
 
                 return borrowConfigs.action(
                   useMax
                     ? U64_MAX
                     : new BigNumber(value)
                         .shiftedBy(selectedReserve.decimals)
-                        .toFixed(0, BigNumber.ROUND_FLOOR),
+                        .toFixed(0),
                   publicKey,
                   selectedPool,
                   selectedReserve,
                   connection,
                   SKIP_PREFLIGHT
                     ? (transaction) =>
-                        sendTransaction(transaction, connection, {
-                          skipPreflight: true,
-                        })
+                        sendTransaction(transaction, connection)
                     : sendTransaction,
                   undefined,
                   () => setResult({ type: 'loading' }),
@@ -217,23 +213,21 @@ export default function TransactionTakeover() {
             setValue={setValue}
             onSubmit={() => {
               if (publicKey && selectedReserve && selectedPool) {
-                const useMax = new BigNumber(value).isEqualTo(withdrawMax);
+                const useMax = new BigNumber(value).isGreaterThanOrEqualTo(withdrawMax);
 
                 return withdrawConfigs.action(
                   useMax
                     ? U64_MAX
                     : new BigNumber(value)
                         .shiftedBy(selectedReserve.decimals)
-                        .toFixed(0, BigNumber.ROUND_FLOOR),
+                        .toFixed(0),
                   publicKey,
                   selectedPool,
                   selectedReserve,
                   connection,
                   SKIP_PREFLIGHT
                     ? (transaction) =>
-                        sendTransaction(transaction, connection, {
-                          skipPreflight: true,
-                        })
+                        sendTransaction(transaction, connection)
                     : sendTransaction,
                   undefined,
                   () => setResult({ type: 'loading' }),
@@ -262,23 +256,21 @@ export default function TransactionTakeover() {
                 const useMax =
                   selectedObligation?.borrows
                     ?.find((b) => b.reserveAddress === selectedReserve.address)
-                    ?.amount.toString() === value;
+                    ?.amount.isGreaterThanOrEqualTo(new BigNumber(value));
 
                 return repayConfigs.action(
                   useMax
                     ? U64_MAX
                     : new BigNumber(value)
                         .shiftedBy(selectedReserve.decimals)
-                        .toFixed(0, BigNumber.ROUND_FLOOR),
+                        .toFixed(0),
                   publicKey,
                   selectedPool,
                   selectedReserve,
                   connection,
                   SKIP_PREFLIGHT
                     ? (transaction) =>
-                        sendTransaction(transaction, connection, {
-                          skipPreflight: true,
-                        })
+                        sendTransaction(transaction, connection)
                     : sendTransaction,
                   undefined,
                   () => setResult({ type: 'loading' }),

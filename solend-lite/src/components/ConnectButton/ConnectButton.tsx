@@ -36,7 +36,7 @@ export default function Header({ openAccount }: { openAccount?: () => void }) {
 
   return publicKey ? (
     <Menu gutter={0}>
-      <MenuButton as={Button} borderRight='1px'>
+      <MenuButton as={Button}>
         <Flex align='center'>
           <Image src='/wallet.svg' alt='wallet logo' width={16} height={16} />{' '}
           <Text ml={1} color='neutral'>
