@@ -31,7 +31,7 @@ export default function Pool() {
 
   return (
     <Menu gutter={0}>
-      <MenuButton as={Button}>
+      <MenuButton as={Button} borderRight='1px'>
         <Flex align='center'>
           <Text color='neutral'>
             {selectedRpc.name} <ChevronDownIcon />

@@ -1,14 +1,15 @@
-import { Flex } from '@chakra-ui/react';
+import { Flex, Text } from '@chakra-ui/react';
 import BigNumber from 'bignumber.js';
 import { ResultConfigType } from 'components/Result/Result';
 import { useAtom } from 'jotai';
 import { ObligationType, selectedObligationAtom } from 'stores/obligations';
 import { SelectedReserveType } from 'stores/pools';
-import { publicKeyAtom } from 'stores/wallet';
+import { publicKeyAtom, walletAssetsAtom } from 'stores/wallet';
 import { titleCase } from '@solendprotocol/solend-sdk';
 import BigInput from '../BigInput/BigInput';
 import ConfirmButton from '../ConfirmButton/ConfirmButton';
 import ReserveStats from '../ReserveStats/ReserveStats';
+import { formatToken } from 'utils/numberFormatter';
 
 export default function TransactionTab({
   onFinish,
@@ -43,8 +44,11 @@ export default function TransactionTab({
 }) {
   const [publicKey] = useAtom(publicKeyAtom);
   const [selectedObligation] = useAtom(selectedObligationAtom);
+  const [walletAssets] = useAtom(walletAssetsAtom);
   const stats = getNewCalculations(selectedObligation, selectedReserve, value);
 
+  const borrowRepay = ['borrow', 'repay'].includes(action);
+  const balance = borrowRepay ? selectedObligation?.borrows.find(b => b.reserveAddress === selectedReserve.address)?.amount : selectedObligation?.deposits.find(d => d.reserveAddress === selectedReserve.address)?.amount;
   const valueObj = new BigNumber(value);
   const buttonText =
     !valueObj.isZero() && !valueObj.isNaN()
@@ -53,6 +57,8 @@ export default function TransactionTab({
           selectedReserve.symbol
         }`
       : 'Enter an amount';
+
+  const walletBalance = walletAssets.find(a => a.mintAddress === selectedReserve.mintAddress)?.amount;
 
   return (
     <Flex direction='column'>
@@ -73,6 +79,16 @@ export default function TransactionTab({
         disabled={Boolean(invalidMessage) || valueObj.isZero()}
         symbol={selectedReserve.symbol}
       />
+      <Flex justify="space-between" mt="24px" mb="-16px">
+        <Text color='secondary'>
+          {walletBalance ? formatToken(walletBalance, 4, true) : '-'}{' '}
+          {selectedReserve.symbol} in wallet
+        </Text>
+        <Text color='secondary'>
+          {balance ? formatToken(balance, 4, true) : 0}{' '}
+          {selectedReserve.symbol} {borrowRepay ? 'borrowed' : 'supplied'}
+        </Text>
+      </Flex>
     </Flex>
   );
 }

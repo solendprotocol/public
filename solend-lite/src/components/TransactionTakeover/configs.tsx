@@ -147,7 +147,7 @@ export const supplyConfigs = {
     return BigNumber.max(
       BigNumber.min(maxSuppliableFromWallet, supplyCapRemaining),
       new BigNumber(0),
-    );
+    ).decimalPlaces(reserve.decimals);
   },
 };
 
@@ -312,7 +312,7 @@ export const borrowConfigs = {
         borrowCapRemaining,
       ),
       BigNumber(0),
-    );
+    ).decimalPlaces(reserve.decimals);
   },
 };
 
@@ -382,15 +382,14 @@ export const withdrawConfigs = {
         )
       : new BigNumber(U64_MAX);
 
-    console.log(value.toString(), collateralWithdrawLimit.toString());
     if (value.isGreaterThan(reserve.availableAmount)) {
       return 'Insufficient liquidity to withdraw';
     }
-    if (value.isGreaterThan(collateralWithdrawLimit)) {
-      return 'Cannot withdraw into undercollateralization';
-    }
     if (value.isGreaterThan(reserveDepositedAmount)) {
       return 'Cannot withdraw more than deposited supply';
+    }
+    if (value.isGreaterThan(collateralWithdrawLimit)) {
+      return 'Cannot withdraw into undercollateralization';
     }
     if (!sufficientSOLForTransaction(wallet)) {
       return 'Min 0.02 SOL required for transaction and fees';
@@ -469,7 +468,7 @@ export const withdrawConfigs = {
     return BigNumber.max(
       BigNumber.min(collateralWithdrawLimit, reserve.availableAmount),
       new BigNumber(0),
-    );
+    ).decimalPlaces(reserve.decimals);
   },
 };
 
@@ -592,6 +591,6 @@ export const repayConfigs = {
           )
         : asset.amount;
 
-    return BigNumber.min(reserveBorrowedAmount.amount, maxRepayableFromWallet);
+    return BigNumber.min(reserveBorrowedAmount.amount, maxRepayableFromWallet).decimalPlaces(reserve.decimals);
   },
 };
