@@ -42,7 +42,6 @@ export default function PoolTable({
         </Flex>
       ),
     }),
-
     columnHelper.accessor('loanToValueRatio', {
       header: 'LTV',
       meta: { isNumeric: true },
@@ -83,7 +82,10 @@ export default function PoolTable({
       header: 'Supply APR',
       meta: { isNumeric: true },
       cell: ({ row: { original: reserve } }) => (
-        <Text>{formatPercent(reserve.supplyInterest)}</Text>
+        <>
+          <Text>{formatPercent(reserve.supplyInterest)}</Text>
+          <br/>
+        </>
       ),
     }),
     columnHelper.accessor('totalBorrowUsd', {
@@ -119,7 +121,10 @@ export default function PoolTable({
       header: 'Borrow APR',
       meta: { isNumeric: true },
       cell: ({ row: { original: reserve } }) => (
-        <Text>{formatPercent(reserve.borrowInterest)}</Text>
+        <>
+          <Text>{formatPercent(reserve.borrowInterest)}</Text>
+          <br/>
+        </>
       ),
     }),
   ];
