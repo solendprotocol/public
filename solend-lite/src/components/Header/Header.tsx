@@ -119,8 +119,8 @@ export default function Header({
         </Flex>
       )}
       <Flex justify='end' w={isLargerThan800 ? 400 : undefined} align='center'>
-        <ConnectButton openAccount={openAccount} />
         {isLargerThan800 ? <RpcSwitcher /> : null}
+        <ConnectButton openAccount={openAccount} />
         <RefreshDataButton />
       </Flex>
     </Flex>

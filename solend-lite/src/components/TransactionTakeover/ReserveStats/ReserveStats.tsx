@@ -260,7 +260,7 @@ function ReserveStats({
           label='Reserve address'
           value={
             <Tooltip title={reserve.address}>
-              <>
+              <Flex align="center">
                 <a
                   href={`https://solscan.io/account/${reserve.address}`}
                   target='_blank'
@@ -275,7 +275,7 @@ function ReserveStats({
                     navigator.clipboard.writeText(reserve.address);
                   }}
                 />
-              </>
+              </Flex>
             </Tooltip>
           }
         />
@@ -285,7 +285,7 @@ function ReserveStats({
             label='Fee receiver address'
             value={
               <Tooltip title={reserve.feeReceiverAddress}>
-                <>
+                <Flex align="center">
                   <a
                     href={`https://solscan.io/account/${reserve.feeReceiverAddress}`}
                     target='_blank'
@@ -305,7 +305,7 @@ function ReserveStats({
                       }
                     }}
                   />
-                </>
+                </Flex>
               </Tooltip>
             }
           />
@@ -315,7 +315,7 @@ function ReserveStats({
           label='Token mint'
           value={
             <Tooltip title={reserve.mintAddress}>
-              <>
+              <Flex align="center">
                 <a
                   href={`https://solscan.io/account/${reserve.mintAddress}`}
                   target='_blank'
@@ -331,7 +331,7 @@ function ReserveStats({
                     navigator.clipboard.writeText(reserve.mintAddress);
                   }}
                 />
-              </>
+              </Flex>
             </Tooltip>
           }
         />
@@ -340,7 +340,7 @@ function ReserveStats({
           label='cToken mint'
           value={
             <Tooltip title={reserve.cTokenMint}>
-              <>
+              <Flex align="center">
                 <a
                   target='_blank'
                   rel='noreferrer'
@@ -356,7 +356,7 @@ function ReserveStats({
                     navigator.clipboard.writeText(reserve.cTokenMint);
                   }}
                 />
-              </>
+              </Flex>
             </Tooltip>
           }
         />
@@ -367,7 +367,7 @@ function ReserveStats({
             label='Pyth Oracle'
             value={
               <Tooltip title={reserve.pythOracle}>
-                <>
+                <Flex align="center">
                   <a
                     target='_blank'
                     rel='noreferrer'
@@ -383,7 +383,7 @@ function ReserveStats({
                       navigator.clipboard.writeText(reserve.pythOracle);
                     }}
                   />
-                </>
+                </Flex>
               </Tooltip>
             }
           />
@@ -393,7 +393,7 @@ function ReserveStats({
           label='Switchboard Oracle'
           value={
             <Tooltip title={reserve.switchboardOracle}>
-              <>
+              <Flex align="center">
                 <a
                   target='_blank'
                   rel='noreferrer'
@@ -409,7 +409,7 @@ function ReserveStats({
                     navigator.clipboard.writeText(reserve.switchboardOracle);
                   }}
                 />
-              </>
+              </Flex>
             </Tooltip>
           }
         />
