@@ -13,12 +13,9 @@ export async function fetchPools(
   programId: string,
   debug?: boolean
 ) {
-  const reserves = (await getReservesFromChain(
-    connection,
-    switchboardProgram,
-    programId,
-    debug
-  )).sort((a, b) => a.totalSupply.isGreaterThan(b.totalSupply) ? -1 : 1);
+  const reserves = (
+    await getReservesFromChain(connection, switchboardProgram, programId, debug)
+  ).sort((a, b) => (a.totalSupply.isGreaterThan(b.totalSupply) ? -1 : 1));
 
   const pools = Object.fromEntries(
     oldPools.map((c) => [

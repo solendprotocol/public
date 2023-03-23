@@ -13,6 +13,7 @@ export interface Reserve {
   liquidity: ReserveLiquidity;
   collateral: ReserveCollateral;
   config: ReserveConfig;
+  rateLimiter: RateLimiter;
 }
 
 export interface ReserveLiquidity {
@@ -26,8 +27,9 @@ export interface ReserveLiquidity {
   availableAmount: BN;
   borrowedAmountWads: BN;
   cumulativeBorrowRateWads: BN;
-  marketPrice: BN;
   accumulatedProtocolFeesWads: BN;
+  marketPrice: BN;
+  smoothedMarketPrice: BN;
 }
 
 export interface ReserveCollateral {
@@ -54,6 +56,20 @@ export interface ReserveConfig {
   feeReceiver: PublicKey;
   protocolLiquidationFee: number;
   protocolTakeRate: number;
+  addedBorrowWeightBPS: number;
+  borrowWeight: number;
+}
+
+export interface RateLimiter {
+  config: RateLimiterConfig;
+  previousQuantity: BN;
+  windowStart: number;
+  currentQuantity: BN;
+}
+
+export interface RateLimiterConfig {
+  windowDuration: BN;
+  maxOutflow: BN;
 }
 
 export const ReserveConfigLayout = BufferLayout.struct(
@@ -78,6 +94,7 @@ export const ReserveConfigLayout = BufferLayout.struct(
     Layout.publicKey("feeReceiver"),
     BufferLayout.u8("protocolLiquidationFee"),
     BufferLayout.u8("protocolTakeRate"),
+    Layout.uint64("addedBorrowWeightBPS"),
   ],
   "config"
 );
@@ -87,7 +104,6 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
     BufferLayout.u8("version"),
     LastUpdateLayout,
     Layout.publicKey("lendingMarket"),
-
     Layout.publicKey("liquidityMintPubkey"),
     BufferLayout.u8("liquidityMintDecimals"),
     Layout.publicKey("liquiditySupplyPubkey"),
@@ -121,7 +137,20 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
     BufferLayout.u8("protocolLiquidationFee"),
     BufferLayout.u8("protocolTakeRate"),
     Layout.uint128("accumulatedProtocolFeesWads"),
-    BufferLayout.blob(230, "padding"),
+
+    BufferLayout.struct(
+      [
+        Layout.uint64("maxOutflow"),
+        Layout.uint64("windowDuration"),
+        Layout.uint128("previousQuantity"),
+        Layout.uint64("windowStart"),
+        Layout.uint128("currentQuantity"),
+      ],
+      "rateLimiter"
+    ),
+    BufferLayout.u64("addedBorrowWeightBPS"),
+    Layout.uint128("liquiditySmoothedMarketPrice"),
+    BufferLayout.blob(150, "padding"),
   ]
 );
 
@@ -144,6 +173,7 @@ function decodeReserve(buffer: Buffer): Reserve {
       cumulativeBorrowRateWads: reserve.liquidityCumulativeBorrowRateWads,
       marketPrice: reserve.liquidityMarketPrice,
       accumulatedProtocolFeesWads: reserve.accumulatedProtocolFeesWads,
+      smoothedMarketPrice: reserve.smoothedMarketPrice,
     },
     collateral: {
       mintPubkey: reserve.collateralMintPubkey,
@@ -168,7 +198,10 @@ function decodeReserve(buffer: Buffer): Reserve {
       feeReceiver: reserve.feeReceiver,
       protocolLiquidationFee: reserve.protocolLiquidationFee,
       protocolTakeRate: reserve.protocolTakeRate,
+      addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
+      borrowWeight: 1 + (1.0 * reserve.borrowWeightBPS) / 10000,
     },
+    rateLimiter: reserve.rateLimiter,
   };
 }
 
