@@ -148,7 +148,7 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
       ],
       "rateLimiter"
     ),
-    BufferLayout.u64("addedBorrowWeightBPS"),
+    Layout.uint64("addedBorrowWeightBPS"),
     Layout.uint128("liquiditySmoothedMarketPrice"),
     BufferLayout.blob(150, "padding"),
   ]
