@@ -56,7 +56,7 @@ export interface ReserveConfig {
   feeReceiver: PublicKey;
   protocolLiquidationFee: number;
   protocolTakeRate: number;
-  addedBorrowWeightBPS: number;
+  addedBorrowWeightBPS: BN;
   borrowWeight: number;
 }
 
