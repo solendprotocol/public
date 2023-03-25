@@ -137,11 +137,15 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
     BufferLayout.u8("protocolLiquidationFee"),
     BufferLayout.u8("protocolTakeRate"),
     Layout.uint128("accumulatedProtocolFeesWads"),
-
     BufferLayout.struct(
       [
-        Layout.uint64("maxOutflow"),
-        Layout.uint64("windowDuration"),
+        BufferLayout.struct(
+          [
+            Layout.uint64("maxOutflow"),
+            Layout.uint64("windowDuration"),
+          ],
+          "config"
+        ),
         Layout.uint128("previousQuantity"),
         Layout.uint64("windowStart"),
         Layout.uint128("currentQuantity"),
