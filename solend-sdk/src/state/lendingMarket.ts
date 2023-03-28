@@ -1,4 +1,5 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
+import * as fzstd from "fzstd";
 import * as Layout from "../utils/layout";
 
 const BufferLayout = require("buffer-layout");
@@ -33,9 +34,14 @@ export const isLendingMarket = (info: AccountInfo<Buffer>) =>
 
 export const parseLendingMarket = (
   pubkey: PublicKey,
-  info: AccountInfo<Buffer>
+  info: AccountInfo<Buffer>,
+  encoding?: string
 ) => {
-  const buffer = Buffer.from(info.data);
+  if (encoding === "base64+zstd") {
+    info.data = Buffer.from(fzstd.decompress(info.data));
+  }
+  const { data } = info;
+  const buffer = Buffer.from(data);
   const lendingMarket = LendingMarketLayout.decode(buffer) as LendingMarket;
 
   const details = {
