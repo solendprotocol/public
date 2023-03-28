@@ -40,7 +40,7 @@ export const parseLendingMarket = (
   if (encoding === "base64+zstd") {
     info.data = Buffer.from(fzstd.decompress(info.data));
   }
-  let { data } = info;
+  const { data } = info;
   const buffer = Buffer.from(data);
   const lendingMarket = LendingMarketLayout.decode(buffer) as LendingMarket;
 
