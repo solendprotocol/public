@@ -8,7 +8,7 @@ dotenv.config();
 export const OBLIGATION_LEN = 1300;
 export const RESERVE_LEN = 619;
 export const LENDING_MARKET_LEN = 290;
-const eligibleApps = ['production', 'devnet'];
+const eligibleApps = ['production', 'devnet', 'beta'];
 
 function getApp() {
   const app = process.env.APP;
@@ -23,7 +23,7 @@ function getApp() {
 function getMarketsUrl(): string {
   // Only fetch the targeted markets if specified. Otherwise we fetch all solend pools
   if (process.env.MARKET) {
-    return `https://api.solend.fi/v1/markets/configs?ids=${process.env.MARKET}`;
+    return `https://api.solend.fi/v1/markets/configs?ids=${process.env.MARKET}&deployment=${getApp()}`;
   }
 
   return `https://api.solend.fi/v1/markets/configs?scope=solend&deployment=${getApp()}`;
