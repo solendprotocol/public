@@ -1,6 +1,11 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import * as fzstd from "fzstd";
 import * as Layout from "../utils/layout";
+import {
+  RateLimiter,
+  RateLimiterLayout,
+  RATE_LIMITER_LEN,
+} from "./rateLimiter";
 
 const BufferLayout = require("buffer-layout");
 
@@ -12,6 +17,7 @@ export interface LendingMarket {
   tokenProgramId: PublicKey;
   oracleProgramId: PublicKey;
   switchboardOracleProgramId: PublicKey;
+  rateLimiter: RateLimiter;
 }
 
 export const LendingMarketLayout: typeof BufferLayout.Structure =
@@ -23,8 +29,8 @@ export const LendingMarketLayout: typeof BufferLayout.Structure =
     Layout.publicKey("tokenProgramId"),
     Layout.publicKey("oracleProgramId"),
     Layout.publicKey("switchboardOracleProgramId"),
-
-    BufferLayout.blob(128, "padding"),
+    RateLimiterLayout,
+    BufferLayout.blob(128 - RATE_LIMITER_LEN, "padding"),
   ]);
 
 export const LENDING_MARKET_SIZE = LendingMarketLayout.span;
