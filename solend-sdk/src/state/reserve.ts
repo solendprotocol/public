@@ -4,6 +4,7 @@ import { Buffer } from "buffer";
 import * as fzstd from "fzstd";
 import * as Layout from "../utils/layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
+import { RateLimiter, RateLimiterLayout } from "./rateLimiter";
 
 const BufferLayout = require("buffer-layout");
 
@@ -59,18 +60,6 @@ export interface ReserveConfig {
   protocolTakeRate: number;
   addedBorrowWeightBPS: BN;
   borrowWeight: number;
-}
-
-export interface RateLimiter {
-  config: RateLimiterConfig;
-  previousQuantity: BN;
-  windowStart: number;
-  currentQuantity: BN;
-}
-
-export interface RateLimiterConfig {
-  windowDuration: BN;
-  maxOutflow: BN;
 }
 
 export const ReserveConfigLayout = BufferLayout.struct(
@@ -138,21 +127,7 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
     BufferLayout.u8("protocolLiquidationFee"),
     BufferLayout.u8("protocolTakeRate"),
     Layout.uint128("accumulatedProtocolFeesWads"),
-    BufferLayout.struct(
-      [
-        BufferLayout.struct(
-          [
-            Layout.uint64("maxOutflow"),
-            Layout.uint64("windowDuration"),
-          ],
-          "config"
-        ),
-        Layout.uint128("previousQuantity"),
-        Layout.uint64("windowStart"),
-        Layout.uint128("currentQuantity"),
-      ],
-      "rateLimiter"
-    ),
+    RateLimiterLayout,
     Layout.uint64("addedBorrowWeightBPS"),
     Layout.uint128("liquiditySmoothedMarketPrice"),
     BufferLayout.blob(150, "padding"),
@@ -204,7 +179,7 @@ function decodeReserve(buffer: Buffer): Reserve {
       protocolLiquidationFee: reserve.protocolLiquidationFee,
       protocolTakeRate: reserve.protocolTakeRate,
       addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
-      borrowWeight: 1 + (1.0 * reserve.addedBorrowWeightBPS) / 10000,
+      borrowWeight: 1 + (1.0 * reserve.addedBorrowWeightBPS.toNumber()) / 10000,
     },
     rateLimiter: reserve.rateLimiter,
   };
