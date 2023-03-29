@@ -222,7 +222,7 @@ export function reserveToString(reserve: Reserve) {
     reserve,
     (key, value) => {
       // Skip padding
-      if (key === "padding") {
+      if (key === "padding" || key === "oracleOption" || key === undefined) {
         return null;
       }
       switch (value.constructor.name) {
