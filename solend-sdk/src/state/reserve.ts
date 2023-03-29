@@ -141,10 +141,7 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
     BufferLayout.struct(
       [
         BufferLayout.struct(
-          [
-            Layout.uint64("maxOutflow"),
-            Layout.uint64("windowDuration"),
-          ],
+          [Layout.uint64("maxOutflow"), Layout.uint64("windowDuration")],
           "config"
         ),
         Layout.uint128("previousQuantity"),
