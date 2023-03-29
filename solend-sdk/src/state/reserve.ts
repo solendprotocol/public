@@ -204,7 +204,7 @@ function decodeReserve(buffer: Buffer): Reserve {
       protocolLiquidationFee: reserve.protocolLiquidationFee,
       protocolTakeRate: reserve.protocolTakeRate,
       addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
-      borrowWeight: 1 + (1.0 * reserve.addedBorrowWeightBPS) / 10000,
+      borrowWeight: 1 + (1.0 * reserve.addedBorrowWeightBPS.toNumber()) / 10000,
     },
     rateLimiter: reserve.rateLimiter,
   };
