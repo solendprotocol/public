@@ -1,7 +1,6 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 import {
-  Account,
   Connection,
   Keypair,
   PublicKey,
@@ -30,7 +29,7 @@ async function runLiquidator() {
   const markets = await getMarkets();
   const connection = new Connection(rpcEndpoint, 'confirmed');
   // liquidator's keypair.
-  const payer = new Account(JSON.parse(readSecret('keypair')));
+  const payer = new Keypair(JSON.parse(readSecret('keypair')));
   const jupiter = await Jupiter.load({
     connection,
     cluster: 'mainnet-beta',
