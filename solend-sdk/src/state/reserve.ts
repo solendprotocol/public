@@ -1,4 +1,5 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
+import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { Buffer } from "buffer";
 import * as fzstd from "fzstd";
@@ -59,7 +60,7 @@ export interface ReserveConfig {
   protocolLiquidationFee: number;
   protocolTakeRate: number;
   addedBorrowWeightBPS: BN;
-  borrowWeight: number;
+  borrowWeight: BigNumber;
 }
 
 export const ReserveConfigLayout = BufferLayout.struct(
@@ -179,7 +180,9 @@ function decodeReserve(buffer: Buffer): Reserve {
       protocolLiquidationFee: reserve.protocolLiquidationFee,
       protocolTakeRate: reserve.protocolTakeRate,
       addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
-      borrowWeight: 1 + (1.0 * reserve.addedBorrowWeightBPS.toNumber()) / 10000,
+      borrowWeight: new BigNumber(reserve.addedBorrowWeightBPS.toString())
+        .dividedBy(new BigNumber(10000))
+        .plus(new BigNumber(1)),
     },
     rateLimiter: reserve.rateLimiter,
   };
