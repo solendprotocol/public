@@ -6,7 +6,7 @@ export const RATE_LIMITER_LEN = 56;
 export interface RateLimiter {
   config: RateLimiterConfig;
   previousQuantity: BN;
-  windowStart: number;
+  windowStart: BN;
   currentQuantity: BN;
 }
 
