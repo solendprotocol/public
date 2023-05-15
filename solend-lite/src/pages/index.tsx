@@ -21,7 +21,7 @@ import BigNumber from 'bignumber.js';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-BigNumber.config({ ROUNDING_MODE: BigNumber.ROUND_DOWN })
+BigNumber.config({ ROUNDING_MODE: BigNumber.ROUND_DOWN });
 
 export default function Index() {
   const [rpc] = useAtom(selectedRpcAtom);
