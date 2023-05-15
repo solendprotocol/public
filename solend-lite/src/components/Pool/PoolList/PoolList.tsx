@@ -44,7 +44,7 @@ export default function PoolList({
             key={reserve.address}
             onClick={() => selectReserveWithModal(reserve.address)}
             cursor='pointer'
-            borderTop={index === 0 ? undefined :'1px'}
+            borderTop={index === 0 ? undefined : '1px'}
             py={2}
           >
             <Flex align='center' justify='space-between'>

@@ -84,7 +84,7 @@ export default function PoolTable({
       cell: ({ row: { original: reserve } }) => (
         <>
           <Text>{formatPercent(reserve.supplyInterest)}</Text>
-          <br/>
+          <br />
         </>
       ),
     }),
@@ -123,7 +123,7 @@ export default function PoolTable({
       cell: ({ row: { original: reserve } }) => (
         <>
           <Text>{formatPercent(reserve.borrowInterest)}</Text>
-          <br/>
+          <br />
         </>
       ),
     }),

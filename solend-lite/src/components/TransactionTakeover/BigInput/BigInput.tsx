@@ -50,10 +50,14 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
           /\B(?=(\d{3})+(?!\d))/g,
           ',',
         )}${vals.length >= 2 ? '.' : ''}${
-          useUsd ? (vals[1] ?? '').substring(0, 2) : vals[1]?.substring(0, selectedToken.decimals) ?? ''
+          useUsd
+            ? (vals[1] ?? '').substring(0, 2)
+            : vals[1]?.substring(0, selectedToken.decimals) ?? ''
         }`;
         let parsedAmount = `${vals[0]}${vals.length >= 2 ? '.' : ''}${
-          useUsd ? (vals[1] ?? '').substring(0, 2) : vals[1]?.substring(0, selectedToken.decimals) ?? ''
+          useUsd
+            ? (vals[1] ?? '').substring(0, 2)
+            : vals[1]?.substring(0, selectedToken.decimals) ?? ''
         }`;
 
         // If the user has only typed in a single "." characters, we
@@ -156,7 +160,10 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
         if (useUsd) {
           handleUsdAmount(parsedAmount);
           onChange(
-            new BigNumber(parsedAmount).dividedBy(exchangeObj).decimalPlaces(selectedToken.decimals).toString(),
+            new BigNumber(parsedAmount)
+              .dividedBy(exchangeObj)
+              .decimalPlaces(selectedToken.decimals)
+              .toString(),
           );
         } else {
           handleUsdAmount(
