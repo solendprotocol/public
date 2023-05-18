@@ -1,5 +1,6 @@
 FROM node:16-alpine3.11
 
+RUN apk add --no-cache git
 
 # Create Directory for the Container
 RUN mkdir -p /home/solend/app

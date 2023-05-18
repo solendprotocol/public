@@ -3,7 +3,7 @@ import BigNumber from 'bignumber.js';
 import { findWhere, find } from 'underscore';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
-import { Obligation, ObligationCollateral, ObligationLiquidity } from '@solendprotocol/solend-sdk';
+import { Obligation, ObligationCollateral, ObligationLiquidity, Reserve } from '@solendprotocol/solend-sdk';
 import {
   getCollateralExchangeRate, getLiquidationThresholdRate, getLoanToValueRate, WAD,
 } from './utils';
@@ -65,7 +65,7 @@ export function calculateRefreshedObligation(
     const {
       price, decimals, symbol, mintAddress,
     } = tokenOracle;
-    const reserve = find(reserves, (r) => r.pubkey.toString() === borrow.borrowReserve.toString()).info;
+    const reserve: Reserve = find(reserves, (r) => r.pubkey.toString() === borrow.borrowReserve.toString()).info;
     const borrowAmountWadsWithInterest = getBorrrowedAmountWadsWithInterest(
       new BigNumber(reserve.liquidity.cumulativeBorrowRateWads.toString()),
       new BigNumber(borrow.cumulativeBorrowRateWads.toString()),
@@ -73,6 +73,7 @@ export function calculateRefreshedObligation(
     );
 
     const marketValue = borrowAmountWadsWithInterest
+      .multipliedBy(reserve.config.borrowWeight)
       .multipliedBy(price)
       .dividedBy(decimals);
 
