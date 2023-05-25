@@ -24,7 +24,7 @@
     "@solana/wallet-adapter-react": "^0.15.28",
     "@solana/wallet-adapter-react-ui": "^0.9.27",
     "@solana/wallet-adapter-wallets": "^0.19.10",
-    "@solana/web3.js": "^1.70.1",
+    "@solana/web3.js": "=1.76.1",
     "@solendprotocol/solend-sdk": "*",
     "@switchboard-xyz/sbv2-lite": "^0.1.6",
     "@tanstack/react-table": "^8.7.9",
