@@ -42,7 +42,7 @@ export const withdrawObligationCollateralAndRedeemReserveLiquidity = (
     { pubkey: destinationCollateral, isSigner: false, isWritable: true },
     { pubkey: withdrawReserve, isSigner: false, isWritable: true },
     { pubkey: obligation, isSigner: false, isWritable: true },
-    { pubkey: lendingMarket, isSigner: false, isWritable: false },
+    { pubkey: lendingMarket, isSigner: false, isWritable: true },
     { pubkey: lendingMarketAuthority, isSigner: false, isWritable: false },
     { pubkey: destinationLiquidity, isSigner: false, isWritable: true },
     { pubkey: reserveCollateralMint, isSigner: false, isWritable: true },
