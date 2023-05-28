@@ -61,7 +61,7 @@ export const borrowObligationLiquidityInstruction = (
       isWritable: true,
     },
     { pubkey: obligation, isSigner: false, isWritable: true },
-    { pubkey: lendingMarket, isSigner: false, isWritable: false },
+    { pubkey: lendingMarket, isSigner: false, isWritable: true },
     { pubkey: lendingMarketAuthority, isSigner: false, isWritable: false },
     { pubkey: obligationOwner, isSigner: true, isWritable: false },
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
