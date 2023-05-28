@@ -1,8 +1,11 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
+import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { Buffer } from "buffer";
+import * as fzstd from "fzstd";
 import * as Layout from "../utils/layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
+import { RateLimiter, RateLimiterLayout } from "./rateLimiter";
 
 const BufferLayout = require("buffer-layout");
 
@@ -13,6 +16,7 @@ export interface Reserve {
   liquidity: ReserveLiquidity;
   collateral: ReserveCollateral;
   config: ReserveConfig;
+  rateLimiter: RateLimiter;
 }
 
 export interface ReserveLiquidity {
@@ -26,8 +30,9 @@ export interface ReserveLiquidity {
   availableAmount: BN;
   borrowedAmountWads: BN;
   cumulativeBorrowRateWads: BN;
-  marketPrice: BN;
   accumulatedProtocolFeesWads: BN;
+  marketPrice: BN;
+  smoothedMarketPrice: BN;
 }
 
 export interface ReserveCollateral {
@@ -54,6 +59,8 @@ export interface ReserveConfig {
   feeReceiver: PublicKey;
   protocolLiquidationFee: number;
   protocolTakeRate: number;
+  addedBorrowWeightBPS: BN;
+  borrowWeight: BigNumber;
 }
 
 export const ReserveConfigLayout = BufferLayout.struct(
@@ -78,6 +85,7 @@ export const ReserveConfigLayout = BufferLayout.struct(
     Layout.publicKey("feeReceiver"),
     BufferLayout.u8("protocolLiquidationFee"),
     BufferLayout.u8("protocolTakeRate"),
+    Layout.uint64("addedBorrowWeightBPS"),
   ],
   "config"
 );
@@ -87,7 +95,6 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
     BufferLayout.u8("version"),
     LastUpdateLayout,
     Layout.publicKey("lendingMarket"),
-
     Layout.publicKey("liquidityMintPubkey"),
     BufferLayout.u8("liquidityMintDecimals"),
     Layout.publicKey("liquiditySupplyPubkey"),
@@ -121,7 +128,10 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
     BufferLayout.u8("protocolLiquidationFee"),
     BufferLayout.u8("protocolTakeRate"),
     Layout.uint128("accumulatedProtocolFeesWads"),
-    BufferLayout.blob(230, "padding"),
+    RateLimiterLayout,
+    Layout.uint64("addedBorrowWeightBPS"),
+    Layout.uint128("liquiditySmoothedMarketPrice"),
+    BufferLayout.blob(150, "padding"),
   ]
 );
 
@@ -144,6 +154,7 @@ function decodeReserve(buffer: Buffer): Reserve {
       cumulativeBorrowRateWads: reserve.liquidityCumulativeBorrowRateWads,
       marketPrice: reserve.liquidityMarketPrice,
       accumulatedProtocolFeesWads: reserve.accumulatedProtocolFeesWads,
+      smoothedMarketPrice: reserve.smoothedMarketPrice,
     },
     collateral: {
       mintPubkey: reserve.collateralMintPubkey,
@@ -168,7 +179,12 @@ function decodeReserve(buffer: Buffer): Reserve {
       feeReceiver: reserve.feeReceiver,
       protocolLiquidationFee: reserve.protocolLiquidationFee,
       protocolTakeRate: reserve.protocolTakeRate,
+      addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
+      borrowWeight: new BigNumber(reserve.addedBorrowWeightBPS.toString())
+        .dividedBy(new BigNumber(10000))
+        .plus(new BigNumber(1)),
     },
+    rateLimiter: reserve.rateLimiter,
   };
 }
 
@@ -177,7 +193,14 @@ export const RESERVE_SIZE = ReserveLayout.span;
 export const isReserve = (info: AccountInfo<Buffer>) =>
   info.data.length === RESERVE_SIZE;
 
-export const parseReserve = (pubkey: PublicKey, info: AccountInfo<Buffer>) => {
+export const parseReserve = (
+  pubkey: PublicKey,
+  info: AccountInfo<Buffer>,
+  encoding?: string
+) => {
+  if (encoding === "base64+zstd") {
+    info.data = Buffer.from(fzstd.decompress(info.data));
+  }
   const { data } = info;
   const buffer = Buffer.from(data);
   const reserve = decodeReserve(buffer);
@@ -202,7 +225,11 @@ export function reserveToString(reserve: Reserve) {
     reserve,
     (key, value) => {
       // Skip padding
-      if (key === "padding") {
+      if (
+        key === "padding" ||
+        key === "oracleOption" ||
+        value === undefined
+      ) {
         return null;
       }
       switch (value.constructor.name) {

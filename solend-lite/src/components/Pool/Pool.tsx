@@ -23,9 +23,10 @@ export default function Pool({
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
   const [showDisabled, setShowDisabled] = useState(false);
-  const reserves = (showDisabled
-    ? selectedPool?.reserves
-    : selectedPool?.reserves.filter((r) => !r.disabled)) ?? [];
+  const reserves =
+    (showDisabled
+      ? selectedPool?.reserves
+      : selectedPool?.reserves.filter((r) => !r.disabled)) ?? [];
 
   if (selectedPoolState === 'loading') return <Loading />;
 

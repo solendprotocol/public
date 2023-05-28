@@ -48,7 +48,13 @@ export default function TransactionTab({
   const stats = getNewCalculations(selectedObligation, selectedReserve, value);
 
   const borrowRepay = ['borrow', 'repay'].includes(action);
-  const balance = borrowRepay ? selectedObligation?.borrows.find(b => b.reserveAddress === selectedReserve.address)?.amount : selectedObligation?.deposits.find(d => d.reserveAddress === selectedReserve.address)?.amount;
+  const balance = borrowRepay
+    ? selectedObligation?.borrows.find(
+        (b) => b.reserveAddress === selectedReserve.address,
+      )?.amount
+    : selectedObligation?.deposits.find(
+        (d) => d.reserveAddress === selectedReserve.address,
+      )?.amount;
   const valueObj = new BigNumber(value);
   const buttonText =
     !valueObj.isZero() && !valueObj.isNaN()
@@ -58,7 +64,9 @@ export default function TransactionTab({
         }`
       : 'Enter an amount';
 
-  const walletBalance = walletAssets.find(a => a.mintAddress === selectedReserve.mintAddress)?.amount;
+  const walletBalance = walletAssets.find(
+    (a) => a.mintAddress === selectedReserve.mintAddress,
+  )?.amount;
 
   return (
     <Flex direction='column'>
@@ -79,14 +87,14 @@ export default function TransactionTab({
         disabled={Boolean(invalidMessage) || valueObj.isZero()}
         symbol={selectedReserve.symbol}
       />
-      <Flex justify="space-between" mt="24px" mb="-16px">
+      <Flex justify='space-between' mt='24px' mb='-16px'>
         <Text color='secondary'>
           {walletBalance ? formatToken(walletBalance, 4, true) : '-'}{' '}
           {selectedReserve.symbol} in wallet
         </Text>
         <Text color='secondary'>
-          {balance ? formatToken(balance, 4, true) : 0}{' '}
-          {selectedReserve.symbol} {borrowRepay ? 'borrowed' : 'supplied'}
+          {balance ? formatToken(balance, 4, true) : 0} {selectedReserve.symbol}{' '}
+          {borrowRepay ? 'borrowed' : 'supplied'}
         </Text>
       </Flex>
     </Flex>
