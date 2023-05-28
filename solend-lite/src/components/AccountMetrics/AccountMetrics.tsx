@@ -26,18 +26,22 @@ function AccountMetrics(): ReactElement {
           label='Borrow utilization'
           value={
             obligation
-              ? `${formatPercent(obligation.borrowUtilization.toString())}`
+              ? formatPercent(obligation.borrowUtilization.toString())
               : '-'
           }
           tooltip='Borrow utilization is equal to your total borrowed amount, Boxided by the borrow limit. At 100%, you will not be able to borrow any more and will be close to liquidation.'
           dangerTooltip={
-            obligation?.isBorrowLimitReached
-              ? `You have reached your borrow limit and approaching the
-          liquidation threshold of ${formatPercent(
-            obligation.liquidationThresholdFactor.toString(),
-          )}. To avoid liquidation,
-          you can repay your positions or supply more assets`
-              : undefined
+            obligation?.isBorrowLimitReached ? (
+              <>
+                You have reached your borrow limit and approaching the
+                liquidation threshold of{' '}
+                {formatPercent(
+                  obligation.liquidationThresholdFactor.toString(),
+                )}
+                . To avoid liquidation, you can repay your positions or supply
+                more assets
+              </>
+            ) : undefined
           }
         />
       </Flex>

@@ -260,7 +260,7 @@ function ReserveStats({
           label='Reserve address'
           value={
             <Tooltip title={reserve.address}>
-              <Flex align="center">
+              <Flex align='center'>
                 <a
                   href={`https://solscan.io/account/${reserve.address}`}
                   target='_blank'
@@ -285,7 +285,7 @@ function ReserveStats({
             label='Fee receiver address'
             value={
               <Tooltip title={reserve.feeReceiverAddress}>
-                <Flex align="center">
+                <Flex align='center'>
                   <a
                     href={`https://solscan.io/account/${reserve.feeReceiverAddress}`}
                     target='_blank'
@@ -315,7 +315,7 @@ function ReserveStats({
           label='Token mint'
           value={
             <Tooltip title={reserve.mintAddress}>
-              <Flex align="center">
+              <Flex align='center'>
                 <a
                   href={`https://solscan.io/account/${reserve.mintAddress}`}
                   target='_blank'
@@ -340,7 +340,7 @@ function ReserveStats({
           label='cToken mint'
           value={
             <Tooltip title={reserve.cTokenMint}>
-              <Flex align="center">
+              <Flex align='center'>
                 <a
                   target='_blank'
                   rel='noreferrer'
@@ -367,7 +367,7 @@ function ReserveStats({
             label='Pyth Oracle'
             value={
               <Tooltip title={reserve.pythOracle}>
-                <Flex align="center">
+                <Flex align='center'>
                   <a
                     target='_blank'
                     rel='noreferrer'
@@ -393,7 +393,7 @@ function ReserveStats({
           label='Switchboard Oracle'
           value={
             <Tooltip title={reserve.switchboardOracle}>
-              <Flex align="center">
+              <Flex align='center'>
                 <a
                   target='_blank'
                   rel='noreferrer'

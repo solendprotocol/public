@@ -591,6 +591,9 @@ export const repayConfigs = {
           )
         : asset.amount;
 
-    return BigNumber.min(reserveBorrowedAmount.amount, maxRepayableFromWallet).decimalPlaces(reserve.decimals);
+    return BigNumber.min(
+      reserveBorrowedAmount.amount,
+      maxRepayableFromWallet,
+    ).decimalPlaces(reserve.decimals);
   },
 };

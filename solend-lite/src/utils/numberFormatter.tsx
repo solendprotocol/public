@@ -25,7 +25,9 @@ export function formatToken(
     !bn.isLessThanOrEqualTo(new BigNumber(0))
   ) {
     return (
-      <Tooltip title={formatExact(value)}><Text whiteSpace="nowrap">{`< ${1 / 10 ** digits}`}</Text></Tooltip>
+      <Tooltip title={formatExact(value)}>
+        <Text whiteSpace='nowrap'>{`< ${1 / 10 ** digits}`}</Text>
+      </Tooltip>
     );
   }
 
@@ -97,13 +99,15 @@ export function formatPercent(
   noTrim?: boolean,
   decimals: number = 2,
   limit: number = 0.0001,
+  tooltip?: boolean,
 ): ReactNode {
   const bnPercent = new BigNumber(value);
   if (
     bnPercent.isLessThan(limit) &&
-    !bnPercent.isLessThanOrEqualTo(new BigNumber(0))
+    !bnPercent.isLessThanOrEqualTo(new BigNumber(0)) &&
+    tooltip
   ) {
-    return <Text whiteSpace="nowrap">{'< 0.01%'}</Text>;
+    return <Text whiteSpace='nowrap'>{'< 0.01%'}</Text>;
   }
 
   return noTrim

@@ -1,5 +1,6 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
+import * as fzstd from "fzstd";
 import * as Layout from "../utils/layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
 
@@ -18,6 +19,7 @@ export interface Obligation {
   borrowedValue: BN; // decimals
   allowedBorrowValue: BN; // decimals
   unhealthyBorrowValue: BN; // decimals
+  borrowedValueUpperBound: BN; // decimals
 }
 
 // BN defines toJSON property, which messes up serialization
@@ -70,7 +72,8 @@ export const ObligationLayout: typeof BufferLayout.Structure =
     Layout.uint128("borrowedValue"),
     Layout.uint128("allowedBorrowValue"),
     Layout.uint128("unhealthyBorrowValue"),
-    BufferLayout.blob(64, "_padding"),
+    Layout.uint128("borrowedValueUpperBound"),
+    BufferLayout.blob(48, "_padding"),
 
     BufferLayout.u8("depositsLen"),
     BufferLayout.u8("borrowsLen"),
@@ -108,6 +111,7 @@ export interface ProtoObligation {
   borrowedValue: BN; // decimals
   allowedBorrowValue: BN; // decimals
   unhealthyBorrowValue: BN; // decimals
+  borrowedValueUpperBound: BN; // decimals
   depositsLen: number;
   borrowsLen: number;
   dataFlat: Buffer;
@@ -115,8 +119,12 @@ export interface ProtoObligation {
 
 export const parseObligation = (
   pubkey: PublicKey,
-  info: AccountInfo<Buffer>
+  info: AccountInfo<Buffer>,
+  encoding?: string
 ) => {
+  if (encoding === "base64+zstd") {
+    info.data = Buffer.from(fzstd.decompress(info.data));
+  }
   const { data } = info;
   const buffer = Buffer.from(data);
   const {
@@ -128,6 +136,7 @@ export const parseObligation = (
     borrowedValue,
     allowedBorrowValue,
     unhealthyBorrowValue,
+    borrowedValueUpperBound,
     depositsLen,
     borrowsLen,
     dataFlat,
@@ -165,6 +174,7 @@ export const parseObligation = (
     borrowedValue,
     allowedBorrowValue,
     unhealthyBorrowValue,
+    borrowedValueUpperBound,
     deposits,
     borrows,
   } as Obligation;
