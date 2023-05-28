@@ -53,7 +53,7 @@ export const redeemReserveCollateralInstruction = (
     { pubkey: reserve, isSigner: false, isWritable: true },
     { pubkey: reserveCollateralMint, isSigner: false, isWritable: true },
     { pubkey: reserveLiquiditySupply, isSigner: false, isWritable: true },
-    { pubkey: lendingMarket, isSigner: false, isWritable: false },
+    { pubkey: lendingMarket, isSigner: false, isWritable: true },
     { pubkey: lendingMarketAuthority, isSigner: false, isWritable: false },
     { pubkey: transferAuthority, isSigner: true, isWritable: false },
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
