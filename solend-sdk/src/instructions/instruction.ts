@@ -18,6 +18,8 @@ export enum LendingInstruction {
   UpdateReserveConfig = 16,
   FlashBorrowReserveLiquidity = 19,
   FlashRepayReserveLiquidity = 20,
+  ForgiveDebt = 21,
+  UpdateMetadata = 22,
 }
 
 /** Instructions defined by the program */
