@@ -65,10 +65,10 @@ export interface ReserveConfig {
   protocolTakeRate: number;
   addedBorrowWeightBPS: BN;
   borrowWeight: BigNumber;
-  reserveType: ReserveType;
+  reserveType: AssetType;
 }
 
-export enum ReserveType {
+export enum AssetType {
   Regular = 0,
   Isolated = 1,
 }
@@ -208,7 +208,7 @@ function decodeReserve(buffer: Buffer): Reserve {
         .dividedBy(new BigNumber(10000))
         .plus(new BigNumber(1)),
       reserveType:
-        reserve.reserveType == 0 ? ReserveType.Regular : ReserveType.Isolated,
+        reserve.reserveType == 0 ? AssetType.Regular : AssetType.Isolated,
     },
     rateLimiter: reserve.rateLimiter,
   };
