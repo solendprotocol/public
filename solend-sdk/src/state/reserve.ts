@@ -3,9 +3,9 @@ import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import { Buffer } from "buffer";
 import * as fzstd from "fzstd";
+import { RateLimiterLayout, RateLimiter } from "./rateLimiter";
 import * as Layout from "../utils/layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
-import { RateLimiter, RateLimiterLayout } from "./rateLimiter";
 
 const BufferLayout = require("buffer-layout");
 

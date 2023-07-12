@@ -1,16 +1,13 @@
 .alignCenter {
-  .label {
-    display: block;
-    margin-bottom: 4px;
-  }
+  display: flex;
   text-align: center;
+  gap: 4px;
 }
 
 .metric {
   .label {
-    display: flex;
-    margin-bottom: 4px;
-    justify-content: center;
+    align-items: center;
+    gap: 4px;
   }
 
   &:last-of-type {
@@ -23,6 +20,7 @@
   &:first-of-type {
     text-align: start;
     .label {
+      flex-direction: row;
       justify-content: start;
     }
   }

@@ -27,7 +27,7 @@ import { publicKeyAtom, walletAssetsAtom } from 'stores/wallet';
 import Result, { ResultConfigType } from 'components/Result/Result';
 import BigNumber from 'bignumber.js';
 import { connectionAtom, refreshPageAtom } from 'stores/settings';
-import { selectedPoolAtom } from 'stores/pools';
+import { rateLimiterAtom, selectedPoolAtom } from 'stores/pools';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { U64_MAX } from '@solendprotocol/solend-sdk';
 import { SKIP_PREFLIGHT } from 'common/config';
@@ -37,6 +37,7 @@ export default function TransactionTakeover() {
   const { sendTransaction } = useWallet();
   const [publicKey] = useAtom(publicKeyAtom);
   const [connection] = useAtom(connectionAtom);
+  const [rateLimiter] = useAtom(rateLimiterAtom);
   const [selectedObligation] = useAtom(selectedObligationAtom);
   const [walletAssets] = useAtom(walletAssetsAtom);
   const refresh = useSetAtom(refreshPageAtom);
@@ -61,6 +62,7 @@ export default function TransactionTakeover() {
             selectedReserve,
             walletAssets,
             selectedObligation,
+            rateLimiter
           )
         : BigNumber(0),
     [selectedReserve, walletAssets, selectedObligation],
@@ -72,6 +74,7 @@ export default function TransactionTakeover() {
             selectedReserve,
             walletAssets,
             selectedObligation,
+            rateLimiter
           )
         : BigNumber(0),
     [selectedReserve, walletAssets, selectedObligation],
@@ -128,7 +131,6 @@ export default function TransactionTakeover() {
           <Text variant='headline'>Repay</Text>
         </Tab>
       </TabList>
-
       <TabPanels>
         <TabPanel>
           <TransactionTab
@@ -202,6 +204,7 @@ export default function TransactionTakeover() {
               selectedObligation,
               selectedReserve,
               walletAssets,
+              rateLimiter,
             )}
             getNewCalculations={borrowConfigs.getNewCalculations}
           />
@@ -243,6 +246,7 @@ export default function TransactionTakeover() {
               selectedObligation,
               selectedReserve,
               walletAssets,
+              rateLimiter
             )}
             getNewCalculations={withdrawConfigs.getNewCalculations}
           />

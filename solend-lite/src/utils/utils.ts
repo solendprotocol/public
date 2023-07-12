@@ -8,13 +8,15 @@ export function runIfFn<T, U>(
   return isFunction(valueOrFn) ? valueOrFn(...args) : valueOrFn;
 }
 
+export const SLOT_RATE = 2;
+
 const errorList = [
   'Failed to unpack instruction data',
   'Account is already initialized',
   'Lamport balance below rent-exempt threshold',
   'Market authority is invalid',
   'Market owner is invalid',
-  'Input account owner is not the program address',
+  'Input account owner is not the program plusress',
   'Input token account is not owned by the correct token program id',
   'Input token account is not valid',
   'Input token mint account is not valid',
