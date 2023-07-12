@@ -3,12 +3,16 @@ import BigNumber from "bignumber.js";
 import { Obligation, parseObligation } from "../../state";
 import { PoolType } from "../types";
 import { getBatchMultipleAccountsInfo } from "./utils";
+import { U64_MAX } from "../../classes/constants";
 
 export function formatObligation(
   obligation: { pubkey: PublicKey; info: Obligation },
   pool: PoolType
 ) {
   const poolAddress = obligation.info.lendingMarket.toBase58();
+  let minPriceUserTotalSupply = new BigNumber(0);
+  let minPriceBorrowLimit = new BigNumber(0);
+  let maxPriceUserTotalWeightedBorrow = new BigNumber(0);
 
   const deposits = obligation.info.deposits
     .filter((d) => d.depositedAmount.toString() !== "0")
@@ -23,6 +27,16 @@ export function formatObligation(
         .shiftedBy(-reserve.decimals)
         .times(reserve.cTokenExchangeRate);
       const amountUsd = amount.times(reserve.price);
+
+      minPriceUserTotalSupply = minPriceUserTotalSupply.plus(
+        amount.times(reserve.minPrice),
+      );
+
+      minPriceBorrowLimit = minPriceBorrowLimit.plus(
+        amount
+          .times(reserve.minPrice)
+          .times(reserve.loanToValueRatio),
+      );
 
       return {
         liquidationThreshold: reserve.liquidationThreshold,
@@ -51,6 +65,18 @@ export function formatObligation(
         );
       const amountUsd = amount.times(reserve.price);
 
+      const maxPrice = reserve.emaPrice ? BigNumber.max(reserve.emaPrice, reserve.price) : reserve.price;
+
+        maxPriceUserTotalWeightedBorrow = maxPriceUserTotalWeightedBorrow.plus(
+          amount
+            .times(maxPrice)
+            .times(
+              reserve.borrowWeight
+                ? reserve.borrowWeight
+                : U64_MAX,
+            ),
+        );
+
       return {
         liquidationThreshold: reserve.liquidationThreshold,
         loanToValueRatio: reserve.loanToValueRatio,
@@ -59,15 +85,20 @@ export function formatObligation(
         reserveAddress,
         amount,
         amountUsd,
+        weightedAmountUsd: reserve.borrowWeight.multipliedBy(amountUsd)
       };
     });
-
+    
   const totalSupplyValue = deposits.reduce(
     (acc, d) => acc.plus(d.amountUsd),
     new BigNumber(0)
   );
   const totalBorrowValue = borrows.reduce(
     (acc, b) => acc.plus(b.amountUsd),
+    new BigNumber(0)
+  );
+  const weightedTotalBorrowValue = borrows.reduce(
+    (acc, b) => acc.plus(b.weightedAmountUsd),
     new BigNumber(0)
   );
 
@@ -89,20 +120,25 @@ export function formatObligation(
   const borrowUtilization = borrowLimit.isZero()
     ? new BigNumber(0)
     : totalBorrowValue.dividedBy(borrowLimit);
+  const weightedBorrowUtilization = minPriceBorrowLimit.isZero()
+    ? new BigNumber(0)
+    : weightedTotalBorrowValue.dividedBy(borrowLimit);
   const isBorrowLimitReached = borrowUtilization.isGreaterThanOrEqualTo(
     new BigNumber("1")
   );
   const borrowOverSupply = totalSupplyValue.isZero()
     ? new BigNumber(0)
     : totalBorrowValue.dividedBy(totalSupplyValue);
-  const borrowLimitOverSupply = totalSupplyValue.isZero()
-    ? new BigNumber(0)
-    : borrowLimit.dividedBy(totalSupplyValue);
 
   const positions =
     obligation.info.deposits.filter((d) => !d.depositedAmount.isZero()).length +
     obligation.info.borrows.filter((b) => !b.borrowedAmountWads.isZero())
       .length;
+
+
+  const weightedConservativeBorrowUtilization = minPriceBorrowLimit.isZero()
+  ? new BigNumber(0)
+  : maxPriceUserTotalWeightedBorrow.dividedBy(minPriceBorrowLimit);
 
   return {
     address: obligation.pubkey.toBase58(),
@@ -118,9 +154,14 @@ export function formatObligation(
     liquidationThresholdFactor,
     borrowLimitFactor,
     borrowUtilization,
+    weightedConservativeBorrowUtilization,
+    weightedBorrowUtilization,
     isBorrowLimitReached,
     borrowOverSupply,
-    borrowLimitOverSupply,
+    weightedTotalBorrowValue,
+    minPriceUserTotalSupply,
+    minPriceBorrowLimit,
+    maxPriceUserTotalWeightedBorrow,
   };
 }
 

@@ -13,6 +13,8 @@ type MetricPropType = {
   dangerTooltip?: React.ReactNode;
   alignCenter?: boolean;
   row?: boolean;
+  flex?: number;
+  style?: any;
 };
 
 function Metric({
@@ -23,35 +25,37 @@ function Metric({
   dangerTooltip,
   row,
   alignCenter,
+  flex,
+  style,
 }: MetricPropType): ReactElement {
   return (
     <Flex
+      flex={flex}
       direction={row ? 'row' : 'column'}
       align={row ? 'center' : undefined}
       justify='space-between'
+      style={style}
       className={classNames(styles.alignCenter, !alignCenter && styles.metric)}
     >
       {label && (
-        <Flex align='center' justify={alignCenter ? 'center' : undefined}>
+        <Flex className={styles.label} justify='space-between'>
           <Text variant='caption' color='secondary'>
             {label}
           </Text>
           {tooltip && (
-            <>
-              <Tooltip label={dangerTooltip ?? tooltip}>
-                <Text variant='caption' color='secondary'>
-                  {dangerTooltip ? (
-                    <WarningTwoIcon ml={1} />
-                  ) : (
-                    <InfoIcon ml={1} />
-                  )}
-                </Text>
-              </Tooltip>
-            </>
+            <Tooltip label={dangerTooltip ?? tooltip}>
+              <Text variant='caption' color='secondary'>
+                {dangerTooltip ? (
+                  <WarningTwoIcon mb={0.5} />
+                ) : (
+                  <InfoIcon mb={0.5} />
+                )}
+              </Text>
+            </Tooltip>
           )}
         </Flex>
       )}
-      <Text display='flex'>{value}</Text>
+      <Text>{value}</Text>
       {secondary && (
         <>
           <Text color='secondary' variant='caption'>

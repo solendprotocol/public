@@ -1,14 +1,21 @@
 import { Text, Flex, Box, Divider, useMediaQuery } from '@chakra-ui/react';
 import { useAtom } from 'jotai';
 import { useState } from 'react';
-import { selectedPoolAtom, selectedPoolStateAtom } from 'stores/pools';
-import { formatCompact } from 'utils/numberFormatter';
+import {
+  rateLimiterAtom,
+  selectedPoolAtom,
+  selectedPoolStateAtom,
+} from 'stores/pools';
+import { formatCompact, formatUsd } from 'utils/numberFormatter';
 import Metric from 'components/Metric/Metric';
 import Loading from 'components/Loading/Loading';
 import BigNumber from 'bignumber.js';
+import humanizeDuration from 'humanize-duration';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import PoolTable from './PoolTable/PoolTable';
 import PoolList from './PoolList/PoolList';
+import { SLOT_RATE } from 'utils/utils';
+import { OUTFLOW_BUFFER } from '@solendprotocol/solend-sdk';
 
 export const ASSET_SUPPLY_LIMIT_TOOLTIP = 'Asset deposit limit reached.';
 export const ASSET_BORROW_LIMIT_TOOLTIP = 'Asset borrow limit reached.';
@@ -19,6 +26,7 @@ export default function Pool({
   selectReserveWithModal: (reserve: string) => void;
 }) {
   const [selectedPool] = useAtom(selectedPoolAtom);
+  const [rateLimiter] = useAtom(rateLimiterAtom);
   const [selectedPoolState] = useAtom(selectedPoolStateAtom);
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
@@ -73,6 +81,51 @@ export default function Pool({
             alignCenter
             value={`$${formatCompact(totalAvailableUsd)}`}
           />
+          {rateLimiter &&
+            !rateLimiter.config.windowDuration.isEqualTo(new BigNumber(0)) && (
+              <Metric
+                alignCenter
+                label='Max outflow'
+                style={
+                  isLargerThan800
+                    ? undefined
+                    : {
+                        width: '80px',
+                      }
+                }
+                value={
+                  <>
+                    {formatUsd(
+                      rateLimiter.config.maxOutflow.toString(),
+                      false,
+                      true,
+                    )}{' '}
+                    per{' '}
+                    {humanizeDuration(
+                      (Number(rateLimiter.config.windowDuration.toString()) /
+                        SLOT_RATE) *
+                        1000,
+                    )}
+                  </>
+                }
+                tooltip={
+                  <>
+                    For the safety of the pool, amounts being withdrawn or
+                    borrowed from the pool are limited by this rate. <br />
+                    Remaining outflow this window:{' '}
+                    {rateLimiter.remainingOutflow
+                      ? formatUsd(
+                          rateLimiter.remainingOutflow
+                            .dividedBy(new BigNumber(OUTFLOW_BUFFER))
+                            .toString(),
+                          false,
+                          true,
+                        )
+                      : 'N/A'}
+                  </>
+                }
+              />
+            )}
         </Flex>
       </Box>
 

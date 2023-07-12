@@ -1,3 +1,4 @@
+import BigNumber from "bignumber.js";
 import * as Layout from "../utils/layout";
 import BN from "bn.js";
 const BufferLayout = require("buffer-layout");
@@ -9,6 +10,17 @@ export interface RateLimiter {
   windowStart: BN;
   currentQuantity: BN;
 }
+
+export type ParsedRateLimiter = {
+  config: {
+    windowDuration: BigNumber,
+    maxOutflow: BigNumber,
+  },
+  windowStart: BigNumber,
+  previousQuantity: BigNumber,
+  currentQuantity: BigNumber,
+  remainingOutflow: BigNumber | null
+};
 
 export interface RateLimiterConfig {
   windowDuration: BN;
