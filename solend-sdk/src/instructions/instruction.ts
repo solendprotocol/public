@@ -1,6 +1,6 @@
 export enum LendingInstruction {
   InitLendingMarket = 0,
-  SetLendingMarketOwner = 1,
+  SetLendingMarketOwnerAndConfig = 1,
   InitReserve = 2,
   RefreshReserve = 3,
   DepositReserveLiquidity = 4,
