@@ -1,7 +1,6 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { ParsedRateLimiter, RateLimiter, RateLimiterConfig } from "../../state/rateLimiter";
+import { RateLimiter } from "../../state/rateLimiter";
 import BigNumber from "bignumber.js";
-import BN from "bn.js";
 
 const ADDRESS_PREFIX_SUFFIX_LENGTH = 6;
 

@@ -5,7 +5,7 @@ import { fetchPrices } from "./prices";
 import { calculateBorrowInterest, calculateSupplyInterest } from "./rates";
 import { PoolType, ReserveType } from "../types";
 import { parseReserve, Reserve } from "../../state";
-import { parseRateLimiter, remainingOutflow } from "./utils";
+import { parseRateLimiter } from "./utils";
 
 export async function fetchPools(
   oldPools: Array<PoolType>,
