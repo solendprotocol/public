@@ -1,11 +1,7 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import * as fzstd from "fzstd";
 import * as Layout from "../utils/layout";
-import {
-  RateLimiter,
-  RateLimiterLayout,
-  RATE_LIMITER_LEN,
-} from "./rateLimiter";
+import { RateLimiter, RateLimiterLayout } from "./rateLimiter";
 
 const BufferLayout = require("buffer-layout");
 

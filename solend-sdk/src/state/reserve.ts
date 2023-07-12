@@ -70,7 +70,7 @@ export interface ReserveConfig {
 
 export enum ReserveType {
   Regular = 0,
-  Isolated = 1
+  Isolated = 1,
 }
 
 export const ReserveConfigLayout = BufferLayout.struct(
@@ -207,7 +207,8 @@ function decodeReserve(buffer: Buffer): Reserve {
       borrowWeight: new BigNumber(reserve.addedBorrowWeightBPS.toString())
         .dividedBy(new BigNumber(10000))
         .plus(new BigNumber(1)),
-      reserveType: reserve.reserveType == 0 ? ReserveType.Regular : ReserveType.Isolated,
+      reserveType:
+        reserve.reserveType == 0 ? ReserveType.Regular : ReserveType.Isolated,
     },
     rateLimiter: reserve.rateLimiter,
   };
@@ -250,11 +251,7 @@ export function reserveToString(reserve: Reserve) {
     reserve,
     (key, value) => {
       // Skip padding
-      if (
-        key === "padding" ||
-        key === "oracleOption" ||
-        value === undefined
-      ) {
+      if (key === "padding" || key === "oracleOption" || value === undefined) {
         return null;
       }
       switch (value.constructor.name) {

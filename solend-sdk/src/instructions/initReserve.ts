@@ -6,7 +6,7 @@ import {
 } from "@solana/web3.js";
 import BN from "bn.js";
 import * as Layout from "../utils/layout";
-import { ReserveConfig, ReserveConfigLayout } from "../state";
+import { ReserveConfig } from "../state";
 import { LendingInstruction } from "./instruction";
 
 const BufferLayout = require("buffer-layout");
