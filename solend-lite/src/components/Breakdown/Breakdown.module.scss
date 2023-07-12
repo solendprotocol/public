@@ -1,0 +1,27 @@
+.tooltipTitle {
+  cursor: pointer !important;
+  text-align: center !important;
+}
+
+.params {
+  background-color: var(--chakra-colors-neutralAlt);
+  padding: 12px;
+  margin-left: -16px;
+  margin-right: -16px;
+  margin-top: 8px;
+}
+
+.visible {
+  transition: max-height 0.75s !important;
+  max-height: 500px;
+  visibility: visible;
+}
+
+.hidden {
+  transition: max-height 0.25s !important;
+  visibility: hidden;
+  max-height: 0;
+  padding: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}

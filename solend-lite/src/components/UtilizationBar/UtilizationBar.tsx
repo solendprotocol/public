@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { Tooltip } from '@chakra-ui/react';
 import { formatPercent, formatUsd } from 'utils/numberFormatter';
@@ -18,13 +18,33 @@ function Section({
   width = 1.5,
   extraClassName,
   tooltip,
+  open,
+  stateOpen,
 }: {
   width?: number;
   extraClassName?: string;
   tooltip?: string;
+  open?: boolean;
+  stateOpen?: boolean;
 }) {
+  const [openState, setOpenState] = useState<boolean | undefined>(open);
+  useEffect(() => {
+    if (openState === false) {
+      setOpenState(undefined);
+    }
+  }, [openState]);
+
+  useEffect(() => {
+    setOpenState(open);
+  }, [open]);
+
   return (
-    <Tooltip title={tooltip}>
+    <Tooltip
+      className={openState ? styles.open : undefined}
+      label={tooltip}
+      hasArrow
+      isOpen={stateOpen ? openState : undefined}
+    >
       <div
         style={{
           width: `${width}%`,
@@ -35,103 +55,184 @@ function Section({
   );
 }
 
-function UtilizationBar(): ReactElement {
+function UtilizationBar({
+  onClick,
+  showBorrowLimitTooltip,
+  showWeightedBorrowTooltip,
+  showLiquidationThresholdTooltip,
+  showBreakdown,
+  stateOpen,
+}: {
+  onClick: () => void;
+  showBorrowLimitTooltip: boolean;
+  showWeightedBorrowTooltip: boolean;
+  showLiquidationThresholdTooltip: boolean;
+  showBreakdown: boolean;
+  stateOpen: boolean;
+}): ReactElement {
   const [obligation] = useAtom(selectedObligationAtom);
 
-  if (!obligation) return <div />;
+  const usedObligation = obligation ?? {
+    totalSupplyValue: new BigNumber(0),
+    totalBorrowValue: new BigNumber(0),
+    borrowLimit: new BigNumber(0),
+    liquidationThreshold: new BigNumber(0),
+    borrowOverSupply: new BigNumber(0),
+    borrowLimitOverSupply: new BigNumber(0),
+    liquidationThresholdFactor: new BigNumber(0),
+    weightedTotalBorrowValue: new BigNumber(0),
+    weightedBorrowUtilization: new BigNumber(0),
+  };
+
+  const borrowLimitOverSupply = usedObligation.totalSupplyValue.isZero()
+    ? new BigNumber(0)
+    : usedObligation.borrowLimit.dividedBy(usedObligation.totalSupplyValue);
+
+  const weightedBorrowOverSupply = usedObligation.totalSupplyValue.isZero()
+    ? new BigNumber(0)
+    : usedObligation.weightedTotalBorrowValue.dividedBy(
+        usedObligation.totalSupplyValue,
+      );
 
   const passedLimit =
-    obligation.totalSupplyValue.isZero() ||
-    (!obligation.totalBorrowValue.isZero() &&
-      obligation.totalBorrowValue.isGreaterThanOrEqualTo(
-        obligation.borrowLimit,
+    usedObligation.totalSupplyValue.isZero() ||
+    (!usedObligation.weightedTotalBorrowValue.isZero() &&
+      usedObligation.weightedTotalBorrowValue.isGreaterThanOrEqualTo(
+        usedObligation.borrowLimit,
       ));
   const passedThreshold =
-    obligation.totalSupplyValue.isZero() ||
-    (!obligation.totalBorrowValue.isZero() &&
-      obligation.totalBorrowValue.isGreaterThanOrEqualTo(
-        obligation.liquidationThreshold,
+    usedObligation.totalSupplyValue.isZero() ||
+    (!usedObligation.weightedTotalBorrowValue.isZero() &&
+      usedObligation.weightedTotalBorrowValue.isGreaterThanOrEqualTo(
+        usedObligation.liquidationThreshold,
       ));
-  // 2% reserved for the bars
-  const denominator = 97 + (passedLimit ? 1 : 0) + (passedThreshold ? 1 : 0);
+  // 3% reserved for the bars
+  const denominator =
+    97 + (passedLimit ? 1.5 : 0) + (passedThreshold ? 1.5 : 0);
 
   const borrowWidth = Math.min(
     100,
-    Number(Number(obligation.borrowOverSupply.toString()).toFixed(4)) *
+    Number(Number(usedObligation.borrowOverSupply.toString()).toFixed(4)) *
       denominator,
   );
+
+  const liquidationThresholdFactor = usedObligation.totalSupplyValue.isZero()
+    ? BigNumber(0)
+    : usedObligation.liquidationThreshold.dividedBy(
+        usedObligation.totalSupplyValue,
+      );
+
+  const weightedBorrowWidth =
+    Math.min(
+      100,
+      Number(Number(weightedBorrowOverSupply.toString()).toFixed(4)) *
+        denominator,
+    ) - borrowWidth;
+
+  const totalBorrowWidth = borrowWidth + weightedBorrowWidth;
+
   const unborrowedWidth =
     Number(
       Number(
-        obligation.totalSupplyValue.isZero()
+        usedObligation.totalSupplyValue.isZero()
           ? BigNumber(0)
           : BigNumber.max(
-              obligation.borrowLimit.minus(obligation.totalBorrowValue),
+              usedObligation.borrowLimit.minus(
+                usedObligation.weightedTotalBorrowValue,
+              ),
               BigNumber(0),
             )
-              .dividedBy(obligation.totalSupplyValue)
+              .dividedBy(usedObligation.totalSupplyValue)
               .toString(),
       ).toFixed(4),
     ) * denominator;
   const unliquidatedWidth =
     Number(
       Number(
-        obligation.totalSupplyValue.isZero()
+        usedObligation.totalSupplyValue.isZero()
           ? BigNumber(0)
           : BigNumber.max(
-              obligation.liquidationThreshold.minus(
+              usedObligation.liquidationThreshold.minus(
                 BigNumber.max(
-                  obligation.borrowLimit,
-                  obligation.totalBorrowValue,
+                  usedObligation.borrowLimit,
+                  usedObligation.weightedTotalBorrowValue,
                 ),
               ),
               BigNumber(0),
             )
-              .dividedBy(obligation.totalSupplyValue)
+              .dividedBy(usedObligation.totalSupplyValue)
               .toString(),
       ).toFixed(4),
     ) * denominator;
   const unusedSupply =
-    denominator - borrowWidth - unborrowedWidth - unliquidatedWidth;
+    denominator - totalBorrowWidth - unborrowedWidth - unliquidatedWidth;
 
-  let borrowToolTip = `You are borrowing ${formatPercent(
-    obligation.borrowOverSupply.toString(),
+  let borrowToolTip = `Your weighted borrow balance is ${formatPercent(
+    weightedBorrowOverSupply.toString(),
   )} of your total supply, or ${formatPercent(
-    obligation.borrowUtilization.toString(),
+    usedObligation.weightedBorrowUtilization.toString(),
   )} of your borrow limit.`;
+
   if (passedLimit) {
     borrowToolTip =
-      'Your borrow balance is past the borrow limit and could be at risk of liquidation. Please repay your borrow balance or supply more assets.';
-  }
-  if (passedThreshold) {
-    borrowToolTip =
-      'Your borrow balance is past the liquidation threshold and could be liquidated.';
+      'Your weighted borrow balance is past the borrow limit and could be at risk of liquidation. Please repay your borrows or supply more assets.';
   }
 
+  if (passedThreshold) {
+    borrowToolTip =
+      'Your weighted borrow balance is past the liquidation threshold and could be liquidated.';
+  }
+
+  const unweightedBorrowTooltip = `This portion represents the actual value of your borrows. However, certain assets have a borrow weight that changes their value during liquidation or borrow limit calculations.`;
+
   return (
-    <div className={styles.container}>
-      <Section
-        width={borrowWidth}
-        extraClassName={passedLimit ? styles.overBorrowed : styles.borrowed}
-        tooltip={borrowToolTip}
-      />
+    <div className={styles.container} onClick={onClick} aria-hidden='true'>
+      {showBreakdown && (
+        <Section
+          width={borrowWidth}
+          extraClassName={passedLimit ? styles.overBorrowed : styles.borrowed2}
+          tooltip={
+            showWeightedBorrowTooltip ? undefined : unweightedBorrowTooltip
+          }
+        />
+      )}
+      {showBreakdown && (
+        <Section
+          width={weightedBorrowWidth}
+          open={showWeightedBorrowTooltip}
+          stateOpen={stateOpen}
+          extraClassName={passedLimit ? styles.overBorrowed : styles.borrowed}
+          tooltip={borrowToolTip}
+        />
+      )}
+      {!showBreakdown && (
+        <Section
+          width={totalBorrowWidth}
+          open={showWeightedBorrowTooltip}
+          stateOpen={stateOpen}
+          extraClassName={passedLimit ? styles.overBorrowed : styles.borrowed}
+          tooltip={borrowToolTip}
+        />
+      )}
       {!passedLimit && (
         <Section
           width={unborrowedWidth}
           tooltip={`You can borrow ${formatUsd(
-            obligation.borrowLimit
-              .minus(obligation.totalBorrowValue)
+            usedObligation.borrowLimit
+              .minus(usedObligation.weightedTotalBorrowValue)
               .toString(),
-          )} more before you hit your borrow limit.`}
+          )} more (weighted) borrow value before you hit your limit.`}
         />
       )}
       {!passedLimit && (
         <Section
           extraClassName={styles.limitBar}
+          open={showBorrowLimitTooltip}
+          stateOpen={stateOpen}
           tooltip={`Your borrow limit is at ${formatUsd(
-            obligation.borrowLimit.toString(),
+            usedObligation.borrowLimit.toString(),
           )} and is ${formatPercent(
-            obligation.borrowLimitOverSupply.toString(),
+            borrowLimitOverSupply.toString(),
           )} of your supplied balance.`}
         />
       )}
@@ -142,10 +243,12 @@ function UtilizationBar(): ReactElement {
       {!passedThreshold && (
         <Section
           extraClassName={styles.liquidationBar}
+          open={showLiquidationThresholdTooltip}
+          stateOpen={stateOpen}
           tooltip={`Your liquidation threshold is at ${formatUsd(
-            obligation.liquidationThreshold.toString(),
+            usedObligation.liquidationThreshold.toString(),
           )} and is ${formatPercent(
-            obligation.liquidationThresholdFactor.toString(),
+            liquidationThresholdFactor.toString(),
           )} of your supplied balance.`}
         />
       )}

@@ -8,6 +8,7 @@ import {
   ASSET_SUPPLY_LIMIT_TOOLTIP,
 } from '../Pool';
 import { DataTable } from 'components/DataTable/DataTable';
+import { U64_MAX } from '@solendprotocol/solend-sdk';
 
 export default function PoolTable({
   reserves,
@@ -43,10 +44,20 @@ export default function PoolTable({
       ),
     }),
     columnHelper.accessor('loanToValueRatio', {
-      header: 'LTV',
+      header: 'Open LTV / BW',
       meta: { isNumeric: true },
       cell: ({ row: { original: reserve } }) => (
-        <Text>{formatPercent(reserve.loanToValueRatio, false, 0)}</Text>
+        <Flex gap={1} align='center'>
+          <Text>{formatPercent(reserve.loanToValueRatio, false, 0)}</Text>
+          <Text color='secondary' variant='caption'>
+            /
+          </Text>
+          <Text>
+            {reserve.addedBorrowWeightBPS.toString() !== U64_MAX
+              ? formatToken(reserve.borrowWeight.toString(), 2, false, true)
+              : '∞'}
+          </Text>
+        </Flex>
       ),
     }),
     columnHelper.accessor('totalSupplyUsd', {

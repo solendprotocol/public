@@ -2,6 +2,43 @@ import React, { ReactNode } from 'react';
 import BigNumber from 'bignumber.js';
 import { Tooltip, Text } from '@chakra-ui/react';
 
+export function collapsableUsd(value: string, maxLength: number) {
+  const bn = new BigNumber(value);
+
+  if (bn.isLessThan(0.01) && !bn.isLessThanOrEqualTo(new BigNumber(0))) {
+    return '< $0.01';
+  }
+
+  const usdString = formatUsd(value);
+
+  return (
+    <Tooltip label={usdString}>
+      {usdString.length > maxLength ? `$${formatCompact(bn)}` : usdString}
+    </Tooltip>
+  );
+}
+
+export function collapsableToken(
+  value: string,
+  decimals: number,
+  maxLength: number,
+) {
+  const bn = new BigNumber(value);
+  if (bn.isLessThan(0.0001) && !bn.isLessThanOrEqualTo(new BigNumber(0))) {
+    return '< 0.0001';
+  }
+
+  const valString = formatToken(value, decimals) as string;
+
+  return (
+    <Tooltip label={value}>
+      {valString.length > maxLength
+        ? formatCompact(new BigNumber(valString))
+        : valString}
+    </Tooltip>
+  );
+}
+
 export function formatExact(value: string | number | BigNumber) {
   const bignum = new BigNumber(value);
   return bignum.isNaN() ? '0' : bignum.toFormat();
@@ -11,7 +48,7 @@ export function formatToken(
   value: string | number | BigNumber,
   digits = 4,
   exactTip?: boolean,
-  noTrim?: boolean,
+  trim?: boolean,
   // by default we truncate for tokens
   round?: boolean,
   exact?: boolean,
@@ -31,7 +68,9 @@ export function formatToken(
     );
   }
 
-  const contents = bn.toFormat(digits, round ? 4 : 1);
+  const contents = trim
+    ? `${Number.parseFloat(bn.toFixed(digits))}`
+    : bn.toFormat(digits, round ? 4 : 1);
 
   if (bn.eq(0)) return '0';
 

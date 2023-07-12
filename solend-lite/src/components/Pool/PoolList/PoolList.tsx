@@ -12,6 +12,7 @@ import {
   ASSET_BORROW_LIMIT_TOOLTIP,
   ASSET_SUPPLY_LIMIT_TOOLTIP,
 } from '../Pool';
+import { U64_MAX } from '@solendprotocol/solend-sdk';
 
 export default function PoolList({
   selectReserveWithModal,
@@ -66,8 +67,27 @@ export default function PoolList({
               </Flex>
               <Flex w='60%' direction='column'>
                 <Metric
-                  label='LTV'
-                  value={formatPercent(reserve.loanToValueRatio, false, 0)}
+                  label='Open LTV / BW'
+                  value={
+                    <Flex gap={1} align='center'>
+                      <Text>
+                        {formatPercent(reserve.loanToValueRatio, false, 0)}
+                      </Text>
+                      <Text color='secondary' variant='caption'>
+                        /
+                      </Text>
+                      <Text>
+                        {reserve.addedBorrowWeightBPS.toString() !== U64_MAX
+                          ? formatToken(
+                              reserve.borrowWeight.toString(),
+                              2,
+                              false,
+                              true,
+                            )
+                          : '∞'}
+                      </Text>
+                    </Flex>
+                  }
                   row
                 />
                 <Metric
