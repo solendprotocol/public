@@ -1,6 +1,5 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import * as BufferLayout from "buffer-layout";
-import { RateLimiterConfig } from "../state/rateLimiter";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
 

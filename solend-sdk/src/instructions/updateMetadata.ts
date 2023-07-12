@@ -1,11 +1,5 @@
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import * as anchor from "@coral-xyz/anchor";
-import {
-  PublicKey,
-  SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
-} from "@solana/web3.js";
-import * as Layout from "../utils/layout";
+import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import { LendingInstruction } from "./instruction";
 import { SYSTEM_PROGRAM_ID } from "@marinade.finance/marinade-ts-sdk/dist/src/util";
@@ -29,7 +23,7 @@ export const updateMetadataInstruction = (
     BufferLayout.u8("bumpSeed"),
   ]);
 
-  const [lendingMarketMetadata, bumpSeed] = findProgramAddressSync(
+  const [lendingMarketMetadata, _] = findProgramAddressSync(
     [
       lendingMarket.toBytes(),
       Buffer.from(anchor.utils.bytes.utf8.encode("MetaData")),

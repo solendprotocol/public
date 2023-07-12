@@ -1,8 +1,8 @@
-import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import * as BufferLayout from 'buffer-layout';
-import {RateLimiterConfig} from '../state/rateLimiter';
+import { PublicKey, TransactionInstruction } from "@solana/web3.js";
+import * as BufferLayout from "buffer-layout";
+import { RateLimiterConfig } from "../state/rateLimiter";
 import * as Layout from "../utils/layout";
-import { LendingInstruction } from './instruction';
+import { LendingInstruction } from "./instruction";
 
 /// Sets the new owner of a lending market.
 ///
@@ -17,21 +17,20 @@ export const SetLendingMarketOwnerAndConfigInstruction = (
   newRateLimiterConfig: RateLimiterConfig,
   whitelistedLiquidator: PublicKey | null,
   riskAuthority: PublicKey,
-  lendingProgramId: PublicKey,
+  lendingProgramId: PublicKey
 ): TransactionInstruction => {
   if (whitelistedLiquidator != null) {
     throw new Error("Whitelisted liquidator not supported yet");
   }
 
   const dataLayout = BufferLayout.struct([
-    BufferLayout.u8('instruction'),
-    Layout.publicKey('newOwner'),
-    Layout.uint64('windowDuration'),
-    Layout.uint64('maxOutflow'),
-    BufferLayout.u8('whitelistedLiquidator'),
-    Layout.publicKey('riskAuthority'),
+    BufferLayout.u8("instruction"),
+    Layout.publicKey("newOwner"),
+    Layout.uint64("windowDuration"),
+    Layout.uint64("maxOutflow"),
+    BufferLayout.u8("whitelistedLiquidator"),
+    Layout.publicKey("riskAuthority"),
   ]);
-
 
   const data = Buffer.alloc(dataLayout.span);
   dataLayout.encode(
@@ -43,7 +42,7 @@ export const SetLendingMarketOwnerAndConfigInstruction = (
       whitelistedLiquidator: 0,
       riskAuthority: riskAuthority,
     },
-    data,
+    data
   );
 
   const keys = [

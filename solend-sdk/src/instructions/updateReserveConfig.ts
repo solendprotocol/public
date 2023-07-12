@@ -1,5 +1,5 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import {RateLimiterConfig} from "../state/rateLimiter";
+import { RateLimiterConfig } from "../state/rateLimiter";
 import { ReserveConfig } from "../state/reserve";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
