@@ -18,6 +18,8 @@ export interface LendingMarket {
   oracleProgramId: PublicKey;
   switchboardOracleProgramId: PublicKey;
   rateLimiter: RateLimiter;
+  whitelistedLiquidator: PublicKey | null;
+  riskAuthority: PublicKey;
 }
 
 export const LendingMarketLayout: typeof BufferLayout.Structure =
@@ -30,7 +32,9 @@ export const LendingMarketLayout: typeof BufferLayout.Structure =
     Layout.publicKey("oracleProgramId"),
     Layout.publicKey("switchboardOracleProgramId"),
     RateLimiterLayout,
-    BufferLayout.blob(128 - RATE_LIMITER_LEN, "padding"),
+    Layout.publicKey("whitelistedLiquidator"),
+    Layout.publicKey("riskAuthority"),
+    BufferLayout.blob(8, "padding"),
   ]);
 
 export const LENDING_MARKET_SIZE = LendingMarketLayout.span;
