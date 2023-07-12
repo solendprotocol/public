@@ -54,7 +54,7 @@ function AccountMetrics(): ReactElement {
           label='Weighted borrow'
           value={
             obligation
-              ? `${formatUsd(obligation.totalBorrowValue.toString())}`
+              ? `${formatUsd(obligation.weightedTotalBorrowValue.toString())}`
               : '-'
           }
           tooltip='Borrow balance is the sum of all assets borrowed.'

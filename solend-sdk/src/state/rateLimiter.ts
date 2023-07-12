@@ -1,7 +1,6 @@
 import BigNumber from "bignumber.js";
 import * as Layout from "../utils/layout";
 import BN from "bn.js";
-import { remainingOutflow } from "../core";
 const BufferLayout = require("buffer-layout");
 
 export const RATE_LIMITER_LEN = 56;
