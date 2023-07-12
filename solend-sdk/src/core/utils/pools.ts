@@ -5,16 +5,18 @@ import { fetchPrices } from "./prices";
 import { calculateBorrowInterest, calculateSupplyInterest } from "./rates";
 import { PoolType, ReserveType } from "../types";
 import { parseReserve, Reserve } from "../../state";
+import { parseRateLimiter } from "./utils";
 
 export async function fetchPools(
   oldPools: Array<PoolType>,
   connection: Connection,
   switchboardProgram: SwitchboardProgram,
   programId: string,
+  currentSlot: number,
   debug?: boolean
 ) {
   const reserves = (
-    await getReservesFromChain(connection, switchboardProgram, programId, debug)
+    await getReservesFromChain(connection, switchboardProgram, programId, currentSlot, debug)
   ).sort((a, b) => (a.totalSupply.isGreaterThan(b.totalSupply) ? -1 : 1));
 
   const pools = Object.fromEntries(
@@ -45,7 +47,11 @@ export function formatReserve(
     pubkey: PublicKey;
     info: Reserve;
   },
-  price: number | null
+  price: {
+    spotPrice: number,
+    emaPrice: number,
+  } | undefined,
+  currentSlot: number,
 ) {
   const decimals = reserve.info.liquidity.mintDecimals;
   const availableAmount = new BigNumber(
@@ -62,7 +68,7 @@ export function formatReserve(
     .minus(accumulatedProtocolFees);
   const address = reserve.pubkey.toBase58();
   const priceResolved = price
-    ? BigNumber(price)
+    ? BigNumber(price.spotPrice)
     : new BigNumber(reserve.info.liquidity.marketPrice.toString()).shiftedBy(
         -18
       );
@@ -114,6 +120,7 @@ export function formatReserve(
     totalSupply,
     totalBorrow,
     availableAmount,
+    rateLimiter: parseRateLimiter(reserve.info.rateLimiter, currentSlot),
     totalSupplyUsd: totalSupply.times(priceResolved),
     totalBorrowUsd: totalBorrow.times(priceResolved),
     availableAmountUsd: availableAmount.times(priceResolved),
@@ -131,6 +138,11 @@ export function formatReserve(
     poolAddress: reserve.info.lendingMarket.toBase58(),
     pythOracle: reserve.info.liquidity.pythOracle.toBase58(),
     switchboardOracle: reserve.info.liquidity.switchboardOracle.toBase58(),
+    addedBorrowWeightBPS: reserve.info.config.addedBorrowWeightBPS,
+    borrowWeight: reserve.info.config.borrowWeight,
+    emaPrice: price?.emaPrice,
+    minPrice: ((price?.emaPrice && price?.spotPrice) ? BigNumber.min(price.emaPrice, price.spotPrice) : new BigNumber(price?.spotPrice ?? priceResolved)),
+    maxPrice: ((price?.emaPrice && price?.spotPrice) ? BigNumber.max(price.emaPrice, price.spotPrice) : new BigNumber(price?.spotPrice ?? priceResolved)) ,
   };
 }
 
@@ -139,6 +151,7 @@ export const getReservesOfPool = async (
   connection: Connection,
   switchboardProgram: SwitchboardProgram,
   programId: string,
+  currentSlot: number,
   debug?: boolean
 ) => {
   if (debug) console.log("getReservesOfPool");
@@ -171,7 +184,7 @@ export const getReservesOfPool = async (
   );
 
   return parsedReserves.map((r) =>
-    formatReserve(r, prices[r.pubkey.toBase58()])
+    formatReserve(r, prices[r.pubkey.toBase58()], currentSlot)
   );
 };
 
@@ -179,6 +192,7 @@ export const getReservesFromChain = async (
   connection: Connection,
   switchboardProgram: SwitchboardProgram,
   programId: string,
+  currentSlot: number,
   debug?: boolean
 ) => {
   if (debug) console.log("getReservesFromChain");
@@ -208,6 +222,6 @@ export const getReservesFromChain = async (
   );
 
   return parsedReserves.map((r) =>
-    formatReserve(r, prices[r.pubkey.toBase58()])
+    formatReserve(r, prices[r.pubkey.toBase58()], currentSlot)
   );
 };

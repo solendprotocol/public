@@ -2,7 +2,7 @@ import React, { ReactElement, useCallback, useEffect, useState } from 'react';
 import { Box, Tooltip, useMediaQuery } from '@chakra-ui/react';
 import { useTimer } from 'react-timer-hook';
 import classNames from 'classnames';
-import { loadPoolsAtom, unqiueAssetsAtom } from 'stores/pools';
+import { currentSlotAtom, loadPoolsAtom, unqiueAssetsAtom } from 'stores/pools';
 import { useAtom, useSetAtom } from 'jotai';
 import {
   selectedObligationAddressAtom,
@@ -29,6 +29,7 @@ const getNewExpiryTimestamp = (): Date => {
 
 function RefreshDataButton(): ReactElement {
   const [on, setOn] = useState<boolean>(false);
+  const [_currentSlot, refreshCurrentSlot] = useAtom(currentSlotAtom);
   const loadPools = useSetAtom(loadPoolsAtom);
   const [switchboardProgram] = useAtom(switchboardAtom);
   const loadObligation = useSetAtom(selectedObligationAtom);
@@ -52,6 +53,8 @@ function RefreshDataButton(): ReactElement {
       if (publicKey) {
         reloadPromises.push(await refreshWallet());
       }
+      // refreshes rateLimiter
+      await refreshCurrentSlot();
       await Promise.all(reloadPromises);
     } finally {
       restart(getNewExpiryTimestamp());

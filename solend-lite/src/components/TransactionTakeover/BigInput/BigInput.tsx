@@ -71,7 +71,7 @@ const BigInput = forwardRef<HTMLSpanElement, BigInputPropsType>(
           parsedAmount,
         };
       },
-      [useUsd],
+      [useUsd, selectedToken.decimals],
     );
 
     useEffect(() => {

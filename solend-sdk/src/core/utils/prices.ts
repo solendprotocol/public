@@ -25,16 +25,22 @@ export async function fetchPrices(
     const pythOracleData = priceAccounts[i];
     const switchboardOracleData = priceAccounts[parsedReserves.length + i];
 
-    let priceData: number | undefined;
+    let priceData: {
+      spotPrice: number,
+      emaPrice: number,
+    } | undefined;
 
     if (pythOracleData) {
-      const { price, previousPrice } = parsePriceData(
+      const { price, previousPrice, emaPrice } = parsePriceData(
         pythOracleData.data as Buffer
       );
 
       if (price || previousPrice) {
-        // use latest price if available otherwise fallback to previoius
-        priceData = price || previousPrice;
+        // use latest price if available otherwise fallback to previous
+        priceData = {
+          spotPrice: (price || previousPrice),
+          emaPrice: emaPrice?.value ?? (price || previousPrice),
+        };
       }
     }
 
@@ -47,7 +53,10 @@ export async function fetchPrices(
         if (owner === SBV2_MAINNET) {
           const result = switchboardProgram.decodeLatestAggregatorValue(rawSb!);
 
-          priceData = result?.toNumber();
+          priceData = {
+            spotPrice: result?.toNumber() ?? 0,
+            emaPrice: result?.toNumber() ?? 0,
+          };
         }
       }
     }
@@ -56,5 +65,8 @@ export async function fetchPrices(
       ...acc,
       [reserve.pubkey.toBase58()]: priceData,
     };
-  }, {}) as { [address: string]: number };
+  }, {}) as { [address: string]: {
+    spotPrice: number,
+    emaPrice: number,
+  } | undefined };
 }

@@ -29,3 +29,20 @@
 .overBorrowed {
   background-color: var(--chakra-colors-brand);
 }
+
+.open {
+  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+  transform: scale(1.01, 1.25);
+}
+
+.borrowed2 {
+  background-color: var(--chakra-colors-brandAlt);
+  opacity: 0.5;
+}
+
+.showBreakdownText {
+  visibility: hidden;
+  &:hover {
+    visibility: visible;
+  }
+}

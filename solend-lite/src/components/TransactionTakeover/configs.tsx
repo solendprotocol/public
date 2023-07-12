@@ -16,6 +16,7 @@ import {
 } from '@solendprotocol/solend-sdk';
 import { getAssociatedTokenAddress, NATIVE_MINT } from '@solana/spl-token';
 import { ENVIRONMENT, HOST_ATA } from 'common/config';
+import { ParsedRateLimiter } from '@solendprotocol/solend-sdk/src/state/rateLimiter';
 
 const SOL_PADDING_FOR_RENT_AND_FEE = 0.02;
 
@@ -112,20 +113,21 @@ export const supplyConfigs = {
     }
 
     const valueObj = new BigNumber(value);
+
     const newBorrowLimit = !valueObj.isNaN()
-      ? obligation.borrowLimit.plus(
-          valueObj.times(reserve.price).times(reserve.loanToValueRatio),
+      ? obligation.minPriceBorrowLimit.plus(
+          valueObj.times(reserve.minPrice).times(reserve.loanToValueRatio),
         )
       : null;
     const newBorrowUtilization =
       newBorrowLimit && !newBorrowLimit.isZero()
-        ? obligation.totalBorrowValue.dividedBy(newBorrowLimit)
+        ? obligation.weightedTotalBorrowValue.dividedBy(newBorrowLimit)
         : null;
 
     return {
-      borrowLimit: obligation.borrowLimit,
+      borrowLimit: obligation.minPriceBorrowLimit,
       newBorrowLimit,
-      utilization: obligation.borrowUtilization,
+      utilization: obligation.weightedConservativeBorrowUtilization,
       newBorrowUtilization,
       calculatedBorrowFee: null,
     };
@@ -204,6 +206,7 @@ export const borrowConfigs = {
     obligation: ObligationType | null,
     reserve: SelectedReserveType,
     wallet: WalletType,
+    rateLimiter: ParsedRateLimiter | null,
   ) => {
     if (!obligation) return null;
 
@@ -214,9 +217,10 @@ export const borrowConfigs = {
       BigNumber(0),
     );
 
-    const overBorrowLimit = obligation.borrowLimit
-      .minus(obligation.totalBorrowValue)
-      .dividedBy(reserve.price);
+    const overBorrowLimit = obligation.minPriceBorrowLimit
+      .minus(obligation.maxPriceUserTotalWeightedBorrow)
+      .dividedBy(reserve.maxPrice)
+      .dividedBy(reserve.borrowWeight);
 
     // Allow action despite position limit, provided user already has a position in this asset
     const positionLimitReached =
@@ -225,6 +229,15 @@ export const borrowConfigs = {
         .map((d) => d.reserveAddress)
         .includes(reserve.address);
 
+    const reserveRateLimit =
+      reserve.rateLimiter.remainingOutflow?.dividedBy(
+        new BigNumber(10 ** reserve.decimals),
+      ) ?? new BigNumber(U64_MAX);
+
+    const poolRateLimit =
+      rateLimiter?.remainingOutflow?.dividedBy(reserve.maxPrice) ??
+      new BigNumber(U64_MAX);
+
     if (positionLimitReached) {
       return 'Max number of positions reached';
     }
@@ -232,7 +245,7 @@ export const borrowConfigs = {
       return 'Insufficient liquidity to borrow';
     }
     if (
-      obligation?.totalBorrowValue
+      obligation?.maxPriceUserTotalWeightedBorrow
         .plus(value)
         .isGreaterThanOrEqualTo(reserve.reserveBorrowCap)
     ) {
@@ -243,6 +256,12 @@ export const borrowConfigs = {
     }
     if (value.isGreaterThan(overBorrowLimit)) {
       return 'Exceeds borrow limit';
+    }
+    if (value.isGreaterThan(poolRateLimit)) {
+      return 'Pool outflow rate limit surpassed';
+    }
+    if (value.isGreaterThan(reserveRateLimit)) {
+      return 'Reserve outflow rate limit surpassed';
     }
     if (!sufficientSOLForTransaction(wallet)) {
       return 'Min 0.02 SOL required for transaction and fees';
@@ -270,16 +289,16 @@ export const borrowConfigs = {
     const valueObj = new BigNumber(value);
 
     const newBorrowUtilization =
-      !valueObj.isNaN() && !obligation.borrowLimit.isZero()
-        ? obligation.totalBorrowValue
-            .plus(valueObj.times(reserve.price))
-            .dividedBy(obligation.borrowLimit)
+      !valueObj.isNaN() && !obligation.minPriceBorrowLimit.isZero()
+        ? obligation.maxPriceUserTotalWeightedBorrow
+            .plus(valueObj.times(reserve.maxPrice).times(reserve.borrowWeight))
+            .dividedBy(obligation.minPriceBorrowLimit)
         : null;
 
     return {
-      borrowLimit: obligation.borrowLimit,
+      borrowLimit: obligation.minPriceBorrowLimit,
       newBorrowLimit: null,
-      utilization: obligation.borrowUtilization,
+      utilization: obligation.weightedConservativeBorrowUtilization,
       newBorrowUtilization,
       calculatedBorrowFee: valueObj.isNaN()
         ? null
@@ -290,6 +309,7 @@ export const borrowConfigs = {
     reserve: SelectedReserveType,
     _wallet: WalletType,
     obligation: ObligationType | null,
+    rateLimiter: ParsedRateLimiter | null,
   ) => {
     if (!obligation) {
       return new BigNumber(0);
@@ -303,13 +323,25 @@ export const borrowConfigs = {
       reserve.availableAmount,
     ).minus(new BigNumber(reserve.totalSupply).times(new BigNumber(0.05)));
 
+    const reserveRateLimit =
+      reserve.rateLimiter.remainingOutflow?.dividedBy(
+        new BigNumber(10 ** reserve.decimals),
+      ) ?? new BigNumber(U64_MAX);
+
+    const poolRateLimit =
+      rateLimiter?.remainingOutflow?.dividedBy(reserve.maxPrice) ??
+      new BigNumber(U64_MAX);
+
     return BigNumber.max(
       BigNumber.min(
-        obligation.borrowLimit
-          .minus(obligation.totalBorrowValue)
-          .dividedBy(reserve.price),
+        obligation.minPriceBorrowLimit
+          .minus(obligation.maxPriceUserTotalWeightedBorrow)
+          .dividedBy(reserve.maxPrice)
+          .dividedBy(reserve.borrowWeight),
         borrowableAmountUntil95utilization,
         borrowCapRemaining,
+        poolRateLimit,
+        reserveRateLimit,
       ),
       BigNumber(0),
     ).decimalPlaces(reserve.decimals);
@@ -352,6 +384,7 @@ export const withdrawConfigs = {
     obligation: ObligationType | null,
     reserve: SelectedReserveType,
     wallet: WalletType,
+    rateLimiter: ParsedRateLimiter | null,
   ) => {
     if (!obligation) return null;
 
@@ -360,9 +393,9 @@ export const withdrawConfigs = {
     )?.amount;
     if (!reserveDepositedAmount) return null;
 
-    const constantBorrowLimit = obligation.borrowLimit.minus(
+    const constantBorrowLimit = obligation.minPriceBorrowLimit.minus(
       reserveDepositedAmount
-        .times(reserve.price)
+        .times(reserve.minPrice)
         .times(reserve.loanToValueRatio),
     );
 
@@ -375,12 +408,21 @@ export const withdrawConfigs = {
               BigNumber(0),
               obligation?.totalBorrowValue
                 .minus(constantBorrowLimit)
-                .dividedBy(reserve.price.times(reserve.loanToValueRatio)),
+                .dividedBy(reserve.minPrice.times(reserve.loanToValueRatio)),
             ),
           ),
           0,
         )
       : new BigNumber(U64_MAX);
+
+    const reserveRateLimit =
+      reserve.rateLimiter.remainingOutflow?.dividedBy(
+        new BigNumber(10 ** reserve.decimals),
+      ) ?? new BigNumber(U64_MAX);
+
+    const poolRateLimit =
+      rateLimiter?.remainingOutflow?.dividedBy(reserve.maxPrice) ??
+      new BigNumber(U64_MAX);
 
     if (value.isGreaterThan(reserve.availableAmount)) {
       return 'Insufficient liquidity to withdraw';
@@ -393,6 +435,12 @@ export const withdrawConfigs = {
     }
     if (!sufficientSOLForTransaction(wallet)) {
       return 'Min 0.02 SOL required for transaction and fees';
+    }
+    if (value.isGreaterThan(poolRateLimit)) {
+      return 'Pool outflow rate limit surpassed';
+    }
+    if (value.isGreaterThan(reserveRateLimit)) {
+      return 'Reserve outflow rate limit surpassed';
     }
     return null;
   },
@@ -414,8 +462,8 @@ export const withdrawConfigs = {
     const valueObj = new BigNumber(value);
 
     const newBorrowLimit = !valueObj.isNaN()
-      ? obligation.borrowLimit.minus(
-          valueObj.times(reserve.price).times(reserve.loanToValueRatio),
+      ? obligation.minPriceBorrowLimit.minus(
+          valueObj.times(reserve.minPrice).times(reserve.loanToValueRatio),
         )
       : null;
 
@@ -427,7 +475,7 @@ export const withdrawConfigs = {
     return {
       borrowLimit: obligation.borrowLimit,
       newBorrowLimit: newBorrowLimit,
-      utilization: obligation.borrowUtilization,
+      utilization: obligation.weightedConservativeBorrowUtilization,
       newBorrowUtilization,
       calculatedBorrowFee: null,
     };
@@ -436,6 +484,7 @@ export const withdrawConfigs = {
     reserve: SelectedReserveType,
     _wallet: WalletType,
     obligation: ObligationType | null,
+    rateLimiter: ParsedRateLimiter | null,
   ) => {
     if (!obligation) {
       return new BigNumber(0);
@@ -444,29 +493,44 @@ export const withdrawConfigs = {
     const reserveDepositedAmount = obligation.deposits.find(
       (d) => d.reserveAddress === reserve.address,
     )?.amount;
+
     if (!reserveDepositedAmount) return BigNumber(0);
 
-    const constantBorrowLimit = obligation.borrowLimit.minus(
+    const constantBorrowLimit = obligation.minPriceBorrowLimit.minus(
       reserveDepositedAmount
-        .times(reserve.price)
+        .times(reserve.minPrice)
         .times(reserve.loanToValueRatio),
     );
 
     const collateralWithdrawLimit = !(
-      reserve.price.isZero() || !reserve.loanToValueRatio
+      reserve.minPrice.isZero() || !reserve.loanToValueRatio
     )
       ? reserveDepositedAmount.minus(
           BigNumber.max(
             BigNumber(0),
             obligation.totalBorrowValue
               .minus(constantBorrowLimit)
-              .dividedBy(reserve.price.times(reserve.loanToValueRatio)),
+              .dividedBy(reserve.minPrice.times(reserve.loanToValueRatio)),
           ),
         )
       : new BigNumber(U64_MAX);
 
+    const reserveRateLimit =
+      reserve.rateLimiter.remainingOutflow?.dividedBy(
+        new BigNumber(10 ** reserve.decimals),
+      ) ?? new BigNumber(U64_MAX);
+
+    const poolRateLimit =
+      rateLimiter?.remainingOutflow?.dividedBy(reserve.maxPrice) ??
+      new BigNumber(U64_MAX);
+
     return BigNumber.max(
-      BigNumber.min(collateralWithdrawLimit, reserve.availableAmount),
+      BigNumber.min(
+        collateralWithdrawLimit,
+        reserve.availableAmount,
+        reserveRateLimit,
+        poolRateLimit,
+      ),
       new BigNumber(0),
     ).decimalPlaces(reserve.decimals);
   },
@@ -549,16 +613,16 @@ export const repayConfigs = {
     const valueObj = new BigNumber(value);
 
     const newBorrowUtilization =
-      !valueObj.isNaN() && !obligation.borrowLimit.isZero()
+      !valueObj.isNaN() && !obligation.minPriceBorrowLimit.isZero()
         ? obligation.totalBorrowValue
-            .minus(valueObj.times(reserve.price))
-            .dividedBy(obligation.borrowLimit)
+            .minus(valueObj.times(reserve.maxPrice).times(reserve.borrowWeight))
+            .dividedBy(obligation.minPriceBorrowLimit)
         : null;
 
     return {
-      borrowLimit: obligation.borrowLimit,
+      borrowLimit: obligation.minPriceBorrowLimit,
       newBorrowLimit: null,
-      utilization: obligation.borrowUtilization,
+      utilization: obligation.weightedConservativeBorrowUtilization,
       newBorrowUtilization,
       calculatedBorrowFee: null,
     };

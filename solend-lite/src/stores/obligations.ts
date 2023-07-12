@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { atom } from 'jotai';
-import { atomFamily, loadable } from 'jotai/utils';
+import { atomFamily, atomWithDefault, loadable } from 'jotai/utils';
 import { poolsFamily, poolsWithMetaDataAtom, selectedPoolAtom } from './pools';
 import { publicKeyAtom } from './wallet';
 import { connectionAtom } from './settings';
@@ -86,6 +86,7 @@ const obligationsFamily = atomFamily((address: string) =>
     (get) => {
       const rawObligation = get(rawObligationsAtom)[address];
       if (!rawObligation?.info) return null;
+
       const pool = get(
         poolsFamily(rawObligation.info.lendingMarket.toBase58()),
       );
@@ -105,7 +106,14 @@ const obligationsFamily = atomFamily((address: string) =>
   ),
 );
 
-export const selectedObligationAddressAtom = atom<string | null>(null);
+export const selectedObligationAddressAtom = atomWithDefault<string | null>(
+  () => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const poolParam = queryParams.get('obligation');
+
+    return poolParam;
+  },
+);
 
 export const selectedObligationAtom = atom(
   (get) => {

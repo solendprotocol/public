@@ -17,8 +17,11 @@ import {
   ReserveType,
   fetchPools,
   getReservesOfPool,
+  parseLendingMarket,
+  parseRateLimiter,
 } from '@solendprotocol/solend-sdk';
 import { DEBUG_MODE, PROGRAM_ID } from 'common/config';
+import { atomWithRefresh } from './shared';
 
 export type ReserveWithMetadataType = ReserveType & {
   symbol: string;
@@ -78,6 +81,7 @@ export const loadPoolsAtom = atom(
   async (get, set) => {
     const [connection, pools] = get(waitForAll([connectionAtom, poolsAtom]));
     const switchboardProgram = get(switchboardAtom);
+    const currentSlot = get(currentSlotAtom);
 
     set(
       poolsAtom,
@@ -86,6 +90,7 @@ export const loadPoolsAtom = atom(
         connection,
         switchboardProgram,
         PROGRAM_ID,
+        currentSlot,
         DEBUG_MODE,
       ),
     );
@@ -137,6 +142,31 @@ export const poolsWithMetaDataAtom = atom((get) => {
   );
 });
 
+export const currentSlotAtom = atomWithRefresh(async (get) => {
+  const connection = get(connectionAtom);
+  return connection.getSlot();
+});
+
+export const rateLimiterAtom = atom(async (get) => {
+  const selectedPoolAddress = get(selectedPoolAddressAtom);
+  const connection = get(connectionAtom);
+  if (!selectedPoolAddress) return null;
+  const currentSlot = get(currentSlotAtom);
+  const pool = await connection.getAccountInfo(
+    new PublicKey(selectedPoolAddress),
+  );
+  if (pool) {
+    const raterLimiter = parseLendingMarket(
+      new PublicKey(selectedPoolAddress),
+      pool,
+    ).info.rateLimiter;
+
+    return parseRateLimiter(raterLimiter, currentSlot);
+  }
+
+  return null;
+});
+
 export const selectedPoolAddressAtom = atomWithDefault<string | null>((get) => {
   const config = get(configAtom);
   const queryParams = new URLSearchParams(window.location.search);
@@ -186,12 +216,14 @@ export const selectedPoolAtom = atom(
         PROGRAM_ID,
       );
     }
+    const currentSlot = get(currentSlotAtom);
 
     getReservesOfPool(
       new PublicKey(newSelectedPoolAddress),
       connection,
       switchboardProgram,
       PROGRAM_ID,
+      currentSlot,
       DEBUG_MODE,
     );
 

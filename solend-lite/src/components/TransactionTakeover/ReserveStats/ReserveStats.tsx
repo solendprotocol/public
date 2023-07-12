@@ -2,12 +2,15 @@ import React, { ReactElement, useState } from 'react';
 import { Box, Divider, Flex, Text, Tooltip } from '@chakra-ui/react';
 import Metric from 'components/Metric/Metric';
 import { formatPercent, formatToken, formatUsd } from 'utils/numberFormatter';
-import { SelectedReserveType } from 'stores/pools';
+import { SelectedReserveType, rateLimiterAtom } from 'stores/pools';
 import BigNumber from 'bignumber.js';
 import styles from './ReserveStats.module.scss';
 import classNames from 'classnames';
 import { ChevronDownIcon, ChevronUpIcon, CopyIcon } from '@chakra-ui/icons';
 import { computeExtremeRates } from '@solendprotocol/solend-sdk';
+import { useAtom } from 'jotai';
+import humanizeDuration from 'humanize-duration';
+import { SLOT_RATE } from 'utils/utils';
 
 // certain oracles do not match their underlying asset, hence this mapping
 const PYTH_ORACLE_MAPPING: Record<string, string> = {
@@ -44,6 +47,7 @@ function ReserveStats({
   action,
   calculatedBorrowFee,
 }: ReserveStatsPropsType): ReactElement {
+  const [rateLimiter] = useAtom(rateLimiterAtom);
   const [showParams, setShowParams] = useState(false);
   let newBorrowLimitDisplay = null;
   if (newBorrowLimit) {
@@ -77,6 +81,22 @@ function ReserveStats({
 
   return (
     <Flex flexDirection='column'>
+      {['borrow', 'repay'].includes(action) && (
+        <Metric
+          row
+          label='Price'
+          value={formatUsd(reserve.maxPrice)}
+          tooltip='For the purpose of borrowed assets in utilization calculations, the max value between spot price a EMA (exponential moving average) is used. This is to protect the protocol against price manipulation.'
+        />
+      )}
+      {['supply', 'withdraw'].includes(action) && (
+        <Metric
+          row
+          label='Price'
+          value={formatUsd(reserve.minPrice)}
+          tooltip='For the purpose of supplied assets in utilization calculations, the min value between spot price a EMA (exponential moving average) is used. This is to protect the protocol against price manipulation.'
+        />
+      )}
       <Metric
         label='User borrow limit'
         row
@@ -168,15 +188,15 @@ function ReserveStats({
         )}
         <Metric
           row
-          label='Loan to value (LTV ratio)'
+          label='Open LTV'
           value={formatPercent(reserve.loanToValueRatio)}
-          tooltip='Loan-to-value (LTV) is the ratio describing how much you can borrow against your collateral.'
+          tooltip='Open loan-to-value (LTV) is the ratio describing how much you can borrow against your collateral.'
         />
         <Metric
           row
-          label='Liquidation threshold'
+          label='Close LTV'
           value={formatPercent(reserve.liquidationThreshold)}
-          tooltip='Collateralization ratio at which liquidation occurs.'
+          tooltip='Close Loan-to-value (LTV) ratio at which liquidation occurs.'
         />
         <Metric
           row
@@ -200,7 +220,7 @@ function ReserveStats({
         />
         <Metric
           row
-          label='liquidation protocol fee'
+          label='Liquidation protocol fee'
           tooltip='The liquidation protocol fee is a percentage of the liquidation penalty that goes to the Solend DAO treasury to help cover bad debt.'
           value={<>{formatPercent(reserve.protocolLiquidationFee)}</>}
         />
@@ -273,6 +293,60 @@ function ReserveStats({
                 <CopyIcon
                   onClick={() => {
                     navigator.clipboard.writeText(reserve.address);
+                  }}
+                />
+              </Flex>
+            </Tooltip>
+          }
+        />
+        <Metric
+          row
+          label='Liquidity supply address'
+          value={
+            <Tooltip title={reserve.liquidityAddress}>
+              <Flex align='center'>
+                <a
+                  href={`https://solscan.io/account/${reserve.liquidityAddress}`}
+                  target='_blank'
+                  rel='noreferrer'
+                >
+                  <u className={styles.reserveAddress}>
+                    {reserve.liquidityAddress.slice(0, 4)}
+                    ...
+                    {reserve.liquidityAddress.slice(-4)}
+                  </u>
+                </a>{' '}
+                <CopyIcon
+                  onClick={() => {
+                    navigator.clipboard.writeText(reserve.liquidityAddress);
+                  }}
+                />
+              </Flex>
+            </Tooltip>
+          }
+        />
+        <Metric
+          row
+          label='Collateral supply address'
+          value={
+            <Tooltip title={reserve.cTokenLiquidityAddress}>
+              <Flex align='center'>
+                <a
+                  href={`https://solscan.io/account/${reserve.cTokenLiquidityAddress}`}
+                  target='_blank'
+                  rel='noreferrer'
+                >
+                  <u className={styles.reserveAddress}>
+                    {reserve.cTokenLiquidityAddress.slice(0, 4)}
+                    ...
+                    {reserve.cTokenLiquidityAddress.slice(-4)}
+                  </u>
+                </a>{' '}
+                <CopyIcon
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      reserve.cTokenLiquidityAddress,
+                    );
                   }}
                 />
               </Flex>
@@ -390,7 +464,7 @@ function ReserveStats({
         )}
         <Metric
           row
-          label='Switchboard Oracle'
+          label='Switchboard oracle'
           value={
             <Tooltip title={reserve.switchboardOracle}>
               <Flex align='center'>
@@ -413,6 +487,51 @@ function ReserveStats({
             </Tooltip>
           }
         />
+        {rateLimiter && (
+          <Metric
+            row
+            label='Max reserve outflow'
+            value={
+              rateLimiter.config.windowDuration.isEqualTo(BigNumber(0)) ? (
+                'N/A'
+              ) : (
+                <>
+                  {formatToken(
+                    new BigNumber(
+                      rateLimiter.config.maxOutflow.toString(),
+                      reserve.decimals,
+                    ).toString(),
+                  )}{' '}
+                  {reserve.symbol} per{' '}
+                  {humanizeDuration(
+                    (rateLimiter.config.windowDuration.toNumber() / SLOT_RATE) *
+                      1000,
+                  )}
+                </>
+              )
+            }
+            tooltip={
+              <>
+                For the safety of the pool, amounts being withdrawn or borrowed
+                from the pool are limited by this rate. <br />
+                Remaining outflow this window:{' '}
+                {formatUsd(
+                  rateLimiter.remainingOutflow?.toString() ?? '0',
+                  false,
+                  true,
+                )}
+              </>
+            }
+          />
+        )}
+        {!new BigNumber(reserve.borrowWeight).isEqualTo(new BigNumber(0)) && (
+          <Metric
+            row
+            label='Borrow weight'
+            value={reserve.borrowWeight.toString()}
+            tooltip='Borrow weight is a coefficient that is applied to the value being borrowed. This allows for the risk management on the borrowing of assets of various risk levels.'
+          />
+        )}
       </Flex>
     </Flex>
   );
