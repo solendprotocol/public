@@ -1,4 +1,5 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
+import {RateLimiterConfig} from "../state/rateLimiter";
 import { ReserveConfig } from "../state/reserve";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
@@ -25,11 +26,13 @@ export const updateReserveConfig = (
   pythPrice: PublicKey,
   switchboardOracle: PublicKey,
   reserveConfig: ReserveConfig,
+  rateLimiterConfig: RateLimiterConfig,
   solendProgramAddress: PublicKey
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
     BufferLayout.u8("instruction"),
     BufferLayout.u8("optimalUtilizationRate"),
+    BufferLayout.u8("maxUtilizationRate"),
     BufferLayout.u8("loanToValueRatio"),
     BufferLayout.u8("liquidationBonus"),
     BufferLayout.u8("liquidationThreshold"),
@@ -44,6 +47,12 @@ export const updateReserveConfig = (
     Layout.publicKey("feeReceiver"),
     BufferLayout.u8("protocolLiquidationFee"),
     BufferLayout.u8("protocolTakeRate"),
+    Layout.uint64("addedBorrowWeightBPS"),
+    BufferLayout.u8("reserveType"),
+    BufferLayout.u8("maxLiquidationBonus"),
+    BufferLayout.u8("maxLiquidationThreshold"),
+    Layout.uint64("windowDuration"),
+    Layout.uint64("maxOutflow"),
   ]);
 
   const data = Buffer.alloc(dataLayout.span);
@@ -51,6 +60,7 @@ export const updateReserveConfig = (
     {
       instruction: LendingInstruction.UpdateReserveConfig,
       optimalUtilizationRate: reserveConfig.optimalUtilizationRate,
+      maxUtilizationRate: reserveConfig.maxUtilizationRate,
       loanToValueRatio: reserveConfig.loanToValueRatio,
       liquidationBonus: reserveConfig.liquidationBonus,
       liquidationThreshold: reserveConfig.liquidationThreshold,
@@ -65,6 +75,12 @@ export const updateReserveConfig = (
       feeReceiver: reserveConfig.feeReceiver,
       protocolLiquidationFee: reserveConfig.protocolLiquidationFee,
       protocolTakeRate: reserveConfig.protocolTakeRate,
+      addedBorrowWeightBPS: reserveConfig.addedBorrowWeightBPS,
+      reserveType: reserveConfig.reserveType,
+      maxLiquidationBonus: reserveConfig.maxLiquidationBonus,
+      maxLiquidationThreshold: reserveConfig.maxLiquidationThreshold,
+      windowDuration: rateLimiterConfig.windowDuration,
+      maxOutflow: rateLimiterConfig.maxOutflow,
     },
     data
   );
