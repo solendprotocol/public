@@ -43,12 +43,16 @@ export interface ReserveCollateral {
 
 export interface ReserveConfig {
   optimalUtilizationRate: number;
+  maxUtilizationRate: number;
   loanToValueRatio: number;
   liquidationBonus: number;
+  maxLiquidationBonus: number;
   liquidationThreshold: number;
+  maxLiquidationThreshold: number;
   minBorrowRate: number;
   optimalBorrowRate: number;
   maxBorrowRate: number;
+  superMaxBorrowRate: BN;
   fees: {
     borrowFeeWad: BN;
     flashLoanFeeWad: BN;
@@ -61,17 +65,27 @@ export interface ReserveConfig {
   protocolTakeRate: number;
   addedBorrowWeightBPS: BN;
   borrowWeight: BigNumber;
+  reserveType: AssetType;
+}
+
+export enum AssetType {
+  Regular = 0,
+  Isolated = 1,
 }
 
 export const ReserveConfigLayout = BufferLayout.struct(
   [
     BufferLayout.u8("optimalUtilizationRate"),
+    BufferLayout.u8("maxUtilizationRate"),
     BufferLayout.u8("loanToValueRatio"),
     BufferLayout.u8("liquidationBonus"),
+    BufferLayout.u8("maxLiquidationBonus"),
     BufferLayout.u8("liquidationThreshold"),
+    BufferLayout.u8("maxLiquidationThreshold"),
     BufferLayout.u8("minBorrowRate"),
     BufferLayout.u8("optimalBorrowRate"),
     BufferLayout.u8("maxBorrowRate"),
+    BufferLayout.u8("superMaxBorrowRate"),
     BufferLayout.struct(
       [
         Layout.uint64("borrowFeeWad"),
@@ -86,6 +100,7 @@ export const ReserveConfigLayout = BufferLayout.struct(
     BufferLayout.u8("protocolLiquidationFee"),
     BufferLayout.u8("protocolTakeRate"),
     Layout.uint64("addedBorrowWeightBPS"),
+    BufferLayout.u8("reserveType"),
   ],
   "config"
 );
@@ -131,7 +146,12 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
     RateLimiterLayout,
     Layout.uint64("addedBorrowWeightBPS"),
     Layout.uint128("liquiditySmoothedMarketPrice"),
-    BufferLayout.blob(150, "padding"),
+    BufferLayout.u8("reserveType"),
+    BufferLayout.u8("maxUtilizationRate"),
+    BufferLayout.u8("superMaxBorrowRate"),
+    BufferLayout.u8("maxLiquidationBonus"),
+    BufferLayout.u8("maxLiquidationThreshold"),
+    BufferLayout.blob(138, "padding"),
   ]
 );
 
@@ -163,12 +183,16 @@ function decodeReserve(buffer: Buffer): Reserve {
     },
     config: {
       optimalUtilizationRate: reserve.optimalUtilizationRate,
+      maxUtilizationRate: reserve.maxUtilizationRate,
       loanToValueRatio: reserve.loanToValueRatio,
       liquidationBonus: reserve.liquidationBonus,
+      maxLiquidationBonus: reserve.maxLiquidationBonus,
       liquidationThreshold: reserve.liquidationThreshold,
+      maxLiquidationThreshold: reserve.maxLiquidationThreshold,
       minBorrowRate: reserve.minBorrowRate,
       optimalBorrowRate: reserve.optimalBorrowRate,
       maxBorrowRate: reserve.maxBorrowRate,
+      superMaxBorrowRate: reserve.superMaxBorrowRate,
       fees: {
         borrowFeeWad: reserve.borrowFeeWad,
         flashLoanFeeWad: reserve.flashLoanFeeWad,
@@ -183,6 +207,8 @@ function decodeReserve(buffer: Buffer): Reserve {
       borrowWeight: new BigNumber(reserve.addedBorrowWeightBPS.toString())
         .dividedBy(new BigNumber(10000))
         .plus(new BigNumber(1)),
+      reserveType:
+        reserve.reserveType == 0 ? AssetType.Regular : AssetType.Isolated,
     },
     rateLimiter: reserve.rateLimiter,
   };
@@ -225,11 +251,7 @@ export function reserveToString(reserve: Reserve) {
     reserve,
     (key, value) => {
       // Skip padding
-      if (
-        key === "padding" ||
-        key === "oracleOption" ||
-        value === undefined
-      ) {
+      if (key === "padding" || key === "oracleOption" || value === undefined) {
         return null;
       }
       switch (value.constructor.name) {

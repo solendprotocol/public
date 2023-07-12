@@ -6,7 +6,7 @@ import {
 } from "@solana/web3.js";
 import BN from "bn.js";
 import * as Layout from "../utils/layout";
-import { ReserveConfig, ReserveConfigLayout } from "../state";
+import { ReserveConfig } from "../state";
 import { LendingInstruction } from "./instruction";
 
 const BufferLayout = require("buffer-layout");
@@ -34,7 +34,26 @@ export const initReserveInstruction = (
   const dataLayout = BufferLayout.struct([
     BufferLayout.u8("instruction"),
     Layout.uint64("liquidityAmount"),
-    ReserveConfigLayout,
+    BufferLayout.u8("optimalUtilizationRate"),
+    BufferLayout.u8("maxUtilizationRate"),
+    BufferLayout.u8("loanToValueRatio"),
+    BufferLayout.u8("liquidationBonus"),
+    BufferLayout.u8("liquidationThreshold"),
+    BufferLayout.u8("minBorrowRate"),
+    BufferLayout.u8("optimalBorrowRate"),
+    BufferLayout.u8("maxBorrowRate"),
+    Layout.uint64("borrowFeeWad"),
+    Layout.uint64("flashLoanFeeWad"),
+    BufferLayout.u8("hostFeePercentage"),
+    Layout.uint64("depositLimit"),
+    Layout.uint64("borrowLimit"),
+    Layout.publicKey("feeReceiver"),
+    BufferLayout.u8("protocolLiquidationFee"),
+    BufferLayout.u8("protocolTakeRate"),
+    Layout.uint64("addedBorrowWeightBPS"),
+    BufferLayout.u8("reserveType"),
+    BufferLayout.u8("maxLiquidationBonus"),
+    BufferLayout.u8("maxLiquidationThreshold"),
   ]);
 
   const data = Buffer.alloc(dataLayout.span);
@@ -42,7 +61,26 @@ export const initReserveInstruction = (
     {
       instruction: LendingInstruction.InitReserve,
       liquidityAmount: new BN(liquidityAmount),
-      config,
+      optimalUtilizationRate: config.optimalUtilizationRate,
+      maxUtilizationRate: config.maxUtilizationRate,
+      loanToValueRatio: config.loanToValueRatio,
+      liquidationBonus: config.liquidationBonus,
+      liquidationThreshold: config.liquidationThreshold,
+      minBorrowRate: config.minBorrowRate,
+      optimalBorrowRate: config.optimalBorrowRate,
+      maxBorrowRate: config.maxBorrowRate,
+      borrowFeeWad: config.fees.borrowFeeWad,
+      flashLoanFeeWad: config.fees.flashLoanFeeWad,
+      hostFeePercentage: config.fees.hostFeePercentage,
+      depositLimit: config.depositLimit,
+      borrowLimit: config.borrowLimit,
+      feeReceiver: config.feeReceiver,
+      protocolLiquidationFee: config.protocolLiquidationFee,
+      protocolTakeRate: config.protocolTakeRate,
+      addedBorrowWeightBPS: config.addedBorrowWeightBPS,
+      reserveType: config.reserveType,
+      maxLiquidationBonus: config.maxLiquidationBonus,
+      maxLiquidationThreshold: config.maxLiquidationThreshold,
     },
     data
   );

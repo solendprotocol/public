@@ -17,9 +17,11 @@ export interface Obligation {
   borrows: ObligationLiquidity[];
   depositedValue: BN; // decimals
   borrowedValue: BN; // decimals
+  borrowedValueUpperBound: BN; // decimals
   allowedBorrowValue: BN; // decimals
   unhealthyBorrowValue: BN; // decimals
-  borrowedValueUpperBound: BN; // decimals
+  superUnhealthyBorrowValue: BN; // decimals
+  borrowingIsolatedAsset: boolean;
 }
 
 // BN defines toJSON property, which messes up serialization
@@ -73,7 +75,9 @@ export const ObligationLayout: typeof BufferLayout.Structure =
     Layout.uint128("allowedBorrowValue"),
     Layout.uint128("unhealthyBorrowValue"),
     Layout.uint128("borrowedValueUpperBound"),
-    BufferLayout.blob(48, "_padding"),
+    BufferLayout.u8("borrowingIsolatedAsset"),
+    Layout.uint128("superUnhealthyBorrowValue"),
+    BufferLayout.blob(31, "_padding"),
 
     BufferLayout.u8("depositsLen"),
     BufferLayout.u8("borrowsLen"),
