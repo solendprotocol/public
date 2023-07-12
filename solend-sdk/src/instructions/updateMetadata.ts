@@ -1,8 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
-import { PublicKey, TransactionInstruction } from "@solana/web3.js";
+import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import { LendingInstruction } from "./instruction";
-import { SYSTEM_PROGRAM_ID } from "@marinade.finance/marinade-ts-sdk/dist/src/util";
 
 const BufferLayout = require("buffer-layout");
 
@@ -48,8 +47,9 @@ export const updateMetadataInstruction = (
     { pubkey: lendingMarket, isSigner: false, isWritable: false },
     { pubkey: lendingMarketOwner, isSigner: true, isWritable: false },
     { pubkey: lendingMarketMetadata, isSigner: false, isWritable: true },
-    { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
+    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
   ];
+
 
   return new TransactionInstruction({
     keys,
