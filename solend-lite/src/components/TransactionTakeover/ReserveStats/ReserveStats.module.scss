@@ -12,7 +12,7 @@
 .params {
   background-color: var(--chakra-colors-neutralAlt);
   padding-top: 8px;
-  padding-bottom: 32px;
+  padding-bottom: 8px;
   margin-left: -36px;
   margin-right: -36px;
   padding-left: 36px;
@@ -36,4 +36,20 @@
 
 .reserveAddress {
   cursor: pointer;
+}
+
+.rateSection {
+  &:hover {
+    opacity: 0.5;
+    :global(.metric) {
+      filter: blur(0.25px);
+    }
+    .graphHover {
+      visibility: visible;
+    }
+  }
+}
+
+.graphHover {
+  visibility: hidden;
 }
