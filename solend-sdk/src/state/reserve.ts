@@ -201,6 +201,7 @@ function decodeReserve(buffer: Buffer): Reserve {
       depositLimit: reserve.depositLimit,
       borrowLimit: reserve.borrowLimit,
       feeReceiver: reserve.feeReceiver,
+      // value is stored on-chain as deca-bp (10 deca bp = 1bps)
       protocolLiquidationFee: reserve.protocolLiquidationFee * 10,
       protocolTakeRate: reserve.protocolTakeRate,
       addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
