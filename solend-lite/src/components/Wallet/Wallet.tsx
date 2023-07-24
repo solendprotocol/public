@@ -47,7 +47,7 @@ export default function Wallet() {
           <Tr>
             <Th w={200}>
               <Text color='secondary' variant='caption'>
-                Wallet asset
+                Wallet assets
               </Text>
             </Th>
             <Th>

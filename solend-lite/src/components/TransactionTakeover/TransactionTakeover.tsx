@@ -62,10 +62,10 @@ export default function TransactionTakeover() {
             selectedReserve,
             walletAssets,
             selectedObligation,
-            rateLimiter
+            rateLimiter,
           )
         : BigNumber(0),
-    [selectedReserve, walletAssets, selectedObligation],
+    [selectedReserve, walletAssets, selectedObligation, rateLimiter],
   );
   const withdrawMax = useMemo(
     () =>
@@ -74,10 +74,10 @@ export default function TransactionTakeover() {
             selectedReserve,
             walletAssets,
             selectedObligation,
-            rateLimiter
+            rateLimiter,
           )
         : BigNumber(0),
-    [selectedReserve, walletAssets, selectedObligation],
+    [selectedReserve, walletAssets, selectedObligation, rateLimiter],
   );
   const repayMax = useMemo(
     () =>
@@ -177,7 +177,7 @@ export default function TransactionTakeover() {
                 const useMax = new BigNumber(value).isGreaterThanOrEqualTo(
                   borrowMax,
                 );
-
+                console.log(useMax);
                 return borrowConfigs.action(
                   useMax
                     ? U64_MAX
@@ -246,7 +246,7 @@ export default function TransactionTakeover() {
               selectedObligation,
               selectedReserve,
               walletAssets,
-              rateLimiter
+              rateLimiter,
             )}
             getNewCalculations={withdrawConfigs.getNewCalculations}
           />

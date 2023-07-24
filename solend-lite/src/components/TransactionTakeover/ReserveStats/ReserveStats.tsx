@@ -11,6 +11,7 @@ import { computeExtremeRates } from '@solendprotocol/solend-sdk';
 import { useAtom } from 'jotai';
 import humanizeDuration from 'humanize-duration';
 import { SLOT_RATE } from 'utils/utils';
+import InterestGraph from 'components/InterestGraph/InterestGraph';
 
 // certain oracles do not match their underlying asset, hence this mapping
 const PYTH_ORACLE_MAPPING: Record<string, string> = {
@@ -49,6 +50,7 @@ function ReserveStats({
 }: ReserveStatsPropsType): ReactElement {
   const [rateLimiter] = useAtom(rateLimiterAtom);
   const [showParams, setShowParams] = useState(false);
+  const [showGraph, setShowGraph] = useState(false);
   let newBorrowLimitDisplay = null;
   if (newBorrowLimit) {
     const nbuObj = newBorrowLimit;
@@ -166,10 +168,112 @@ function ReserveStats({
           showParams ? styles.visible : styles.hidden,
         )}
         style={{
-          maxHeight: showParams ? 500 : 0,
+          maxHeight: showParams ? 1000 : 0,
           display: showParams ? 'visible' : 'hidden',
         }}
       >
+        {showGraph && (
+          <Box h={168} cursor='pointer' onClick={() => setShowGraph(false)}>
+            <Flex justify='center'>
+              <Text variant='caption' color='secondary'>
+                Interest rate curve
+              </Text>
+            </Flex>
+            <InterestGraph reserve={reserve} />
+          </Box>
+        )}
+        {!showGraph && (
+          <Flex
+            position='relative'
+            cursor='pointer'
+            flexDirection='column'
+            justify='space-between'
+            className={styles.rateSection}
+            onClick={() => setShowGraph(true)}
+          >
+            <Metric
+              row
+              label='Current asset utilization'
+              value={formatPercent(reserve.reserveUtilization)}
+              tooltip={
+                <>
+                  Percentage of the asset being lent out. Utilization determines
+                  interest rates via a function.{' '}
+                  <a
+                    href='https://docs.solend.fi/protocol/fees'
+                    target='_blank'
+                    rel='noreferrer'
+                  >
+                    <u>Learn more</u>
+                  </a>
+                  .
+                </>
+              }
+            />
+            <Metric
+              row
+              label='Target borrow APR'
+              value={formatPercent(
+                reserve.maxBorrowApr === reserve.targetBorrowApr
+                  ? computeExtremeRates(reserve.targetBorrowApr)
+                  : reserve.targetBorrowApr,
+              )}
+              tooltip='When utilization is equal to the target utilization, borrow APR will be this value.'
+            />
+            <Metric
+              row
+              label='Current borrow APR'
+              value={formatPercent(reserve.borrowInterest)}
+            />
+            <Metric
+              row
+              label='Target utilization'
+              value={formatPercent(reserve.targetUtilization)}
+              tooltip='When utilization goes above this value, interest rates are more sensitive to changes in utilization.'
+            />
+            <Metric
+              row
+              label='Max borrow APR'
+              value={formatPercent(
+                reserve.maxBorrowApr === reserve.targetBorrowApr
+                  ? computeExtremeRates(reserve.maxBorrowApr)
+                  : reserve.maxBorrowApr,
+              )}
+              tooltip='Maximum possible borrow APR.'
+            />
+            <Metric
+              row
+              label='Max utilization'
+              value={formatPercent(reserve.maxUtilizationRate)}
+              tooltip='When utilization goes above this value, borrows and withdraws will not be possible.'
+            />
+            <Metric
+              row
+              label='Supermax borrow APR'
+              value={formatPercent(
+                reserve.maxBorrowApr === reserve.targetBorrowApr
+                  ? computeExtremeRates(reserve.maxBorrowApr)
+                  : reserve.maxBorrowApr,
+              )}
+              tooltip='Maximum possible borrow APR.'
+            />
+            <Box
+              className={styles.graphHover}
+              position='absolute'
+              top='0px'
+              left='0px'
+              bottom='0px'
+              right='0px'
+              display='flex'
+              justifyContent='center'
+              alignItems='center'
+            >
+              <Text variant='label' color='primary'>
+                Click to show graph
+              </Text>
+            </Box>
+          </Flex>
+        )}
         {reserve.reserveSupplyLimit && (
           <Metric
             row
@@ -200,8 +304,20 @@ function ReserveStats({
         />
         <Metric
           row
+          label='Max close LTV'
+          value={formatPercent(reserve.liquidationThreshold)}
+          tooltip='Max close Loan-to-value (LTV) is the ratio at which the max liquidation penalty occurs.'
+        />
+        <Metric
+          row
           label='Liquidation penalty'
           value={formatPercent(reserve.liquidationPenalty)}
+        />
+        <Metric
+          row
+          label='Max liquidation penalty'
+          value={<>{formatPercent(reserve.protocolLiquidationFee)}</>}
+          tooltip='Liquidation penalty increases past close LTV until max close LTV, where max liquidation penalty occurs.'
         />
         <Metric
           row
@@ -229,51 +345,6 @@ function ReserveStats({
           label='Interest rate spread'
           tooltip='Interest rate spread is a percentage of the borrow interest rate. The fee percentage ranges depending on the asset.'
           value={<>{formatPercent(reserve.interestRateSpread)}</>}
-        />
-        <Metric
-          row
-          label='Max borrow APR'
-          value={formatPercent(
-            reserve.maxBorrowApr === reserve.targetBorrowApr
-              ? computeExtremeRates(reserve.maxBorrowApr)
-              : reserve.maxBorrowApr,
-          )}
-          tooltip='Maximum possible borrow APR.'
-        />
-        <Metric
-          row
-          label='Target borrow APR'
-          value={formatPercent(
-            reserve.maxBorrowApr === reserve.targetBorrowApr
-              ? computeExtremeRates(reserve.targetBorrowApr)
-              : reserve.targetBorrowApr,
-          )}
-          tooltip='When utilization is equal to the target utilization, borrow APR will be this value.'
-        />
-        <Metric
-          row
-          label='Target utilization'
-          value={formatPercent(reserve.targetUtilization)}
-          tooltip='When utilization goes above this value, interest rates are more sensitive to changes in utilization.'
-        />
-        <Metric
-          row
-          label='Current asset utilization'
-          value={formatPercent(reserve.reserveUtilization)}
-          tooltip={
-            <>
-              Percentage of the asset being lent out. Utilization determines
-              interest rates via a function.{' '}
-              <a
-                href='https://docs.solend.fi/protocol/fees'
-                target='_blank'
-                rel='noreferrer'
-              >
-                <u>Learn more</u>
-              </a>
-              .
-            </>
-          }
         />
         <Metric
           row
@@ -434,6 +505,51 @@ function ReserveStats({
             </Tooltip>
           }
         />
+        {rateLimiter && (
+          <Metric
+            row
+            label='Max reserve outflow'
+            value={
+              rateLimiter.config.windowDuration.isEqualTo(BigNumber(0)) ? (
+                'N/A'
+              ) : (
+                <>
+                  {formatToken(
+                    new BigNumber(
+                      rateLimiter.config.maxOutflow.toString(),
+                      reserve.decimals,
+                    ).toString(),
+                  )}{' '}
+                  {reserve.symbol} per{' '}
+                  {humanizeDuration(
+                    (rateLimiter.config.windowDuration.toNumber() / SLOT_RATE) *
+                      1000,
+                  )}
+                </>
+              )
+            }
+            tooltip={
+              <>
+                For the safety of the pool, amounts being withdrawn or borrowed
+                from the pool are limited by this rate. <br />
+                Remaining outflow this window:{' '}
+                {formatUsd(
+                  rateLimiter.remainingOutflow?.toString() ?? '0',
+                  false,
+                  true,
+                )}
+              </>
+            }
+          />
+        )}
+        {!new BigNumber(reserve.borrowWeight).isEqualTo(new BigNumber(0)) && (
+          <Metric
+            row
+            label='Borrow weight'
+            value={reserve.borrowWeight.toString()}
+            tooltip='Borrow weight is a coefficient that is applied to the value being borrowed. This allows for the risk management on the borrowing of assets of various risk levels.'
+          />
+        )}
         {reserve.pythOracle !==
           'nu11111111111111111111111111111111111111111' && (
           <Metric
@@ -487,51 +603,6 @@ function ReserveStats({
             </Tooltip>
           }
         />
-        {rateLimiter && (
-          <Metric
-            row
-            label='Max reserve outflow'
-            value={
-              rateLimiter.config.windowDuration.isEqualTo(BigNumber(0)) ? (
-                'N/A'
-              ) : (
-                <>
-                  {formatToken(
-                    new BigNumber(
-                      rateLimiter.config.maxOutflow.toString(),
-                      reserve.decimals,
-                    ).toString(),
-                  )}{' '}
-                  {reserve.symbol} per{' '}
-                  {humanizeDuration(
-                    (rateLimiter.config.windowDuration.toNumber() / SLOT_RATE) *
-                      1000,
-                  )}
-                </>
-              )
-            }
-            tooltip={
-              <>
-                For the safety of the pool, amounts being withdrawn or borrowed
-                from the pool are limited by this rate. <br />
-                Remaining outflow this window:{' '}
-                {formatUsd(
-                  rateLimiter.remainingOutflow?.toString() ?? '0',
-                  false,
-                  true,
-                )}
-              </>
-            }
-          />
-        )}
-        {!new BigNumber(reserve.borrowWeight).isEqualTo(new BigNumber(0)) && (
-          <Metric
-            row
-            label='Borrow weight'
-            value={reserve.borrowWeight.toString()}
-            tooltip='Borrow weight is a coefficient that is applied to the value being borrowed. This allows for the risk management on the borrowing of assets of various risk levels.'
-          />
-        )}
       </Flex>
     </Flex>
   );
