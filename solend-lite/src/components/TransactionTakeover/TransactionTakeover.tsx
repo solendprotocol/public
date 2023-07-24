@@ -177,7 +177,6 @@ export default function TransactionTakeover() {
                 const useMax = new BigNumber(value).isGreaterThanOrEqualTo(
                   borrowMax,
                 );
-                console.log(useMax);
                 return borrowConfigs.action(
                   useMax
                     ? U64_MAX
