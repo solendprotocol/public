@@ -15,4 +15,7 @@ export * from "./initReserve";
 export * from "./updateReserveConfig";
 export * from "./flashBorrowReserveLiquidity";
 export * from "./flashRepayReserveLiquidity";
+export * from "./forgiveDebt";
+export * from "./setLendingMarketOwnerAndConfig";
+export * from "./updateMetadata";
 export * from "./instruction";

@@ -52,7 +52,7 @@ export interface ReserveConfig {
   minBorrowRate: number;
   optimalBorrowRate: number;
   maxBorrowRate: number;
-  superMaxBorrowRate: BN;
+  superMaxBorrowRate: number;
   fees: {
     borrowFeeWad: BN;
     flashLoanFeeWad: BN;
@@ -183,16 +183,16 @@ function decodeReserve(buffer: Buffer): Reserve {
     },
     config: {
       optimalUtilizationRate: reserve.optimalUtilizationRate,
-      maxUtilizationRate: reserve.maxUtilizationRate,
+      maxUtilizationRate: Math.max(reserve.maxUtilizationRate, reserve.optimalUtilizationRate),
       loanToValueRatio: reserve.loanToValueRatio,
       liquidationBonus: reserve.liquidationBonus,
-      maxLiquidationBonus: reserve.maxLiquidationBonus,
+      maxLiquidationBonus: Math.max(reserve.maxLiquidationBonus, reserve.liquidationBonus),
       liquidationThreshold: reserve.liquidationThreshold,
-      maxLiquidationThreshold: reserve.maxLiquidationThreshold,
+      maxLiquidationThreshold: Math.max(reserve.maxLiquidationThreshold, reserve.liquidationThreshold),
       minBorrowRate: reserve.minBorrowRate,
       optimalBorrowRate: reserve.optimalBorrowRate,
       maxBorrowRate: reserve.maxBorrowRate,
-      superMaxBorrowRate: reserve.superMaxBorrowRate,
+      superMaxBorrowRate: Math.max(reserve.superMaxBorrowRate, reserve.maxBorrowRate),
       fees: {
         borrowFeeWad: reserve.borrowFeeWad,
         flashLoanFeeWad: reserve.flashLoanFeeWad,
@@ -201,7 +201,8 @@ function decodeReserve(buffer: Buffer): Reserve {
       depositLimit: reserve.depositLimit,
       borrowLimit: reserve.borrowLimit,
       feeReceiver: reserve.feeReceiver,
-      protocolLiquidationFee: reserve.protocolLiquidationFee,
+      // value is stored on-chain as deca-bp (10 deca bp = 1bps)
+      protocolLiquidationFee: reserve.protocolLiquidationFee * 10,
       protocolTakeRate: reserve.protocolTakeRate,
       addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
       borrowWeight: new BigNumber(reserve.addedBorrowWeightBPS.toString())
