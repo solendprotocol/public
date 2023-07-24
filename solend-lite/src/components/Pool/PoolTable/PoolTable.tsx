@@ -47,17 +47,19 @@ export default function PoolTable({
       header: 'Open LTV / BW',
       meta: { isNumeric: true },
       cell: ({ row: { original: reserve } }) => (
-        <Flex gap={1} align='center'>
-          <Text>{formatPercent(reserve.loanToValueRatio, false, 0)}</Text>
-          <Text color='secondary' variant='caption'>
+        <>
+          <Text display='inline-block'>
+            {formatPercent(reserve.loanToValueRatio, false, 0)}
+          </Text>{' '}
+          <Text display='inline-block' color='secondary' variant='caption'>
             /
-          </Text>
-          <Text>
+          </Text>{' '}
+          <Text display='inline-block'>
             {reserve.addedBorrowWeightBPS.toString() !== U64_MAX
               ? formatToken(reserve.borrowWeight.toString(), 2, false, true)
               : '∞'}
           </Text>
-        </Flex>
+        </>
       ),
     }),
     columnHelper.accessor('totalSupplyUsd', {

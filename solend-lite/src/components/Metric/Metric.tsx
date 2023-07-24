@@ -35,7 +35,11 @@ function Metric({
       align={row ? 'center' : undefined}
       justify='space-between'
       style={style}
-      className={classNames(styles.alignCenter, !alignCenter && styles.metric)}
+      className={classNames(
+        'metric',
+        styles.alignCenter,
+        !alignCenter && (row ? styles.rowMetric : styles.metric),
+      )}
     >
       {label && (
         <Flex className={styles.label} justify='space-between'>
