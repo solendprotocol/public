@@ -19,6 +19,7 @@ import {
   getReservesOfPool,
   parseLendingMarket,
   parseRateLimiter,
+  PoolType,
 } from '@solendprotocol/solend-sdk';
 import { DEBUG_MODE, PROGRAM_ID } from 'common/config';
 import { atomWithRefresh } from './shared';
@@ -31,13 +32,6 @@ export type ReserveWithMetadataType = ReserveType & {
 export type SelectedReserveType = ReserveType & {
   symbol: string;
   logo: string | null;
-};
-
-export type PoolType = {
-  name: string | null;
-  address: string;
-  authorityAddress: string;
-  reserves: Array<ReserveType>;
 };
 
 export type SelectedPoolType = {
@@ -67,6 +61,7 @@ export const poolsAtom = atomWithDefault<{ [address: string]: PoolType }>(
           name: pool.name,
           authorityAddress: pool.authorityAddress,
           address: pool.address,
+          owner: pool.owner,
           reserves: [] as Array<ReserveType>,
         },
       ]),
