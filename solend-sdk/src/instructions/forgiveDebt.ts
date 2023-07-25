@@ -2,13 +2,14 @@ import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import * as BufferLayout from "buffer-layout";
 import * as Layout from "../utils/layout";
 import { LendingInstruction } from "./instruction";
+import BN from "bn.js";
 
-export const ForgiveDebtInstruction = (
+export const forgiveDebtInstruction = (
   obligation: PublicKey,
   reserve: PublicKey,
   lendingMarket: PublicKey,
   lendingMarketOwner: PublicKey,
-  liquidityAmount: number,
+  liquidityAmount: number | BN,
   lendingProgramId: PublicKey
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
@@ -19,8 +20,8 @@ export const ForgiveDebtInstruction = (
   const data = Buffer.alloc(dataLayout.span);
   dataLayout.encode(
     {
-      instruction: LendingInstruction.SetLendingMarketOwnerAndConfig,
-      liquidityAmount: liquidityAmount,
+      instruction: LendingInstruction.ForgiveDebt,
+      liquidityAmount: new BN(liquidityAmount),
     },
     data
   );

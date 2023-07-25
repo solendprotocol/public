@@ -7,7 +7,6 @@ import BigNumber from 'bignumber.js';
 import styles from './ReserveStats.module.scss';
 import classNames from 'classnames';
 import { ChevronDownIcon, ChevronUpIcon, CopyIcon } from '@chakra-ui/icons';
-import { computeExtremeRates } from '@solendprotocol/solend-sdk';
 import { useAtom } from 'jotai';
 import humanizeDuration from 'humanize-duration';
 import { SLOT_RATE } from 'utils/utils';
@@ -213,11 +212,7 @@ function ReserveStats({
             <Metric
               row
               label='Target borrow APR'
-              value={formatPercent(
-                reserve.maxBorrowApr === reserve.targetBorrowApr
-                  ? computeExtremeRates(reserve.targetBorrowApr)
-                  : reserve.targetBorrowApr,
-              )}
+              value={formatPercent(reserve.targetBorrowApr)}
               tooltip='When utilization is equal to the target utilization, borrow APR will be this value.'
             />
             <Metric
@@ -235,9 +230,7 @@ function ReserveStats({
               row
               label='Max borrow APR'
               value={formatPercent(
-                reserve.maxBorrowApr === reserve.targetBorrowApr
-                  ? computeExtremeRates(reserve.maxBorrowApr)
-                  : reserve.maxBorrowApr,
+                reserve.maxBorrowApr,
               )}
               tooltip='Maximum possible borrow APR.'
             />
@@ -251,9 +244,7 @@ function ReserveStats({
               row
               label='Supermax borrow APR'
               value={formatPercent(
-                reserve.maxBorrowApr === reserve.targetBorrowApr
-                  ? computeExtremeRates(reserve.maxBorrowApr)
-                  : reserve.maxBorrowApr,
+                reserve.superMaxBorrowRate
               )}
               tooltip='Maximum possible borrow APR.'
             />

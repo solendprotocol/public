@@ -34,6 +34,7 @@ import {
   syncNative,
   depositObligationCollateralInstruction,
   withdrawObligationCollateralInstruction,
+  forgiveDebtInstruction,
 } from "../../instructions";
 import { POSITION_LIMIT } from "../constants";
 import { EnvironmentType, PoolType, ReserveType } from "../types";
@@ -49,7 +50,8 @@ export type ActionType =
   | "mint"
   | "redeem"
   | "depositCollateral"
-  | "withdrawCollateral";
+  | "withdrawCollateral"
+  | "forgive";
 
 export class SolendActionCore {
   programId: PublicKey;
@@ -139,12 +141,13 @@ export class SolendActionCore {
     publicKey: PublicKey,
     connection: Connection,
     environment: EnvironmentType = "production",
+    customObligationAddress?: PublicKey,
     hostAta?: PublicKey
   ) {
     const seed = pool.address.slice(0, 32);
     const programId = getProgramId(environment);
 
-    const obligationAddress = await PublicKey.createWithSeed(
+    const obligationAddress = customObligationAddress ?? await PublicKey.createWithSeed(
       publicKey,
       seed,
       programId
@@ -228,6 +231,32 @@ export class SolendActionCore {
     );
   }
 
+  static async buildForgiveTxns(
+    pool: PoolType,
+    reserve: ReserveType,
+    connection: Connection,
+    amount: string,
+    publicKey: PublicKey,
+    obligationAddress: PublicKey,
+    environment: EnvironmentType = "production"
+  ) {
+    const axn = await SolendActionCore.initialize(
+      pool,
+      reserve,
+      "deposit",
+      new BN(amount),
+      publicKey,
+      connection,
+      environment,
+      obligationAddress
+    );
+
+    await axn.addSupportIxs("forgive");
+    await axn.addForgiveIx();
+
+    return axn
+  }
+
   static async buildDepositTxns(
     pool: PoolType,
     reserve: ReserveType,
@@ -269,6 +298,7 @@ export class SolendActionCore {
       publicKey,
       connection,
       environment,
+      undefined,
       hostAta
     );
 
@@ -499,6 +529,19 @@ export class SolendActionCore {
     return signature;
   }
 
+  addForgiveIx() {
+    this.lendingIxs.push(
+      forgiveDebtInstruction(
+        this.obligationAddress,
+        new PublicKey(this.reserve.address),
+        new PublicKey(this.pool.address),
+        new PublicKey(this.pool.owner),
+        this.amount,
+        this.programId
+      )
+    );
+  }
+
   addDepositIx() {
     this.lendingIxs.push(
       depositReserveLiquidityAndObligationCollateralInstruction(
@@ -707,7 +750,7 @@ export class SolendActionCore {
   }
 
   async addSupportIxs(action: ActionType) {
-    if (["withdraw", "borrow", "withdrawCollateral"].includes(action)) {
+    if (["withdraw", "borrow", "withdrawCollateral", "forgive"].includes(action)) {
       await this.addRefreshIxs();
     }
     if (!["mint", "redeem"].includes(action)) {
