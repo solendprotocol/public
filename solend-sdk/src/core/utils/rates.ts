@@ -62,14 +62,16 @@ const calculateBorrowAPR = (reserve: Reserve) => {
       );
       const maxBorrowRate = new BigNumber(reserve.config.maxBorrowRate / 100);
 
-      borrowAPR = weight.times(maxBorrowRate.minus(optimalBorrowRate)).plus(optimalBorrowRate)
+      borrowAPR = weight
+        .times(maxBorrowRate.minus(optimalBorrowRate))
+        .plus(optimalBorrowRate)
   } else {
     const weight = currentUtilization
-      .minus(optimalUtilization)
-      .dividedBy(maxUtilizationRate.minus(optimalUtilization));
+      .minus(maxUtilizationRate)
+      .dividedBy(new BigNumber(100).minus(maxUtilizationRate));
 
     const maxBorrowRate = new BigNumber(reserve.config.maxBorrowRate / 100)
-    const superMaxBorrowRate = new BigNumber(reserve.config.superMaxBorrowRate.toString()).dividedBy(100);
+    const superMaxBorrowRate = new BigNumber(reserve.config.superMaxBorrowRate / 100);
 
     borrowAPR = weight
       .times(superMaxBorrowRate.minus(maxBorrowRate))
@@ -106,35 +108,3 @@ export const calculateSupplyInterest = (reserve: Reserve, showApy: boolean) =>
 
 export const calculateBorrowInterest = (reserve: Reserve, showApy: boolean) =>
   showApy ? calculateBorrowAPY(reserve) : calculateBorrowAPR(reserve);
-
-export function computeExtremeRates(configRate: number) {
-  const rate = 0.5;
-  let cleanRate = configRate;
-
-  if (configRate >= 2.47) {
-    cleanRate = Number(configRate.toString().replace(".", ""));
-  }
-
-  switch (cleanRate) {
-    case 251:
-      return rate * 6;
-    case 252:
-      return rate * 7;
-    case 253:
-      return rate * 8;
-    case 254:
-      return rate * 10;
-    case 255:
-      return rate * 12;
-    case 250:
-      return rate * 20;
-    case 249:
-      return rate * 30;
-    case 248:
-      return rate * 40;
-    case 247:
-      return rate * 50;
-    default:
-      return cleanRate;
-  }
-}

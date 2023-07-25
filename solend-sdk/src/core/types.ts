@@ -23,6 +23,7 @@ export type PoolType = {
   name: string | null;
   address: string;
   authorityAddress: string;
+  owner: string;
   reserves: Array<ReserveType>;
 };
 
