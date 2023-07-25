@@ -10,7 +10,7 @@ import { LendingInstruction } from "./instruction";
 ///
 ///   0. `[writable]` Lending market account.
 ///   1. `[signer]` Current owner.
-export const SetLendingMarketOwnerAndConfigInstruction = (
+export const setLendingMarketOwnerAndConfigInstruction = (
   lendingMarket: PublicKey,
   currentMarketOwner: PublicKey,
   newMarketOwner: PublicKey,
