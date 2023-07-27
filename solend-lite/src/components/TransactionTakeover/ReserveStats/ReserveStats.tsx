@@ -172,7 +172,7 @@ function ReserveStats({
         }}
       >
         {showGraph && (
-          <Box h={168} cursor='pointer' onClick={() => setShowGraph(false)}>
+          <Box h={192} cursor='pointer' onClick={() => setShowGraph(false)}>
             <Flex justify='center'>
               <Text variant='caption' color='secondary'>
                 Interest rate curve
@@ -211,14 +211,13 @@ function ReserveStats({
             />
             <Metric
               row
-              label='Target borrow APR'
-              value={formatPercent(reserve.targetBorrowApr)}
-              tooltip='When utilization is equal to the target utilization, borrow APR will be this value.'
+              label='Current borrow APR'
+              value={formatPercent(reserve.borrowInterest)}
             />
             <Metric
               row
-              label='Current borrow APR'
-              value={formatPercent(reserve.borrowInterest)}
+              label='Min borrow APR'
+              value={formatPercent(reserve.minBorrowApr)}
             />
             <Metric
               row
@@ -228,17 +227,23 @@ function ReserveStats({
             />
             <Metric
               row
-              label='Max borrow APR'
-              value={formatPercent(
-                reserve.maxBorrowApr,
-              )}
-              tooltip='Maximum possible borrow APR.'
+              label='Target borrow APR'
+              value={formatPercent(reserve.targetBorrowApr)}
+              tooltip='When utilization is equal to the target utilization, borrow APR will be this value.'
             />
             <Metric
               row
               label='Max utilization'
               value={formatPercent(reserve.maxUtilizationRate)}
               tooltip='When utilization goes above this value, borrows and withdraws will not be possible.'
+            />
+            <Metric
+              row
+              label='Max borrow APR'
+              value={formatPercent(
+                reserve.maxBorrowApr,
+              )}
+              tooltip='Maximum possible borrow APR.'
             />
             <Metric
               row
@@ -296,7 +301,7 @@ function ReserveStats({
         <Metric
           row
           label='Max close LTV'
-          value={formatPercent(reserve.liquidationThreshold)}
+          value={formatPercent(reserve.maxLiquidationThreshold)}
           tooltip='Max close Loan-to-value (LTV) is the ratio at which the max liquidation penalty occurs.'
         />
         <Metric
@@ -307,7 +312,7 @@ function ReserveStats({
         <Metric
           row
           label='Max liquidation penalty'
-          value={<>{formatPercent(reserve.protocolLiquidationFee)}</>}
+          value={<>{formatPercent(reserve.maxLiquidationPenalty)}</>}
           tooltip='Liquidation penalty increases past close LTV until max close LTV, where max liquidation penalty occurs.'
         />
         <Metric
