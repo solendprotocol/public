@@ -64,7 +64,7 @@ export interface ReserveConfig {
   protocolLiquidationFee: number;
   protocolTakeRate: number;
   addedBorrowWeightBPS: BN;
-  borrowWeight: BigNumber;
+  borrowWeight: number;
   reserveType: AssetType;
 }
 
@@ -207,7 +207,7 @@ function decodeReserve(buffer: Buffer): Reserve {
       addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
       borrowWeight: new BigNumber(reserve.addedBorrowWeightBPS.toString())
         .dividedBy(new BigNumber(10000))
-        .plus(new BigNumber(1)),
+        .plus(new BigNumber(1)).toNumber(),
       reserveType:
         reserve.reserveType == 0 ? AssetType.Regular : AssetType.Isolated,
     },

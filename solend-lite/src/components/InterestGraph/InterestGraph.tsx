@@ -115,7 +115,6 @@ function InterestGraph({ reserve }: { reserve: ReserveType }): ReactElement {
         </XAxis>
         <YAxis
           type='number'
-          domain={[0, 100]}
           style={{
             fontSize: 12,
           }}
