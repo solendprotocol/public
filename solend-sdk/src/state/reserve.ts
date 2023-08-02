@@ -148,7 +148,7 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
     Layout.uint128("liquiditySmoothedMarketPrice"),
     BufferLayout.u8("reserveType"),
     BufferLayout.u8("maxUtilizationRate"),
-    BufferLayout.u8("superMaxBorrowRate"),
+    Layout.uint64("superMaxBorrowRate"),
     BufferLayout.u8("maxLiquidationBonus"),
     BufferLayout.u8("maxLiquidationThreshold"),
     BufferLayout.blob(138, "padding"),
@@ -192,7 +192,7 @@ function decodeReserve(buffer: Buffer): Reserve {
       minBorrowRate: reserve.minBorrowRate,
       optimalBorrowRate: reserve.optimalBorrowRate,
       maxBorrowRate: reserve.maxBorrowRate,
-      superMaxBorrowRate: Math.max(reserve.superMaxBorrowRate, reserve.maxBorrowRate),
+      superMaxBorrowRate: Math.max(reserve.superMaxBorrowRate.toNumber(), reserve.maxBorrowRate),
       fees: {
         borrowFeeWad: reserve.borrowFeeWad,
         flashLoanFeeWad: reserve.flashLoanFeeWad,

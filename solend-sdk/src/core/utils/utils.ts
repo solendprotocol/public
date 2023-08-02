@@ -67,7 +67,7 @@ export const remainingOutflow = (
     const curOutflow = prevWeight.times(
       previousQuantity.plus(currentQuantity),
     );
-    outflow = maxOutflow.plus(curOutflow);
+    outflow = maxOutflow.minus(curOutflow);
   } else if (windowStart.plus(windowDuration).isEqualTo(curSlotStart)) {
     const curOutflow = prevWeight.times(currentQuantity);
     outflow = maxOutflow.minus(curOutflow);

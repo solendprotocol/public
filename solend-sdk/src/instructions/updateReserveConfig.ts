@@ -35,9 +35,7 @@ export const updateReserveConfig = (
     BufferLayout.u8("maxUtilizationRate"),
     BufferLayout.u8("loanToValueRatio"),
     BufferLayout.u8("liquidationBonus"),
-    BufferLayout.u8("maxLiquidationBonus"),
     BufferLayout.u8("liquidationThreshold"),
-    BufferLayout.u8("maxLiquidationThreshold"),
     BufferLayout.u8("minBorrowRate"),
     BufferLayout.u8("optimalBorrowRate"),
     BufferLayout.u8("maxBorrowRate"),
@@ -52,11 +50,14 @@ export const updateReserveConfig = (
     BufferLayout.u8("protocolTakeRate"),
     Layout.uint64("addedBorrowWeightBPS"),
     BufferLayout.u8("reserveType"),
+    BufferLayout.u8("maxLiquidationBonus"),
+    BufferLayout.u8("maxLiquidationThreshold"),
     Layout.uint64("windowDuration"),
     Layout.uint64("maxOutflow"),
   ]);
 
   const data = Buffer.alloc(dataLayout.span);
+
   dataLayout.encode(
     {
       instruction: LendingInstruction.UpdateReserveConfig,
