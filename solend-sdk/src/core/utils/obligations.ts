@@ -85,7 +85,7 @@ export function formatObligation(
         reserveAddress,
         amount,
         amountUsd,
-        weightedAmountUsd: reserve.borrowWeight.multipliedBy(amountUsd)
+        weightedAmountUsd: new BigNumber(reserve.borrowWeight).multipliedBy(amountUsd)
       };
     });
     
