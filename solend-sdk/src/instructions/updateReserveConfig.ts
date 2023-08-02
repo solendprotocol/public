@@ -39,6 +39,7 @@ export const updateReserveConfig = (
     BufferLayout.u8("minBorrowRate"),
     BufferLayout.u8("optimalBorrowRate"),
     BufferLayout.u8("maxBorrowRate"),
+    Layout.uint64("superMaxBorrowRate"),
     Layout.uint64("borrowFeeWad"),
     Layout.uint64("flashLoanFeeWad"),
     BufferLayout.u8("hostFeePercentage"),
@@ -56,6 +57,7 @@ export const updateReserveConfig = (
   ]);
 
   const data = Buffer.alloc(dataLayout.span);
+
   dataLayout.encode(
     {
       instruction: LendingInstruction.UpdateReserveConfig,
@@ -73,6 +75,7 @@ export const updateReserveConfig = (
       depositLimit: reserveConfig.depositLimit,
       borrowLimit: reserveConfig.borrowLimit,
       feeReceiver: reserveConfig.feeReceiver,
+      superMaxBorrowRate: reserveConfig.superMaxBorrowRate,
       protocolLiquidationFee: reserveConfig.protocolLiquidationFee,
       protocolTakeRate: reserveConfig.protocolTakeRate,
       addedBorrowWeightBPS: reserveConfig.addedBorrowWeightBPS,
