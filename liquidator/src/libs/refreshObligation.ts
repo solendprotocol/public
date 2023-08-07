@@ -84,7 +84,7 @@ export function calculateRefreshedObligation(
       mintAddress,
       marketValue,
       symbol,
-      addedBorrowWeightBPS: reserve.config.addedBorrowWeightBPS
+      addedBorrowWeightBPS: reserve.config.addedBorrowWeightBPS,
     });
   });
 

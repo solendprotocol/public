@@ -75,7 +75,7 @@ async function runLiquidator() {
             }
 
             // select repay token that has the highest market value
-            let selectedBorrow: Borrow | undefined = sortBorrows(borrows)[0];
+            const selectedBorrow: Borrow | undefined = sortBorrows(borrows)[0];
 
             // select the withdrawal collateral token with the highest market value
             let selectedDeposit;

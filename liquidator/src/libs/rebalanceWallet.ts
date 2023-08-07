@@ -67,7 +67,7 @@ export async function rebalanceWallet(connection, payer, jupiter, tokensOracle, 
 function aggregateInfo(tokensOracle, walletBalances, connection, wallet, target) {
   const info: any = [];
   target.forEach(async (tokenDistribution: TokenCount) => {
-    const { symbol, target } = tokenDistribution;
+    const { symbol, target: tokenTarget } = tokenDistribution;
     const tokenOracle = findWhere(tokensOracle, { symbol });
     const walletBalance = findWhere(walletBalances, { symbol });
 
@@ -90,7 +90,7 @@ function aggregateInfo(tokensOracle, walletBalances, connection, wallet, target)
       const usdValue = new BigNumber(walletBalance.balance).multipliedBy(tokenOracle.price);
       info.push({
         symbol,
-        target,
+        target: tokenTarget,
         mintAddress: tokenOracle.mintAddress,
         ata: walletBalance.ata?.toString(),
         balance: walletBalance.balance,
