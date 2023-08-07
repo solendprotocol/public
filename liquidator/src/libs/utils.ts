@@ -302,14 +302,14 @@ export const sortBorrows = (borrows: Borrow[]): Borrow[] => {
 
 // use the bytes representation to compare two addresses
 export const comparePubkeys = (a: PublicKey, b: PublicKey): number => {
-  const a_bytes = a.toBytes();
-  const b_bytes = b.toBytes();
+  const aBytes = a.toBytes();
+  const bBytes = b.toBytes();
 
   for (let i = 0; i < 32; i++) {
-    if (a_bytes[i] < b_bytes[i]) {
+    if (aBytes[i] < bBytes[i]) {
       return -1;
     }
-    if (a_bytes[i] > b_bytes[i]) {
+    if (aBytes[i] > bBytes[i]) {
       return 1;
     }
   }
