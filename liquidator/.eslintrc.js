@@ -1,7 +1,7 @@
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'react', 'import'],
   extends: [
     'eslint:recommended',
     'airbnb-typescript',
