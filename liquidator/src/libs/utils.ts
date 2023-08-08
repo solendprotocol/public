@@ -11,6 +11,7 @@ import {
 } from 'global';
 import { findWhere } from 'underscore';
 import { TokenOracleData } from './pyth';
+import { Borrow } from './refreshObligation';
 
 export const WAD = new BigNumber(`1${''.padEnd(18, '0')}`);
 export const U64_MAX = '18446744073709551615';
@@ -78,7 +79,7 @@ export function getTokenInfo(market: MarketConfig, symbol: string) {
 }
 
 export function getTokenInfoFromMarket(market: MarketConfig, symbol: string) {
-  const liquidityToken: LiquidityToken = findWhere(market.reserves.map((reserve) => reserve.liquidityToken), { symbol });
+  const liquidityToken: LiquidityToken = findWhere(market.reserves.map((reserve) => reserve.liquidityToken), { symbol })!;
   if (!liquidityToken) {
     throw new Error(`Could not find ${symbol} in config.assets`);
   }
@@ -287,3 +288,31 @@ export const getLoanToValueRate = (reserve: Reserve): BigNumber => new BigNumber
 export const getLiquidationThresholdRate = (reserve: Reserve): BigNumber => new BigNumber(
   reserve.config.liquidationThreshold / 100,
 );
+
+export const sortBorrows = (borrows: Borrow[]): Borrow[] => {
+  return borrows.sort((a, b) => {
+    if (a.addedBorrowWeightBPS.eq(b.addedBorrowWeightBPS)) {
+      return comparePubkeys(b.borrowReserve, a.borrowReserve);
+    } else {
+      // Otherwise, sort by addedBorrowWeightBPS in descending order
+      return b.addedBorrowWeightBPS.cmp(a.addedBorrowWeightBPS);
+    }
+  });
+};
+
+// use the bytes representation to compare two addresses
+export const comparePubkeys = (a: PublicKey, b: PublicKey): number => {
+  const aBytes = a.toBytes();
+  const bBytes = b.toBytes();
+
+  for (let i = 0; i < 32; i++) {
+    if (aBytes[i] < bBytes[i]) {
+      return -1;
+    }
+    if (aBytes[i] > bBytes[i]) {
+      return 1;
+    }
+  }
+
+  return 0;
+};
