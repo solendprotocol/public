@@ -8,10 +8,10 @@ import {
 } from '@solana/web3.js';
 import dotenv from 'dotenv';
 import {
-  getObligations, getReserves, getWalletBalances, getWalletDistTarget, getWalletTokenData, wait,
+  getObligations, getReserves, getWalletBalances, getWalletDistTarget, getWalletTokenData, sortBorrows, wait,
 } from 'libs/utils';
 import { getTokensOracleData } from 'libs/pyth';
-import { calculateRefreshedObligation } from 'libs/refreshObligation';
+import { Borrow, calculateRefreshedObligation } from 'libs/refreshObligation';
 import { readSecret } from 'libs/secret';
 import { liquidateAndRedeem } from 'libs/actions/liquidateAndRedeem';
 import { rebalanceWallet } from 'libs/rebalanceWallet';
@@ -75,12 +75,7 @@ async function runLiquidator() {
             }
 
             // select repay token that has the highest market value
-            let selectedBorrow;
-            borrows.forEach((borrow) => {
-              if (!selectedBorrow || borrow.marketValue.gt(selectedBorrow.marketValue)) {
-                selectedBorrow = borrow;
-              }
-            });
+            const selectedBorrow: Borrow | undefined = sortBorrows(borrows)[0];
 
             // select the withdrawal collateral token with the highest market value
             let selectedDeposit;

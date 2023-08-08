@@ -1,4 +1,3 @@
-/* eslint-disable no-loop-func */
 import got from 'got';
 import { MarketConfig } from 'global';
 import dotenv from 'dotenv';
@@ -35,10 +34,13 @@ export async function getMarkets(): Promise<MarketConfig[]> {
   const maxAttempt = 10;
   const marketUrl = getMarketsUrl();
 
-  do {
+  // Function to wait for a certain amount of time
+  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  while (attemptCount < maxAttempt) {
     try {
       if (attemptCount > 0) {
-        await new Promise((resolve) => setTimeout(resolve, backoffFactor * 10));
+        await wait(backoffFactor * 10);
         backoffFactor *= 2;
       }
       attemptCount += 1;
@@ -48,7 +50,7 @@ export async function getMarkets(): Promise<MarketConfig[]> {
     } catch (error) {
       console.error('error fetching /v1/markets/configs ', error);
     }
-  } while (attemptCount < maxAttempt);
+  }
 
   throw new Error('failed to fetch /v1/markets/configs');
 }

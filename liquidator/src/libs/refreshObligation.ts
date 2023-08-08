@@ -84,6 +84,7 @@ export function calculateRefreshedObligation(
       mintAddress,
       marketValue,
       symbol,
+      addedBorrowWeightBPS: reserve.config.addedBorrowWeightBPS,
     });
   });
 
@@ -132,12 +133,13 @@ function getBorrrowedAmountWadsWithInterest(
   }
 }
 
-type Borrow = {
+export type Borrow = {
   borrowReserve: PublicKey;
   borrowAmountWads: BN;
   marketValue: BigNumber;
   mintAddress: string,
   symbol: string;
+  addedBorrowWeightBPS: BN;
 };
 
 type Deposit = {

@@ -64,7 +64,7 @@ export type Ggoldca = {
           'name': 'rent',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
@@ -78,7 +78,7 @@ export type Ggoldca = {
         {
           'name': 'minSlotsForReinvest',
           'type': 'u64'
-        }
+        },
       ]
     },
     {
@@ -93,13 +93,13 @@ export type Ggoldca = {
           'name': 'vaultAccount',
           'isMut': true,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
           'name': 'isPaused',
           'type': 'bool'
-        }
+        },
       ]
     },
     {
@@ -114,13 +114,13 @@ export type Ggoldca = {
           'name': 'vaultAccount',
           'isMut': true,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
           'name': 'isActive',
           'type': 'bool'
-        }
+        },
       ]
     },
     {
@@ -180,7 +180,7 @@ export type Ggoldca = {
           'name': 'associatedTokenProgram',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
@@ -194,7 +194,7 @@ export type Ggoldca = {
         {
           'name': 'tickUpperIndex',
           'type': 'i32'
-        }
+        },
       ]
     },
     {
@@ -234,7 +234,7 @@ export type Ggoldca = {
           'name': 'tokenProgram',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': []
     },
@@ -265,7 +265,7 @@ export type Ggoldca = {
           'name': 'destinationTokenAccount',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
@@ -273,7 +273,7 @@ export type Ggoldca = {
           'type': {
             'defined': 'MarketRewardsInfoInput'
           }
-        }
+        },
       ]
     },
     {
@@ -288,13 +288,13 @@ export type Ggoldca = {
           'name': 'vaultAccount',
           'isMut': true,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
           'name': 'fee',
           'type': 'u64'
-        }
+        },
       ]
     },
     {
@@ -309,13 +309,13 @@ export type Ggoldca = {
           'name': 'vaultAccount',
           'isMut': true,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
           'name': 'minSlots',
           'type': 'u64'
-        }
+        },
       ]
     },
     {
@@ -383,7 +383,7 @@ export type Ggoldca = {
               'name': 'tickArrayUpper',
               'isMut': true,
               'isSigner': false
-            }
+            },
           ]
         },
         {
@@ -413,14 +413,14 @@ export type Ggoldca = {
               'name': 'tickArrayUpper',
               'isMut': true,
               'isSigner': false
-            }
+            },
           ]
         },
         {
           'name': 'tokenProgram',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': []
     },
@@ -499,7 +499,7 @@ export type Ggoldca = {
               'name': 'tickArrayUpper',
               'isMut': true,
               'isSigner': false
-            }
+            },
           ]
         },
         {
@@ -516,7 +516,7 @@ export type Ggoldca = {
           'name': 'tokenProgram',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
@@ -530,7 +530,7 @@ export type Ggoldca = {
         {
           'name': 'maxAmountB',
           'type': 'u64'
-        }
+        },
       ]
     },
     {
@@ -608,7 +608,7 @@ export type Ggoldca = {
               'name': 'tickArrayUpper',
               'isMut': true,
               'isSigner': false
-            }
+            },
           ]
         },
         {
@@ -625,7 +625,7 @@ export type Ggoldca = {
           'name': 'tokenProgram',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
@@ -639,7 +639,7 @@ export type Ggoldca = {
         {
           'name': 'minAmountB',
           'type': 'u64'
-        }
+        },
       ]
     },
     {
@@ -712,14 +712,14 @@ export type Ggoldca = {
               'name': 'tickArrayUpper',
               'isMut': true,
               'isSigner': false
-            }
+            },
           ]
         },
         {
           'name': 'tokenProgram',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': []
     },
@@ -778,20 +778,20 @@ export type Ggoldca = {
               'name': 'tickArrayUpper',
               'isMut': true,
               'isSigner': false
-            }
+            },
           ]
         },
         {
           'name': 'tokenProgram',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
           'name': 'rewardIndex',
           'type': 'u8'
-        }
+        },
       ]
     },
     {
@@ -821,7 +821,7 @@ export type Ggoldca = {
           'name': 'swapProgram',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': []
     },
@@ -847,7 +847,7 @@ export type Ggoldca = {
           'name': 'tokenProgram',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': []
     },
@@ -916,7 +916,7 @@ export type Ggoldca = {
               'name': 'tickArrayUpper',
               'isMut': true,
               'isSigner': false
-            }
+            },
           ]
         },
         {
@@ -943,7 +943,7 @@ export type Ggoldca = {
           'name': 'tokenProgram',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': []
     },
@@ -994,7 +994,7 @@ export type Ggoldca = {
           'name': 'rent',
           'isMut': false,
           'isSigner': false
-        }
+        },
       ],
       'args': [
         {
@@ -1012,15 +1012,15 @@ export type Ggoldca = {
         {
           'name': 'firstTime',
           'type': 'bool'
-        }
+        },
       ]
-    }
+    },
   ],
   'accounts': [
     {
       'name': 'vaultAccount',
       'docs': [
-        'Strategy vault account'
+        'Strategy vault account',
       ],
       'type': {
         'kind': 'struct',
@@ -1028,35 +1028,35 @@ export type Ggoldca = {
           {
             'name': 'version',
             'docs': [
-              'Vault version'
+              'Vault version',
             ],
             'type': 'u8'
           },
           {
             'name': 'isActiveFromUi',
             'docs': [
-              'The vault is active from the UI'
+              'The vault is active from the UI',
             ],
             'type': 'bool'
           },
           {
             'name': 'isPaused',
             'docs': [
-              'The smart contract is paused for this vault'
+              'The smart contract is paused for this vault',
             ],
             'type': 'bool'
           },
           {
             'name': 'id',
             'docs': [
-              'Vault number for a given whirlpool'
+              'Vault number for a given whirlpool',
             ],
             'type': 'u8'
           },
           {
             'name': 'bumps',
             'docs': [
-              'PDA bump seeds'
+              'PDA bump seeds',
             ],
             'type': {
               'defined': 'Bumps'
@@ -1065,56 +1065,56 @@ export type Ggoldca = {
           {
             'name': 'whirlpoolId',
             'docs': [
-              'Whirlpool pubkey'
+              'Whirlpool pubkey',
             ],
             'type': 'publicKey'
           },
           {
             'name': 'inputTokenAMintPubkey',
             'docs': [
-              'Pool input token_a mint address'
+              'Pool input token_a mint address',
             ],
             'type': 'publicKey'
           },
           {
             'name': 'inputTokenBMintPubkey',
             'docs': [
-              'Pool input token_b mint address'
+              'Pool input token_b mint address',
             ],
             'type': 'publicKey'
           },
           {
             'name': 'fee',
             'docs': [
-              'Fee percentage using FEE_SCALE. Fee applied on earnings'
+              'Fee percentage using FEE_SCALE. Fee applied on earnings',
             ],
             'type': 'u64'
           },
           {
             'name': 'minSlotsForReinvest',
             'docs': [
-              'Minimum number of elapsed slots required for reinvesting'
+              'Minimum number of elapsed slots required for reinvesting',
             ],
             'type': 'u64'
           },
           {
             'name': 'lastReinvestmentSlot',
             'docs': [
-              'Last reinvestment slot'
+              'Last reinvestment slot',
             ],
             'type': 'u64'
           },
           {
             'name': 'lastLiquidityIncrease',
             'docs': [
-              'Last reinvestment liquidity increase'
+              'Last reinvestment liquidity increase',
             ],
             'type': 'u128'
           },
           {
             'name': 'earnedRewardsTokenA',
             'docs': [
-              'Total rewards earned by the vault'
+              'Total rewards earned by the vault',
             ],
             'type': 'u64'
           },
@@ -1125,21 +1125,21 @@ export type Ggoldca = {
           {
             'name': 'marketRewards',
             'docs': [
-              'The market where to sell the rewards'
+              'The market where to sell the rewards',
             ],
             'type': {
               'array': [
                 {
                   'defined': 'MarketRewardsInfo'
                 },
-                3
+                3,
               ]
             }
           },
           {
             'name': 'positions',
             'docs': [
-              'Information about the opened positions (max = MAX_POSITIONS)'
+              'Information about the opened positions (max = MAX_POSITIONS)',
             ],
             'type': {
               'vec': {
@@ -1150,18 +1150,18 @@ export type Ggoldca = {
           {
             'name': 'padding',
             'docs': [
-              'Additional padding'
+              'Additional padding',
             ],
             'type': {
               'array': [
                 'u64',
-                10
+                10,
               ]
             }
-          }
+          },
         ]
       }
-    }
+    },
   ],
   'types': [
     {
@@ -1172,7 +1172,7 @@ export type Ggoldca = {
           {
             'name': 'id',
             'docs': [
-              'Id of market associated'
+              'Id of market associated',
             ],
             'type': {
               'defined': 'MarketRewards'
@@ -1181,17 +1181,17 @@ export type Ggoldca = {
           {
             'name': 'minAmountOut',
             'docs': [
-              'Minimum number of lamports to receive during swap'
+              'Minimum number of lamports to receive during swap',
             ],
             'type': 'u64'
-          }
+          },
         ]
       }
     },
     {
       'name': 'Bumps',
       'docs': [
-        'PDA bump seeds'
+        'PDA bump seeds',
       ],
       'type': {
         'kind': 'struct',
@@ -1203,14 +1203,14 @@ export type Ggoldca = {
           {
             'name': 'lpTokenMint',
             'type': 'u8'
-          }
+          },
         ]
       }
     },
     {
       'name': 'PositionInfo',
       'docs': [
-        'Position information'
+        'Position information',
       ],
       'type': {
         'kind': 'struct',
@@ -1218,24 +1218,24 @@ export type Ggoldca = {
           {
             'name': 'pubkey',
             'docs': [
-              'Position pubkey'
+              'Position pubkey',
             ],
             'type': 'publicKey'
           },
           {
             'name': 'lowerTick',
             'docs': [
-              'Position lower tick'
+              'Position lower tick',
             ],
             'type': 'i32'
           },
           {
             'name': 'upperTick',
             'docs': [
-              'Position upper tick'
+              'Position upper tick',
             ],
             'type': 'i32'
-          }
+          },
         ]
       }
     },
@@ -1247,7 +1247,7 @@ export type Ggoldca = {
           {
             'name': 'id',
             'docs': [
-              'Id of market associated'
+              'Id of market associated',
             ],
             'type': {
               'defined': 'MarketRewards'
@@ -1256,24 +1256,24 @@ export type Ggoldca = {
           {
             'name': 'rewardsMint',
             'docs': [
-              'Pubkey of the rewards token mint'
+              'Pubkey of the rewards token mint',
             ],
             'type': 'publicKey'
           },
           {
             'name': 'destinationTokenAccount',
             'docs': [
-              'Destination account'
+              'Destination account',
             ],
             'type': 'publicKey'
           },
           {
             'name': 'minAmountOut',
             'docs': [
-              'Minimum number of lamports to receive during swap'
+              'Minimum number of lamports to receive during swap',
             ],
             'type': 'u64'
-          }
+          },
         ]
       }
     },
@@ -1293,10 +1293,10 @@ export type Ggoldca = {
           },
           {
             'name': 'Whirlpool'
-          }
+          },
         ]
       }
-    }
+    },
   ],
   'events': [
     {
@@ -1326,7 +1326,7 @@ export type Ggoldca = {
           'name': 'treasuryFeeTokenB',
           'type': 'u64',
           'index': false
-        }
+        },
       ]
     },
     {
@@ -1346,7 +1346,7 @@ export type Ggoldca = {
           'name': 'treasuryFee',
           'type': 'u64',
           'index': false
-        }
+        },
       ]
     },
     {
@@ -1371,7 +1371,7 @@ export type Ggoldca = {
           'name': 'liquidity',
           'type': 'u128',
           'index': false
-        }
+        },
       ]
     },
     {
@@ -1391,7 +1391,7 @@ export type Ggoldca = {
           'name': 'newLiquidity',
           'type': 'u128',
           'index': false
-        }
+        },
       ]
     },
     {
@@ -1421,7 +1421,7 @@ export type Ggoldca = {
           'name': 'elapsedSlots',
           'type': 'u64',
           'index': false
-        }
+        },
       ]
     },
     {
@@ -1451,9 +1451,9 @@ export type Ggoldca = {
           'name': 'amountOut',
           'type': 'u64',
           'index': false
-        }
+        },
       ]
-    }
+    },
   ],
   'errors': [
     {
@@ -1610,7 +1610,7 @@ export type Ggoldca = {
       'code': 6030,
       'name': 'WhirlpoolLiquidityToDeltasOverflow',
       'msg': 'whirlpool_cpi: Overflow while computing liquidity to token deltas'
-    }
+    },
   ]
 };
 
