@@ -76,7 +76,7 @@ export const LiquidateObligationAndRedeemReserveCollateral = (
     { pubkey: withdrawReserveLiquiditySupply, isSigner: false, isWritable: true },
     { pubkey: withdrawReserveFeeReceiver, isSigner: false, isWritable: true },
     { pubkey: obligation, isSigner: false, isWritable: true },
-    { pubkey: lendingMarket, isSigner: false, isWritable: false },
+    { pubkey: lendingMarket, isSigner: false, isWritable: true },
     { pubkey: lendingMarketAuthority, isSigner: false, isWritable: false },
     { pubkey: transferAuthority, isSigner: true, isWritable: false },
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
