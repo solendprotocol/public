@@ -31,7 +31,7 @@ const calculateBorrowAPR = (reserve: Reserve) => {
     reserve.config.optimalUtilizationRate / 100
   );
   const maxUtilizationRate = new BigNumber(
-    reserve.config.maxUtilizationRate
+    reserve.config.maxUtilizationRate / 100
   );
   let borrowAPR;
   if (
