@@ -35,10 +35,10 @@ const CustomTooltip = ({
           variant='caption'
           color='secondary'
         >{`Utilization: ${formatPercent(
-          (payload[0]?.value ?? 0) / 100,
+          (label ?? 0) / 100,
         )}`}</Text>
         <Text variant='caption' color='secondary'>{`Interest: ${formatPercent(
-          (label ?? 0) / 100,
+          (payload[0]?.value ?? 0) / 100,
         )}`}</Text>
         <br />
         <Text variant='caption' color='secondary'>
@@ -126,7 +126,7 @@ function InterestGraph({ reserve }: { reserve: ReserveType }): ReactElement {
               textAnchor: 'middle',
             }}
             color='var(--chakra-colors-secondary)'
-            value='Interest'
+            value='Borrow interest'
             position='insideLeft'
             angle={-90}
           />
