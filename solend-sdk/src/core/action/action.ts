@@ -753,10 +753,12 @@ export class SolendActionCore {
     if (["withdraw", "borrow", "withdrawCollateral", "forgive"].includes(action)) {
       await this.addRefreshIxs();
     }
-    if (!["mint", "redeem"].includes(action)) {
+    if (!["mint", "redeem", "forgive"].includes(action)) {
       await this.addObligationIxs();
     }
-    await this.addAtaIxs(action);
+    if (action !== 'forgive') {
+      await this.addAtaIxs(action);
+    }
   }
 
   private async addRefreshIxs() {

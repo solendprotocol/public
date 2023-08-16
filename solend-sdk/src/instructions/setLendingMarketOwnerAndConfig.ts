@@ -15,22 +15,24 @@ export const setLendingMarketOwnerAndConfigInstruction = (
   currentMarketOwner: PublicKey,
   newMarketOwner: PublicKey,
   newRateLimiterConfig: RateLimiterConfig,
-  whitelistedLiquidator: PublicKey | null,
   riskAuthority: PublicKey,
-  lendingProgramId: PublicKey
+  lendingProgramId: PublicKey,
+  whitelistedLiquidator?: PublicKey
 ): TransactionInstruction => {
-  if (whitelistedLiquidator != null) {
-    throw new Error("Whitelisted liquidator not supported yet");
-  }
-
-  const dataLayout = BufferLayout.struct([
+  const dataAccounts = [
     BufferLayout.u8("instruction"),
     Layout.publicKey("newOwner"),
     Layout.uint64("windowDuration"),
     Layout.uint64("maxOutflow"),
     BufferLayout.u8("whitelistedLiquidator"),
     Layout.publicKey("riskAuthority"),
-  ]);
+  ]
+
+  if (whitelistedLiquidator) {
+    dataAccounts.splice(5, 0, Layout.publicKey("whitelistedLiquidatorPublicKey"))
+  }
+
+  const dataLayout = BufferLayout.struct(dataAccounts)
 
   const data = Buffer.alloc(dataLayout.span);
   dataLayout.encode(
@@ -39,7 +41,8 @@ export const setLendingMarketOwnerAndConfigInstruction = (
       newOwner: newMarketOwner,
       windowDuration: newRateLimiterConfig.windowDuration,
       maxOutflow: newRateLimiterConfig.maxOutflow,
-      whitelistedLiquidator: 0,
+      whitelistedLiquidator: Number(Boolean(whitelistedLiquidator)),
+      whitelistedLiquidatorPublicKey: whitelistedLiquidator,
       riskAuthority: riskAuthority,
     },
     data
