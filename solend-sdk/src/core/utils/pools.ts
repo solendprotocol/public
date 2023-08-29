@@ -27,6 +27,7 @@ export async function fetchPools(
         address: c.address,
         authorityAddress: c.authorityAddress,
         reserves: [] as Array<ReserveType>,
+        owner: c.owner
       },
     ])
   );
