@@ -118,7 +118,7 @@ export function formatReserve(
     maxUtilizationRate: reserve.info.config.maxUtilizationRate / 100,
     minBorrowApr: reserve.info.config.minBorrowRate / 100,
     maxBorrowApr: reserve.info.config.maxBorrowRate / 100,
-    superMaxBorrowRate: reserve.info.config.superMaxBorrowRate / 100,
+    superMaxBorrowRate: reserve.info.config.superMaxBorrowRate.toNumber() / 100,
     supplyInterest: calculateSupplyInterest(reserve.info, false),
     borrowInterest: calculateBorrowInterest(reserve.info, false),
     totalSupply,
