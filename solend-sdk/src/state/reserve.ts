@@ -52,7 +52,7 @@ export interface ReserveConfig {
   minBorrowRate: number;
   optimalBorrowRate: number;
   maxBorrowRate: number;
-  superMaxBorrowRate: number;
+  superMaxBorrowRate: BN;
   fees: {
     borrowFeeWad: BN;
     flashLoanFeeWad: BN;
@@ -183,16 +183,28 @@ function decodeReserve(buffer: Buffer): Reserve {
     },
     config: {
       optimalUtilizationRate: reserve.optimalUtilizationRate,
-      maxUtilizationRate: Math.max(reserve.maxUtilizationRate, reserve.optimalUtilizationRate),
+      maxUtilizationRate: Math.max(
+        reserve.maxUtilizationRate,
+        reserve.optimalUtilizationRate
+      ),
       loanToValueRatio: reserve.loanToValueRatio,
       liquidationBonus: reserve.liquidationBonus,
-      maxLiquidationBonus: Math.max(reserve.maxLiquidationBonus, reserve.liquidationBonus),
+      maxLiquidationBonus: Math.max(
+        reserve.maxLiquidationBonus,
+        reserve.liquidationBonus
+      ),
       liquidationThreshold: reserve.liquidationThreshold,
-      maxLiquidationThreshold: Math.max(reserve.maxLiquidationThreshold, reserve.liquidationThreshold),
+      maxLiquidationThreshold: Math.max(
+        reserve.maxLiquidationThreshold,
+        reserve.liquidationThreshold
+      ),
       minBorrowRate: reserve.minBorrowRate,
       optimalBorrowRate: reserve.optimalBorrowRate,
       maxBorrowRate: reserve.maxBorrowRate,
-      superMaxBorrowRate: Math.max(reserve.superMaxBorrowRate.toNumber(), reserve.maxBorrowRate),
+      superMaxBorrowRate:
+        reserve.config.superMaxBorrowRate > reserve.maxBorrowRate
+          ? reserve.config.superMaxBorrowRate
+          : reserve.maxBorrowRate,
       fees: {
         borrowFeeWad: reserve.borrowFeeWad,
         flashLoanFeeWad: reserve.flashLoanFeeWad,
@@ -207,7 +219,8 @@ function decodeReserve(buffer: Buffer): Reserve {
       addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
       borrowWeight: new BigNumber(reserve.addedBorrowWeightBPS.toString())
         .dividedBy(new BigNumber(10000))
-        .plus(new BigNumber(1)).toNumber(),
+        .plus(new BigNumber(1))
+        .toNumber(),
       reserveType:
         reserve.reserveType == 0 ? AssetType.Regular : AssetType.Isolated,
     },
