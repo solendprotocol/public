@@ -13,13 +13,13 @@ export interface RateLimiter {
 
 export type ParsedRateLimiter = {
   config: {
-    windowDuration: BigNumber,
-    maxOutflow: BigNumber,
-  },
-  windowStart: BigNumber,
-  previousQuantity: BigNumber,
-  currentQuantity: BigNumber,
-  remainingOutflow: BigNumber | null
+    windowDuration: BigNumber;
+    maxOutflow: BigNumber;
+  };
+  windowStart: BigNumber;
+  previousQuantity: BigNumber;
+  currentQuantity: BigNumber;
+  remainingOutflow: BigNumber | null;
 };
 
 export interface RateLimiterConfig {

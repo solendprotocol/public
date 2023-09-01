@@ -25,10 +25,12 @@ export async function fetchPrices(
     const pythOracleData = priceAccounts[i];
     const switchboardOracleData = priceAccounts[parsedReserves.length + i];
 
-    let priceData: {
-      spotPrice: number,
-      emaPrice: number,
-    } | undefined;
+    let priceData:
+      | {
+          spotPrice: number;
+          emaPrice: number;
+        }
+      | undefined;
 
     if (pythOracleData) {
       const { price, previousPrice, emaPrice } = parsePriceData(
@@ -38,7 +40,7 @@ export async function fetchPrices(
       if (price || previousPrice) {
         // use latest price if available otherwise fallback to previous
         priceData = {
-          spotPrice: (price || previousPrice),
+          spotPrice: price || previousPrice,
           emaPrice: emaPrice?.value ?? (price || previousPrice),
         };
       }
@@ -65,8 +67,12 @@ export async function fetchPrices(
       ...acc,
       [reserve.pubkey.toBase58()]: priceData,
     };
-  }, {}) as { [address: string]: {
-    spotPrice: number,
-    emaPrice: number,
-  } | undefined };
+  }, {}) as {
+    [address: string]:
+      | {
+          spotPrice: number;
+          emaPrice: number;
+        }
+      | undefined;
+  };
 }

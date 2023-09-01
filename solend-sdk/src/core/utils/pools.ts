@@ -16,7 +16,13 @@ export async function fetchPools(
   debug?: boolean
 ) {
   const reserves = (
-    await getReservesFromChain(connection, switchboardProgram, programId, currentSlot, debug)
+    await getReservesFromChain(
+      connection,
+      switchboardProgram,
+      programId,
+      currentSlot,
+      debug
+    )
   ).sort((a, b) => (a.totalSupply.isGreaterThan(b.totalSupply) ? -1 : 1));
 
   const pools = Object.fromEntries(
@@ -27,7 +33,7 @@ export async function fetchPools(
         address: c.address,
         authorityAddress: c.authorityAddress,
         reserves: [] as Array<ReserveType>,
-        owner: c.owner
+        owner: c.owner,
       },
     ])
   );
@@ -48,11 +54,13 @@ export function formatReserve(
     pubkey: PublicKey;
     info: Reserve;
   },
-  price: {
-    spotPrice: number,
-    emaPrice: number,
-  } | undefined,
-  currentSlot: number,
+  price:
+    | {
+        spotPrice: number;
+        emaPrice: number;
+      }
+    | undefined,
+  currentSlot: number
 ) {
   const decimals = reserve.info.liquidity.mintDecimals;
   const availableAmount = new BigNumber(
@@ -147,8 +155,14 @@ export function formatReserve(
     addedBorrowWeightBPS: reserve.info.config.addedBorrowWeightBPS,
     borrowWeight: reserve.info.config.borrowWeight,
     emaPrice: price?.emaPrice,
-    minPrice: ((price?.emaPrice && price?.spotPrice) ? BigNumber.min(price.emaPrice, price.spotPrice) : new BigNumber(price?.spotPrice ?? priceResolved)),
-    maxPrice: ((price?.emaPrice && price?.spotPrice) ? BigNumber.max(price.emaPrice, price.spotPrice) : new BigNumber(price?.spotPrice ?? priceResolved)) ,
+    minPrice:
+      price?.emaPrice && price?.spotPrice
+        ? BigNumber.min(price.emaPrice, price.spotPrice)
+        : new BigNumber(price?.spotPrice ?? priceResolved),
+    maxPrice:
+      price?.emaPrice && price?.spotPrice
+        ? BigNumber.max(price.emaPrice, price.spotPrice)
+        : new BigNumber(price?.spotPrice ?? priceResolved),
   };
 }
 
