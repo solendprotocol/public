@@ -68,7 +68,7 @@ const calculateBorrowAPR = (reserve: Reserve) => {
 
     const maxBorrowRate = new BigNumber(reserve.config.maxBorrowRate / 100);
     const superMaxBorrowRate = new BigNumber(
-      reserve.config.superMaxBorrowRate / 100
+      reserve.config.superMaxBorrowRate.toNumber() / 100
     );
 
     borrowAPR = weight
