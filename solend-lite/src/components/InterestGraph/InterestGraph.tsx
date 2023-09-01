@@ -34,9 +34,7 @@ const CustomTooltip = ({
         <Text
           variant='caption'
           color='secondary'
-        >{`Utilization: ${formatPercent(
-          (label ?? 0) / 100,
-        )}`}</Text>
+        >{`Utilization: ${formatPercent((label ?? 0) / 100)}`}</Text>
         <Text variant='caption' color='secondary'>{`Interest: ${formatPercent(
           (payload[0]?.value ?? 0) / 100,
         )}`}</Text>

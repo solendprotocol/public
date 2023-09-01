@@ -202,9 +202,9 @@ function decodeReserve(buffer: Buffer): Reserve {
       optimalBorrowRate: reserve.optimalBorrowRate,
       maxBorrowRate: reserve.maxBorrowRate,
       superMaxBorrowRate:
-        reserve.config.superMaxBorrowRate > reserve.maxBorrowRate
-          ? reserve.config.superMaxBorrowRate
-          : reserve.maxBorrowRate,
+        reserve.superMaxBorrowRate > reserve.maxBorrowRate
+          ? reserve.superMaxBorrowRate
+          : new BN(reserve.maxBorrowRate),
       fees: {
         borrowFeeWad: reserve.borrowFeeWad,
         flashLoanFeeWad: reserve.flashLoanFeeWad,

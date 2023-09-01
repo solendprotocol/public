@@ -240,17 +240,13 @@ function ReserveStats({
             <Metric
               row
               label='Max borrow APR'
-              value={formatPercent(
-                reserve.maxBorrowApr,
-              )}
+              value={formatPercent(reserve.maxBorrowApr)}
               tooltip='Maximum possible borrow APR.'
             />
             <Metric
               row
               label='Supermax borrow APR'
-              value={formatPercent(
-                reserve.superMaxBorrowRate
-              )}
+              value={formatPercent(reserve.superMaxBorrowRate)}
               tooltip='Maximum possible borrow APR.'
             />
             <Box
