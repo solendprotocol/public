@@ -42,7 +42,7 @@ export const initReserveInstruction = (
     BufferLayout.u8("minBorrowRate"),
     BufferLayout.u8("optimalBorrowRate"),
     BufferLayout.u8("maxBorrowRate"),
-    BufferLayout.u8("superMaxBorrowRate"),
+    BufferLayout.u64("superMaxBorrowRate"),
     Layout.uint64("borrowFeeWad"),
     Layout.uint64("flashLoanFeeWad"),
     BufferLayout.u8("hostFeePercentage"),
