@@ -6,48 +6,49 @@ const ADDRESS_PREFIX_SUFFIX_LENGTH = 6;
 
 export const OUTFLOW_BUFFER = 0.985;
 
-export const parseRateLimiter = (rateLimiter: RateLimiter, currentSlot: number) => {
+export const parseRateLimiter = (
+  rateLimiter: RateLimiter,
+  currentSlot: number
+) => {
   const convertedRateLimiter = {
     config: {
       windowDuration: new BigNumber(
-        rateLimiter.config.windowDuration.toString(),
+        rateLimiter.config.windowDuration.toString()
       ),
-      maxOutflow: new BigNumber(
-        rateLimiter.config.maxOutflow.toString(),
-      ),
+      maxOutflow: new BigNumber(rateLimiter.config.maxOutflow.toString()),
     },
     windowStart: new BigNumber(rateLimiter.windowStart.toString()),
     previousQuantity: new BigNumber(
-      rateLimiter.previousQuantity.toString(),
+      rateLimiter.previousQuantity.toString()
     ).shiftedBy(-18),
     currentQuantity: new BigNumber(
-      rateLimiter.currentQuantity.toString(),
+      rateLimiter.currentQuantity.toString()
     ).shiftedBy(-18),
-  }
+  };
   return {
-  ...convertedRateLimiter,
-  remainingOutflow: remainingOutflow(currentSlot, convertedRateLimiter)
-}};
-
+    ...convertedRateLimiter,
+    remainingOutflow: remainingOutflow(currentSlot, convertedRateLimiter),
+  };
+};
 
 export const remainingOutflow = (
   currentSlot: number,
   rateLimiter: {
     config: {
-      windowDuration: BigNumber,
-      maxOutflow: BigNumber,
-    },
-    windowStart: BigNumber,
-    previousQuantity: BigNumber,
-    currentQuantity: BigNumber,
-  },
+      windowDuration: BigNumber;
+      maxOutflow: BigNumber;
+    };
+    windowStart: BigNumber;
+    previousQuantity: BigNumber;
+    currentQuantity: BigNumber;
+  }
 ) => {
   if (rateLimiter.config.windowDuration.eq(new BigNumber(0))) {
     return null;
   }
 
   const curSlot = new BigNumber(currentSlot);
-  const windowDuration = rateLimiter.config.windowDuration
+  const windowDuration = rateLimiter.config.windowDuration;
   const previousQuantity = rateLimiter.previousQuantity;
   const currentQuantity = rateLimiter.currentQuantity;
   const maxOutflow = rateLimiter.config.maxOutflow;
@@ -64,9 +65,7 @@ export const remainingOutflow = (
   let outflow = new BigNumber(0);
 
   if (windowStart.isEqualTo(curSlotStart)) {
-    const curOutflow = prevWeight.times(
-      previousQuantity.plus(currentQuantity),
-    );
+    const curOutflow = prevWeight.times(previousQuantity.plus(currentQuantity));
     outflow = maxOutflow.minus(curOutflow);
   } else if (windowStart.plus(windowDuration).isEqualTo(curSlotStart)) {
     const curOutflow = prevWeight.times(currentQuantity);

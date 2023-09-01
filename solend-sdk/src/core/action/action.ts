@@ -147,11 +147,9 @@ export class SolendActionCore {
     const seed = pool.address.slice(0, 32);
     const programId = getProgramId(environment);
 
-    const obligationAddress = customObligationAddress ?? await PublicKey.createWithSeed(
-      publicKey,
-      seed,
-      programId
-    );
+    const obligationAddress =
+      customObligationAddress ??
+      (await PublicKey.createWithSeed(publicKey, seed, programId));
 
     const obligationAccountInfo = await connection.getAccountInfo(
       obligationAddress
@@ -254,7 +252,7 @@ export class SolendActionCore {
     await axn.addSupportIxs("forgive");
     await axn.addForgiveIx();
 
-    return axn
+    return axn;
   }
 
   static async buildDepositTxns(
@@ -750,13 +748,15 @@ export class SolendActionCore {
   }
 
   async addSupportIxs(action: ActionType) {
-    if (["withdraw", "borrow", "withdrawCollateral", "forgive"].includes(action)) {
+    if (
+      ["withdraw", "borrow", "withdrawCollateral", "forgive"].includes(action)
+    ) {
       await this.addRefreshIxs();
     }
     if (!["mint", "redeem", "forgive"].includes(action)) {
       await this.addObligationIxs();
     }
-    if (action !== 'forgive') {
+    if (action !== "forgive") {
       await this.addAtaIxs(action);
     }
   }

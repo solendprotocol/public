@@ -26,13 +26,17 @@ export const setLendingMarketOwnerAndConfigInstruction = (
     Layout.uint64("maxOutflow"),
     BufferLayout.u8("whitelistedLiquidator"),
     Layout.publicKey("riskAuthority"),
-  ]
+  ];
 
   if (whitelistedLiquidator) {
-    dataAccounts.splice(5, 0, Layout.publicKey("whitelistedLiquidatorPublicKey"))
+    dataAccounts.splice(
+      5,
+      0,
+      Layout.publicKey("whitelistedLiquidatorPublicKey")
+    );
   }
 
-  const dataLayout = BufferLayout.struct(dataAccounts)
+  const dataLayout = BufferLayout.struct(dataAccounts);
 
   const data = Buffer.alloc(dataLayout.span);
   dataLayout.encode(

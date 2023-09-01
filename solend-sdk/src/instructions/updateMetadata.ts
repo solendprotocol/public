@@ -1,5 +1,9 @@
 import * as anchor from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
+import {
+  PublicKey,
+  SystemProgram,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import { LendingInstruction } from "./instruction";
 
@@ -49,7 +53,6 @@ export const updateMetadataInstruction = (
     { pubkey: lendingMarketMetadata, isSigner: false, isWritable: true },
     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
   ];
-
 
   return new TransactionInstruction({
     keys,

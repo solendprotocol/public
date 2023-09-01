@@ -29,13 +29,11 @@ export function formatObligation(
       const amountUsd = amount.times(reserve.price);
 
       minPriceUserTotalSupply = minPriceUserTotalSupply.plus(
-        amount.times(reserve.minPrice),
+        amount.times(reserve.minPrice)
       );
 
       minPriceBorrowLimit = minPriceBorrowLimit.plus(
-        amount
-          .times(reserve.minPrice)
-          .times(reserve.loanToValueRatio),
+        amount.times(reserve.minPrice).times(reserve.loanToValueRatio)
       );
 
       return {
@@ -65,17 +63,15 @@ export function formatObligation(
         );
       const amountUsd = amount.times(reserve.price);
 
-      const maxPrice = reserve.emaPrice ? BigNumber.max(reserve.emaPrice, reserve.price) : reserve.price;
+      const maxPrice = reserve.emaPrice
+        ? BigNumber.max(reserve.emaPrice, reserve.price)
+        : reserve.price;
 
-        maxPriceUserTotalWeightedBorrow = maxPriceUserTotalWeightedBorrow.plus(
-          amount
-            .times(maxPrice)
-            .times(
-              reserve.borrowWeight
-                ? reserve.borrowWeight
-                : U64_MAX,
-            ),
-        );
+      maxPriceUserTotalWeightedBorrow = maxPriceUserTotalWeightedBorrow.plus(
+        amount
+          .times(maxPrice)
+          .times(reserve.borrowWeight ? reserve.borrowWeight : U64_MAX)
+      );
 
       return {
         liquidationThreshold: reserve.liquidationThreshold,
@@ -85,10 +81,12 @@ export function formatObligation(
         reserveAddress,
         amount,
         amountUsd,
-        weightedAmountUsd: new BigNumber(reserve.borrowWeight).multipliedBy(amountUsd)
+        weightedAmountUsd: new BigNumber(reserve.borrowWeight).multipliedBy(
+          amountUsd
+        ),
       };
     });
-    
+
   const totalSupplyValue = deposits.reduce(
     (acc, d) => acc.plus(d.amountUsd),
     new BigNumber(0)
@@ -135,10 +133,9 @@ export function formatObligation(
     obligation.info.borrows.filter((b) => !b.borrowedAmountWads.isZero())
       .length;
 
-
   const weightedConservativeBorrowUtilization = minPriceBorrowLimit.isZero()
-  ? new BigNumber(0)
-  : maxPriceUserTotalWeightedBorrow.dividedBy(minPriceBorrowLimit);
+    ? new BigNumber(0)
+    : maxPriceUserTotalWeightedBorrow.dividedBy(minPriceBorrowLimit);
 
   return {
     address: obligation.pubkey.toBase58(),
