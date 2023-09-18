@@ -1,6 +1,6 @@
 {
   "name": "@solendprotocol/solend-sdk",
-  "version": "0.6.41",
+  "version": "0.6.47",
   "private": true,
   "main": "src/index.ts",
   "module": "src/index.ts",
