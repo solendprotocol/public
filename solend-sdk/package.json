@@ -29,6 +29,7 @@
     "@solana/web3.js": "=1.76.0",
     "@solendprotocol/solend-sdk": "^0.6.31",
     "@solflare-wallet/utl-sdk": "^1.4.0",
+    "@switchboard-xyz/sbv2-lite": "^0.2.4",
     "@types/bn.js": "^5.1.1",
     "axios": "^0.24.0",
     "bignumber.js": "^9.0.2",
