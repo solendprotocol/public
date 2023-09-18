@@ -546,7 +546,7 @@ function ReserveStats({
           'nu11111111111111111111111111111111111111111' && (
           <Metric
             row
-            label='Pyth Oracle'
+            label='Pyth oracle'
             value={
               <Tooltip title={reserve.pythOracle}>
                 <Flex align='center'>
