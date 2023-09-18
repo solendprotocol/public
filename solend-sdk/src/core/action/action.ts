@@ -631,6 +631,7 @@ export class SolendActionCore {
           : new BN(
               new BigNumber(this.amount.toString())
                 .dividedBy(cTokenExchangeRate)
+                .integerValue(BigNumber.ROUND_FLOOR)
                 .toString()
             ),
         new PublicKey(this.reserve.cTokenLiquidityAddress),
@@ -714,6 +715,7 @@ export class SolendActionCore {
           : new BN(
               new BigNumber(this.amount.toString())
                 .dividedBy(cTokenExchangeRate)
+                .integerValue(BigNumber.ROUND_FLOOR)
                 .toString()
             ),
         new PublicKey(this.reserve.cTokenLiquidityAddress),
