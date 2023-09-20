@@ -13,7 +13,7 @@ import {
   InputGroup,
 } from '@chakra-ui/react';
 import { useAtom } from 'jotai';
-import { lcs } from 'string-comparison';
+import stringComparison from 'string-comparison';
 import { createRef, RefObject, useState } from 'react';
 import {
   poolsStateAtom,
@@ -169,14 +169,14 @@ export default function Nav({ onClose }: { onClose?: () => void }) {
                   const searchTerms = e.target.value.split(' ');
                   let shouldDisplay = false;
                   searchTerms.forEach((term) => {
-                    const similarities = lcs.sortMatch(term, keywords);
+                    const similarities = stringComparison.sortMatch(term, keywords);
                     for (const sim of similarities) {
                       if (sim.rating > 0.86) {
                         shouldDisplay = true;
                         return;
                       }
                     }
-                    const similarities2 = lcs.sortMatch(
+                    const similarities2 = stringComparison.sortMatch(
                       term,
                       keywords.map((x) => x.slice(0, term.length)),
                     );
