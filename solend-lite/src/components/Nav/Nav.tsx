@@ -169,14 +169,14 @@ export default function Nav({ onClose }: { onClose?: () => void }) {
                   const searchTerms = e.target.value.split(' ');
                   let shouldDisplay = false;
                   searchTerms.forEach((term) => {
-                    const similarities = stringComparison.sortMatch(term, keywords);
+                    const similarities = stringComparison.lcs.sortMatch(term, keywords);
                     for (const sim of similarities) {
                       if (sim.rating > 0.86) {
                         shouldDisplay = true;
                         return;
                       }
                     }
-                    const similarities2 = stringComparison.sortMatch(
+                    const similarities2 = stringComparison.lcs.sortMatch(
                       term,
                       keywords.map((x) => x.slice(0, term.length)),
                     );
