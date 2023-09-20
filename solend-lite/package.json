@@ -35,8 +35,6 @@
     "bignumber.js": "^9.1.1",
     "buffer-layout": "^1.2.2",
     "classnames": "^2.3.2",
-    "eslint": "8.29.0",
-    "eslint-config-next": "13.0.7",
     "framer-motion": "^8.4.3",
     "humanize-duration": "^3.29.0",
     "jotai": "^1.12.1",
@@ -57,7 +55,9 @@
     "@next/bundle-analyzer": "^13.2.1",
     "@types/humanize-duration": "^3.27.1",
     "@typescript-eslint/eslint-plugin": "^6.7.2",
+    "eslint": "^8.49.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-next": "13.0.7",
     "eslint-config-prettier": "^8.6.0",
     "prettier": "^2.8.4"
   }
