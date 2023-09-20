@@ -200,7 +200,7 @@ export const selectedPoolAtom = atom(
     const switchboardProgram = get(switchboardAtom);
     const poolToUpdateAtom = poolsFamily(newSelectedPoolAddress);
     if (!poolToUpdateAtom) {
-      throw Error('Selected pool not found');
+      console.error('Selected pool not found');
     }
 
     let newSelectedObligationAddress: string | null = null;
