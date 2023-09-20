@@ -6,7 +6,6 @@ import {
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ENVIRONMENT } from 'common/config';
 import {
-  BraveWalletAdapter,
   CoinbaseWalletAdapter,
   SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
@@ -28,7 +27,6 @@ export default function Index() {
   const network = ENVIRONMENT as WalletAdapterNetwork;
   const solflare = new SolflareWalletAdapter({ network });
   const coinbase = new CoinbaseWalletAdapter();
-  const brave = new BraveWalletAdapter();
 
   return (
     <>
@@ -78,7 +76,7 @@ export default function Index() {
         <meta name='theme-color' content='#ffffff' />
       </Head>
       <ConnectionProvider endpoint={rpc.endpoint}>
-        <WalletProvider wallets={[solflare, coinbase, brave]} autoConnect>
+        <WalletProvider wallets={[solflare, coinbase]} autoConnect>
           <WalletModalProvider>
             <NoSSR>
               <Suspense fallback={<Loading />}>
