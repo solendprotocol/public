@@ -13,6 +13,7 @@ import {
   GetLatestBlockhashConfig,
   GetMultipleAccountsConfig,
   GetProgramAccountsConfig,
+  GetProgramAccountsResponse,
   GetSlotConfig,
   GetTransactionConfig,
   GetVersionedTransactionConfig,
@@ -84,12 +85,7 @@ export class RetryConnection implements SolendRPCConnection {
   getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
-  ): Promise<
-    Array<{
-      pubkey: PublicKey;
-      account: AccountInfo<Buffer>;
-    }>
-  > {
+  ): Promise<RpcResponseAndContext<GetProgramAccountsResponse>> {
     return this.withRetries(
       this.connection.getProgramAccounts(programId, configOrCommitment)
     );

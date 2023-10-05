@@ -13,6 +13,7 @@ import {
   GetLatestBlockhashConfig,
   GetMultipleAccountsConfig,
   GetProgramAccountsConfig,
+  GetProgramAccountsResponse,
   GetSlotConfig,
   GetTransactionConfig,
   GetVersionedTransactionConfig,
@@ -96,12 +97,7 @@ export class InstrumentedConnection implements SolendRPCConnection {
   getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
-  ): Promise<
-    Array<{
-      pubkey: PublicKey;
-      account: AccountInfo<Buffer>;
-    }>
-  > {
+  ): Promise<RpcResponseAndContext<GetProgramAccountsResponse>> {
     return this.withStats(
       this.connection.getProgramAccounts(programId, configOrCommitment),
       "getProgramAccounts"
