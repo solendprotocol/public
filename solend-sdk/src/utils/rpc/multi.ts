@@ -13,6 +13,7 @@ import {
   GetLatestBlockhashConfig,
   GetMultipleAccountsConfig,
   GetProgramAccountsConfig,
+  GetProgramAccountsResponse,
   GetSlotConfig,
   GetTransactionConfig,
   GetVersionedTransactionConfig,
@@ -105,12 +106,7 @@ export class MultiConnection implements SolendRPCConnection {
   getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
-  ): Promise<
-    Array<{
-      pubkey: PublicKey;
-      account: AccountInfo<Buffer>;
-    }>
-  > {
+  ): Promise<RpcResponseAndContext<GetProgramAccountsResponse>> {
     return Promise.race(
       this.connections.map((c, index) =>
         delayed(

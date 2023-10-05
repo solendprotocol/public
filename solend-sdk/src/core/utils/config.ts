@@ -57,11 +57,13 @@ export const fetchPoolMetadataFromChain = async (
   if (debug) console.log("fetchPoolsFromChain");
   const filters = [{ dataSize: LENDING_MARKET_SIZE }];
 
-  const pools = await connection.getProgramAccounts(programId, {
-    commitment: connection.commitment,
-    filters,
-    encoding: "base64",
-  });
+  const pools = Array.from(
+    await connection.getProgramAccounts(programId, {
+      commitment: connection.commitment,
+      filters,
+      encoding: "base64",
+    })
+  );
 
   return pools
     .sort((a, _b) =>

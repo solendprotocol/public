@@ -13,6 +13,7 @@ import {
   GetLatestBlockhashConfig,
   GetMultipleAccountsConfig,
   GetProgramAccountsConfig,
+  GetProgramAccountsResponse,
   GetSlotConfig,
   GetTransactionConfig,
   GetVersionedTransactionConfig,
@@ -162,12 +163,7 @@ export class CachedConnection implements SolendRPCConnection {
   async getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
-  ): Promise<
-    Array<{
-      pubkey: PublicKey;
-      account: AccountInfo<Buffer>;
-    }>
-  > {
+  ): Promise<RpcResponseAndContext<GetProgramAccountsResponse>> {
     const key = `getProgramAccounts_${programId.toBase58()}_${JSON.stringify(
       configOrCommitment
     )}`;

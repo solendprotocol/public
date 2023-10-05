@@ -13,6 +13,7 @@ import {
   GetLatestBlockhashConfig,
   GetMultipleAccountsConfig,
   GetProgramAccountsConfig,
+  GetProgramAccountsResponse,
   GetSlotConfig,
   GetTransactionConfig,
   GetVersionedTransactionConfig,
@@ -53,12 +54,7 @@ export interface SolendRPCConnection {
   getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
-  ): Promise<
-    Array<{
-      pubkey: PublicKey;
-      account: AccountInfo<Buffer>;
-    }>
-  >;
+  ): Promise<RpcResponseAndContext<GetProgramAccountsResponse>>;
   getRecentBlockhash(commitment?: Commitment): Promise<{
     blockhash: Blockhash;
     feeCalculator: FeeCalculator;
