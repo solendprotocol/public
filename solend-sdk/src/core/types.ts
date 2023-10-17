@@ -11,6 +11,7 @@ export type PoolMetadataCoreType = {
     name: string;
     logo: string;
     mintAddress: string;
+    address: string;
   }>;
 };
 
