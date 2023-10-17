@@ -1,6 +1,6 @@
 {
   "name": "@solendprotocol/solend-sdk",
-  "version": "0.6.47",
+  "version": "0.6.48",
   "private": true,
   "main": "src/index.ts",
   "module": "src/index.ts",
@@ -46,7 +46,7 @@
     "@orca-so/sdk": "^1.2.25",
     "@types/bs58": "^4.0.1",
     "@types/jest": "^29.2.3",
-    "@types/node": "^20.5.7",
+    "@types/node": "^20.8.6",
     "@types/node-fetch": "^2.6.2",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
