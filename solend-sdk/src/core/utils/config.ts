@@ -37,11 +37,21 @@ export async function fetchPoolMetadata(
         address: string;
         owner: string;
         authorityAddress: string;
+        reserves: Array<{liquidityToken: {
+          name: string,
+          logo: string,
+          mint: string,
+        }}>;
       }) => ({
         name: titleCase(c.name),
         owner: c.owner,
         address: c.address,
         authorityAddress: c.authorityAddress,
+        reserves: c.reserves.map(r => ({
+          name: r.liquidityToken.name,
+          logo: r.liquidityToken.logo,
+          mintAddress: r.liquidityToken.mint,
+        }))
       })
     );
   } catch (e) {
@@ -80,6 +90,7 @@ export const fetchPoolMetadataFromChain = async (
         owner: pool.account.owner.toBase58(),
         authorityAddress: authorityAddress.toBase58(),
         address: pool.pubkey.toBase58(),
+        reserves: [],
       };
     });
 };
