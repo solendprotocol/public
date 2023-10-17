@@ -7,6 +7,11 @@ export type PoolMetadataCoreType = {
   address: string;
   owner: string;
   authorityAddress: string;
+  reserves: Array<{
+    name: string;
+    logo: string;
+    mintAddress: string;
+  }>;
 };
 
 export type EnvironmentType = Cluster | "production" | "beta";

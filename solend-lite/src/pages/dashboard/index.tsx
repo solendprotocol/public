@@ -6,5 +6,7 @@ import NoSSR from 'react-no-ssr';
 export default function Solend() {
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
-  return <NoSSR children={isLargerThan800 ? <Dashboard /> : <MobileDashboard />} />;
+  return (
+    <NoSSR children={isLargerThan800 ? <Dashboard /> : <MobileDashboard />} />
+  );
 }
