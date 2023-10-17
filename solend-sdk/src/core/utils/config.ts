@@ -41,7 +41,7 @@ export async function fetchPoolMetadata(
           name: string,
           logo: string,
           mint: string,
-        }}>;
+        }, address: string}>;
       }) => ({
         name: titleCase(c.name),
         owner: c.owner,
@@ -51,6 +51,7 @@ export async function fetchPoolMetadata(
           name: r.liquidityToken.name,
           logo: r.liquidityToken.logo,
           mintAddress: r.liquidityToken.mint,
+          address: r.address,
         }))
       })
     );
