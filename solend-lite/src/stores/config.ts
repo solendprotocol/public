@@ -6,8 +6,5 @@ import { ENVIRONMENT, DEBUG_MODE } from 'common/config';
 export const configAtom = atom(async (get) => {
   const connection = get(connectionAtom);
 
-  const a = await fetchPoolMetadata(connection, ENVIRONMENT, true, DEBUG_MODE);
-
-  console.log(a);
-  return a;
+  return fetchPoolMetadata(connection, ENVIRONMENT, true, DEBUG_MODE);
 });

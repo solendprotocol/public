@@ -257,9 +257,9 @@ export default function TransactionTakeover() {
             setValue={setValue}
             onSubmit={() => {
               if (publicKey && selectedReserve && selectedPool) {
-                const useMax = selectedObligation?.borrows
-                  ?.find((b) => b.reserveAddress === selectedReserve.address)
-                  ?.amount.isGreaterThanOrEqualTo(new BigNumber(value));
+                const useMax = new BigNumber(value).isGreaterThanOrEqualTo(
+                  repayMax,
+                );
 
                 return repayConfigs.action(
                   useMax
