@@ -37,22 +37,25 @@ export async function fetchPoolMetadata(
         address: string;
         owner: string;
         authorityAddress: string;
-        reserves: Array<{liquidityToken: {
-          name: string,
-          logo: string,
-          mint: string,
-        }, address: string}>;
+        reserves: Array<{
+          liquidityToken: {
+            name: string;
+            logo: string;
+            mint: string;
+          };
+          address: string;
+        }>;
       }) => ({
         name: titleCase(c.name),
         owner: c.owner,
         address: c.address,
         authorityAddress: c.authorityAddress,
-        reserves: c.reserves.map(r => ({
+        reserves: c.reserves.map((r) => ({
           name: r.liquidityToken.name,
           logo: r.liquidityToken.logo,
           mintAddress: r.liquidityToken.mint,
           address: r.address,
-        }))
+        })),
       })
     );
   } catch (e) {
