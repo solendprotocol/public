@@ -100,6 +100,7 @@ function UtilizationBar({
       usedObligation.weightedTotalBorrowValue.isGreaterThanOrEqualTo(
         usedObligation.borrowLimit,
       ));
+
   const passedThreshold =
     usedObligation.totalSupplyValue.isZero() ||
     (!usedObligation.weightedTotalBorrowValue.isZero() &&

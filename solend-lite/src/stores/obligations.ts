@@ -132,7 +132,7 @@ export const selectedObligationAtom = atom(
       newSelectedObligationAddress,
     );
     if (!obligationToUpdateAtom) {
-      throw Error('Selected obligation not found');
+      throw new Error('Selected obligation not found');
     }
 
     fetchObligationByAddress(

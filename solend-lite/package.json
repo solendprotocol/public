@@ -35,6 +35,7 @@
     "bignumber.js": "^9.1.1",
     "buffer-layout": "^1.2.2",
     "classnames": "^2.3.2",
+    "eslint-config-next": "^14.0.4",
     "framer-motion": "^8.4.3",
     "humanize-duration": "^3.29.0",
     "jotai": "^1.12.1",
