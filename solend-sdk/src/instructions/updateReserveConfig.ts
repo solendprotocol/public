@@ -76,7 +76,7 @@ export const updateReserveConfig = (
       depositLimit: reserveConfig.depositLimit,
       borrowLimit: reserveConfig.borrowLimit,
       feeReceiver: reserveConfig.feeReceiver,
-      protocolLiquidationFee: reserveConfig.protocolLiquidationFee * 10,
+      protocolLiquidationFee: reserveConfig.protocolLiquidationFee,
       protocolTakeRate: reserveConfig.protocolTakeRate,
       addedBorrowWeightBPS: reserveConfig.addedBorrowWeightBPS,
       reserveType: reserveConfig.reserveType,

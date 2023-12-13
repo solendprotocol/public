@@ -213,8 +213,8 @@ function decodeReserve(buffer: Buffer): Reserve {
       depositLimit: reserve.depositLimit,
       borrowLimit: reserve.borrowLimit,
       feeReceiver: reserve.feeReceiver,
-      // value is stored on-chain as deca bps (1 deca bp = 10 bps)
-      protocolLiquidationFee: reserve.protocolLiquidationFee / 10,
+      // value is stored on-chain as deca bps (10 deca bp = 1 bps)
+      protocolLiquidationFee: reserve.protocolLiquidationFee,
       protocolTakeRate: reserve.protocolTakeRate,
       addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
       borrowWeight: new BigNumber(reserve.addedBorrowWeightBPS.toString())

@@ -1,33 +1,13 @@
 import Head from 'next/head';
-import {
-  ConnectionProvider,
-  WalletProvider,
-} from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { ENVIRONMENT } from 'common/config';
-import {
-  CoinbaseWalletAdapter,
-  SolflareWalletAdapter,
-} from '@solana/wallet-adapter-wallets';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { selectedRpcAtom } from 'stores/settings';
-import { useAtom } from 'jotai';
 import { Suspense } from 'react';
 import Loading from 'components/Loading/Loading';
 import NoSSR from 'react-no-ssr';
 import Solend from './dashboard';
 import BigNumber from 'bignumber.js';
 
-require('@solana/wallet-adapter-react-ui/styles.css');
-
 BigNumber.config({ ROUNDING_MODE: BigNumber.ROUND_DOWN });
 
 export default function Index() {
-  const [rpc] = useAtom(selectedRpcAtom);
-  const network = ENVIRONMENT as WalletAdapterNetwork;
-  const solflare = new SolflareWalletAdapter({ network });
-  const coinbase = new CoinbaseWalletAdapter();
-
   return (
     <>
       <Head>
@@ -75,17 +55,11 @@ export default function Index() {
         <meta name='msapplication-TileColor' content='#da532c' />
         <meta name='theme-color' content='#ffffff' />
       </Head>
-      <ConnectionProvider endpoint={rpc.endpoint}>
-        <WalletProvider wallets={[solflare, coinbase]} autoConnect>
-          <WalletModalProvider>
-            <NoSSR>
-              <Suspense fallback={<Loading />}>
-                <Solend />
-              </Suspense>
-            </NoSSR>
-          </WalletModalProvider>
-        </WalletProvider>
-      </ConnectionProvider>
+      <NoSSR>
+        <Suspense fallback={<Loading />}>
+          <Solend />
+        </Suspense>
+      </NoSSR>
     </>
   );
 }
