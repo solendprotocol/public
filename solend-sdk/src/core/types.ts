@@ -1,6 +1,7 @@
 import { Cluster } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import { formatReserve } from "./utils/pools";
+import { formatObligation } from "./utils";
 
 export type PoolMetadataCoreType = {
   name: string | null;
@@ -32,6 +33,8 @@ export type PoolType = {
   owner: string;
   reserves: Array<ReserveType>;
 };
+
+export type ObligationType = Awaited<ReturnType<typeof formatObligation>>;
 
 export type ReserveType = Omit<
   Awaited<ReturnType<typeof formatReserve>>,

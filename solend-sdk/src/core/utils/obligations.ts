@@ -5,6 +5,8 @@ import { PoolType } from "../types";
 import { getBatchMultipleAccountsInfo } from "./utils";
 import { U64_MAX } from "../../classes/constants";
 
+export type FormattedObligation = ReturnType<typeof formatObligation>
+
 export function formatObligation(
   obligation: { pubkey: PublicKey; info: Obligation },
   pool: PoolType

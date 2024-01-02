@@ -24,6 +24,7 @@ export interface Obligation {
   borrowingIsolatedAsset: boolean;
 }
 
+export type RawObligationType = ReturnType<typeof parseObligation>;
 // BN defines toJSON property, which messes up serialization
 // @ts-ignore
 BN.prototype.toJSON = undefined;

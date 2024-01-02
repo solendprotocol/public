@@ -14,15 +14,17 @@ import { configAtom } from './config';
 import BigNumber from 'bignumber.js';
 import {
   createObligationAddress,
-  ReserveType,
   fetchPools,
   getReservesOfPool,
   parseLendingMarket,
   parseRateLimiter,
   PoolType,
+  parseReserve,
 } from '@solendprotocol/solend-sdk';
 import { DEBUG_MODE, PROGRAM_ID } from 'common/config';
 import { atomWithRefresh } from './shared';
+
+export type ReserveType = ReturnType<typeof parseReserve>;
 
 export type ReserveWithMetadataType = ReserveType & {
   symbol: string;

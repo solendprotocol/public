@@ -245,3 +245,19 @@ export const getReservesFromChain = async (
     formatReserve(r, prices[r.pubkey.toBase58()], currentSlot)
   );
 };
+
+export async function fetchPoolByAddress(
+  poolAddress: string,
+  connection: Connection,
+  debug?: boolean
+) {
+  if (debug) console.log("fetchPoolByAddress");
+
+  const accountInfo = await connection.getAccountInfo(new PublicKey(poolAddress));
+
+  if (!accountInfo) {
+    return null;
+  }
+
+  const parsedReserve = parseReserve(new PublicKey(poolAddress), accountInfo);
+}
