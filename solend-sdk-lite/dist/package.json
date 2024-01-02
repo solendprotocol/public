@@ -1,6 +1,6 @@
 {
   "name": "@solendprotocol/solend-sdk",
-  "version": "0.7.1",
+  "version": "0.7.1-lite.0",
   "private": false,
   "main": "./index.js",
   "module": "./index.js",
