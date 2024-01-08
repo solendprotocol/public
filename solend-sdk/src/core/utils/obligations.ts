@@ -1,93 +1,95 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
-import { Obligation, parseObligation } from "../../state";
-import { PoolType } from "../types";
+import { Obligation, OBLIGATION_SIZE, parseObligation } from "../../state";
+import { ReserveType } from "../types";
+import { sha256 as sha256$1 } from "js-sha256";
 import { getBatchMultipleAccountsInfo } from "./utils";
-import { U64_MAX } from "../../classes/constants";
+import { U64_MAX } from "../constants";
 
-export type FormattedObligation = ReturnType<typeof formatObligation>
+export type FormattedObligation = ReturnType<typeof formatObligation>;
 
 export function formatObligation(
   obligation: { pubkey: PublicKey; info: Obligation },
-  pool: PoolType
+  pool: { reserves: Array<ReserveType> }
 ) {
   const poolAddress = obligation.info.lendingMarket.toBase58();
   let minPriceUserTotalSupply = new BigNumber(0);
   let minPriceBorrowLimit = new BigNumber(0);
   let maxPriceUserTotalWeightedBorrow = new BigNumber(0);
 
-  const deposits = obligation.info.deposits
-    .filter((d) => d.depositedAmount.toString() !== "0")
-    .map((d) => {
-      const reserveAddress = d.depositReserve.toBase58();
-      const reserve = pool.reserves.find((r) => r.address === reserveAddress);
+  const deposits = obligation.info.deposits.map((d) => {
+    const reserveAddress = d.depositReserve.toBase58();
+    const reserve = pool.reserves.find((r) => r.address === reserveAddress);
 
-      if (!reserve)
-        throw Error("Deposit in obligation does not exist in the pool");
+    if (!reserve)
+      throw Error("Deposit in obligation does not exist in the pool");
 
-      const amount = new BigNumber(d.depositedAmount.toString())
-        .shiftedBy(-reserve.decimals)
-        .times(reserve.cTokenExchangeRate);
-      const amountUsd = amount.times(reserve.price);
+    const amount = new BigNumber(d.depositedAmount.toString())
+      .shiftedBy(-reserve.decimals)
+      .times(reserve.cTokenExchangeRate);
+    const amountUsd = amount.times(reserve.price);
 
-      minPriceUserTotalSupply = minPriceUserTotalSupply.plus(
-        amount.times(reserve.minPrice)
+    minPriceUserTotalSupply = minPriceUserTotalSupply.plus(
+      amount.times(reserve.minPrice)
+    );
+
+    minPriceBorrowLimit = minPriceBorrowLimit.plus(
+      amount.times(reserve.minPrice).times(reserve.loanToValueRatio)
+    );
+
+    return {
+      liquidationThreshold: reserve.liquidationThreshold,
+      loanToValueRatio: reserve.loanToValueRatio,
+      symbol: reserve.symbol,
+      price: reserve.price,
+      mintAddress: reserve.mintAddress,
+      reserveAddress,
+      amount,
+      amountUsd,
+      annualInterest: amountUsd.multipliedBy(reserve.supplyInterest),
+    };
+  });
+
+  const borrows = obligation.info.borrows.map((b) => {
+    const reserveAddress = b.borrowReserve.toBase58();
+    const reserve = pool.reserves.find((r) => r.address === reserveAddress);
+    if (!reserve)
+      throw Error("Borrow in obligation does not exist in the pool");
+
+    const amount = new BigNumber(b.borrowedAmountWads.toString())
+      .shiftedBy(-18 - reserve.decimals)
+      .times(reserve.cumulativeBorrowRate)
+      .dividedBy(
+        new BigNumber(b.cumulativeBorrowRateWads.toString()).shiftedBy(-18)
       );
+    const amountUsd = amount.times(reserve.price);
 
-      minPriceBorrowLimit = minPriceBorrowLimit.plus(
-        amount.times(reserve.minPrice).times(reserve.loanToValueRatio)
-      );
+    const maxPrice = reserve.emaPrice
+      ? BigNumber.max(reserve.emaPrice, reserve.price)
+      : reserve.price;
 
-      return {
-        liquidationThreshold: reserve.liquidationThreshold,
-        loanToValueRatio: reserve.loanToValueRatio,
-        symbol: reserve.symbol,
-        price: reserve.price,
-        reserveAddress,
-        amount,
-        amountUsd,
-      };
-    });
+    maxPriceUserTotalWeightedBorrow = maxPriceUserTotalWeightedBorrow.plus(
+      amount
+        .times(maxPrice)
+        .times(reserve.borrowWeight ? reserve.borrowWeight : U64_MAX)
+    );
 
-  const borrows = obligation.info.borrows
-    .filter((b) => b.borrowedAmountWads.toString() !== "0")
-    .map((b) => {
-      const reserveAddress = b.borrowReserve.toBase58();
-      const reserve = pool.reserves.find((r) => r.address === reserveAddress);
-      if (!reserve)
-        throw Error("Borrow in obligation does not exist in the pool");
-
-      const amount = new BigNumber(b.borrowedAmountWads.toString())
-        .shiftedBy(-18 - reserve.decimals)
-        .times(reserve.cumulativeBorrowRate)
-        .dividedBy(
-          new BigNumber(b.cumulativeBorrowRateWads.toString()).shiftedBy(-18)
-        );
-      const amountUsd = amount.times(reserve.price);
-
-      const maxPrice = reserve.emaPrice
-        ? BigNumber.max(reserve.emaPrice, reserve.price)
-        : reserve.price;
-
-      maxPriceUserTotalWeightedBorrow = maxPriceUserTotalWeightedBorrow.plus(
-        amount
-          .times(maxPrice)
-          .times(reserve.borrowWeight ? reserve.borrowWeight : U64_MAX)
-      );
-
-      return {
-        liquidationThreshold: reserve.liquidationThreshold,
-        loanToValueRatio: reserve.loanToValueRatio,
-        symbol: reserve.symbol,
-        price: reserve.price,
-        reserveAddress,
-        amount,
-        amountUsd,
-        weightedAmountUsd: new BigNumber(reserve.borrowWeight).multipliedBy(
-          amountUsd
-        ),
-      };
-    });
+    return {
+      liquidationThreshold: reserve.liquidationThreshold,
+      loanToValueRatio: reserve.loanToValueRatio,
+      symbol: reserve.symbol,
+      price: reserve.price,
+      reserveAddress,
+      mintAddress: reserve.mintAddress,
+      borrowWeight: reserve.borrowWeight,
+      amount,
+      amountUsd,
+      weightedAmountUsd: new BigNumber(reserve.borrowWeight).multipliedBy(
+        amountUsd
+      ),
+      annualInterest: amountUsd.multipliedBy(reserve.borrowInterest),
+    };
+  });
 
   const totalSupplyValue = deposits.reduce(
     (acc, d) => acc.plus(d.amountUsd),
@@ -139,6 +141,17 @@ export function formatObligation(
     ? new BigNumber(0)
     : maxPriceUserTotalWeightedBorrow.dividedBy(minPriceBorrowLimit);
 
+  const annualSupplyInterest = deposits.reduce(
+    (acc, d) => d.annualInterest.plus(acc),
+    new BigNumber(0)
+  );
+  const annualBorrowInterest = borrows.reduce(
+    (acc, b) => b.annualInterest.plus(acc),
+    new BigNumber(0)
+  );
+  const netApy = annualSupplyInterest
+    .minus(annualBorrowInterest)
+    .div(netAccountValue.toString());
   return {
     address: obligation.pubkey.toBase58(),
     positions,
@@ -161,6 +174,7 @@ export function formatObligation(
     minPriceUserTotalSupply,
     minPriceBorrowLimit,
     maxPriceUserTotalWeightedBorrow,
+    netApy,
   };
 }
 
@@ -212,4 +226,92 @@ export async function fetchObligationsByAddress(
     .filter(Boolean) as Array<{ info: Obligation; pubkey: PublicKey }>;
 
   return parsedObligations;
+}
+
+export async function fetchObligationsByWallet(
+  publicKey: PublicKey,
+  connection: Connection,
+  programId: string,
+  debug?: boolean
+) {
+  if (debug) console.log("fetchObligationsByWallet");
+
+  const filters = [
+    { dataSize: OBLIGATION_SIZE },
+    { memcmp: { offset: 42, bytes: publicKey.toBase58() } },
+  ];
+
+  const rawObligations = await connection.getProgramAccounts(
+    new PublicKey(programId),
+    {
+      commitment: connection.commitment,
+      filters,
+      encoding: "base64",
+    }
+  );
+
+  const parsedObligations = rawObligations
+    .map((obligation, index) =>
+      obligation ? parseObligation(obligation.pubkey, obligation.account) : null
+    )
+    .filter(Boolean) as Array<{ info: Obligation; pubkey: PublicKey }>;
+
+  return parsedObligations;
+}
+
+export async function fetchObligationsOfPoolByWallet(
+  publicKey: PublicKey,
+  poolAddress: PublicKey,
+  programId: PublicKey,
+  connection: Connection,
+  debug?: boolean
+) {
+  if (debug) console.log("fetchObligationsByWallet");
+
+  const filters = [
+    { dataSize: OBLIGATION_SIZE },
+    { memcmp: { offset: 42, bytes: publicKey.toBase58() } },
+    { memcmp: { offset: 10, bytes: poolAddress.toBase58() } },
+  ];
+
+  const rawObligations = await connection.getProgramAccounts(programId, {
+    commitment: connection.commitment,
+    filters,
+    encoding: "base64",
+  });
+
+  const parsedObligations = rawObligations
+    .map((obligation, index) =>
+      obligation ? parseObligation(obligation.pubkey, obligation.account) : null
+    )
+    .filter(Boolean) as Array<{ info: Obligation; pubkey: PublicKey }>;
+
+  return parsedObligations;
+}
+
+function createWithSeedSync(
+  fromPublicKey: PublicKey,
+  seed: string,
+  programId: PublicKey
+) {
+  const buffer = Buffer.concat([
+    fromPublicKey.toBuffer(),
+    Buffer.from(seed),
+    programId.toBuffer(),
+  ]);
+  const hash = sha256$1.digest(buffer);
+  return new PublicKey(Buffer.from(hash));
+}
+
+export function getNthObligationSeed(lendingMarket: PublicKey, n: number) {
+  return lendingMarket.toBase58().slice(0, 24) + `0000000${n}m`.slice(-7);
+}
+
+export function getObligationAddressWithSeed(
+  publicKey: PublicKey,
+  seed: string,
+  programId: PublicKey
+) {
+  // <first 25 char of lending market address> + <7 chars: 0000001 - 9999999>
+  return createWithSeedSync(publicKey, seed, programId);
 }

@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import * as Layout from "../utils/layout";
+import * as Layout from "../layout";
 import BN from "bn.js";
 const BufferLayout = require("buffer-layout");
 

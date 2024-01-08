@@ -1,12 +1,8 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import {
-  EnvironmentType,
-  getProgramId,
-  LENDING_MARKET_SIZE,
-} from "@solendprotocol/solend-sdk";
-import { SOLEND_ADDRESSES } from "../constants";
+import { LENDING_MARKET_SIZE } from "../../state";
+import { SOLEND_ADDRESSES, getProgramId } from "../constants";
+import { EnvironmentType, PoolMetadataCoreType } from "../types";
 import { titleCase } from "./utils";
-import { PoolMetadataCoreType } from "@solendprotocol/solend-sdk";
 
 export async function fetchPoolMetadata(
   connection: Connection,
