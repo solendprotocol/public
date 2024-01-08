@@ -1,4 +1,4 @@
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Cluster, Connection, PublicKey } from "@solana/web3.js";
 import axios from "axios";
 import { SolendClaim } from "./claim";
 import * as anchor from "@project-serum/anchor";
@@ -91,7 +91,7 @@ export class SolendWallet {
   private constructor(
     wallet: anchor.Wallet,
     connection: Connection,
-    environment: string
+    environment: Cluster | 'beta' | 'production'
   ) {
     this.config = null;
     this.rewards = {};
