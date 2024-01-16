@@ -67,7 +67,7 @@ export declare const ReserveConfigLayout: any;
 export declare const ReserveLayout: typeof BufferLayout.Structure;
 export declare const RESERVE_SIZE: any;
 export declare const isReserve: (info: AccountInfo<Buffer>) => boolean;
-export declare const parseReserve: (pubkey: PublicKey, info: AccountInfo<Buffer>, encoding?: string | undefined) => {
+export declare const parseReserve: (pubkey: PublicKey, info: AccountInfo<Buffer>, encoding?: string) => {
     pubkey: PublicKey;
     account: {
         executable: boolean;

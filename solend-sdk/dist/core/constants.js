@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getProgramId = exports.SOLEND_BETA_PROGRAM_ID = exports.SOLEND_DEVNET_PROGRAM_ID = exports.SOLEND_PRODUCTION_PROGRAM_ID = exports.NULL_ORACLE = exports.U64_MAX = exports.SOLEND_ADDRESSES = exports.SLOTS_PER_YEAR = exports.SOL_PADDING_FOR_INTEREST = exports.POSITION_LIMIT = exports.WAD = void 0;
+exports.EmptyObligation = exports.BigZero = exports.getProgramId = exports.SOLEND_BETA_PROGRAM_ID = exports.SOLEND_DEVNET_PROGRAM_ID = exports.SOLEND_PRODUCTION_PROGRAM_ID = exports.NULL_ORACLE = exports.U64_MAX = exports.SOLEND_ADDRESSES = exports.SLOTS_PER_YEAR = exports.SOL_PADDING_FOR_INTEREST = exports.POSITION_LIMIT = exports.WAD = void 0;
 const web3_js_1 = require("@solana/web3.js");
+const bignumber_js_1 = __importDefault(require("bignumber.js"));
 exports.WAD = "1".concat(Array(18 + 1).join("0"));
 exports.POSITION_LIMIT = 6;
 exports.SOL_PADDING_FOR_INTEREST = "1000000";
@@ -33,3 +37,28 @@ function getProgramId(environment) {
     throw Error(`Unsupported environment: ${environment}`);
 }
 exports.getProgramId = getProgramId;
+exports.BigZero = new bignumber_js_1.default(0);
+exports.EmptyObligation = {
+    address: "empty",
+    positions: 0,
+    deposits: [],
+    borrows: [],
+    poolAddress: "",
+    totalSupplyValue: exports.BigZero,
+    totalBorrowValue: exports.BigZero,
+    borrowLimit: exports.BigZero,
+    liquidationThreshold: exports.BigZero,
+    netAccountValue: exports.BigZero,
+    liquidationThresholdFactor: exports.BigZero,
+    borrowLimitFactor: exports.BigZero,
+    borrowUtilization: exports.BigZero,
+    weightedConservativeBorrowUtilization: exports.BigZero,
+    weightedBorrowUtilization: exports.BigZero,
+    isBorrowLimitReached: false,
+    borrowOverSupply: exports.BigZero,
+    weightedTotalBorrowValue: exports.BigZero,
+    minPriceUserTotalSupply: exports.BigZero,
+    minPriceBorrowLimit: exports.BigZero,
+    maxPriceUserTotalWeightedBorrow: exports.BigZero,
+    netApy: exports.BigZero,
+};

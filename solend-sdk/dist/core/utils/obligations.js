@@ -185,7 +185,7 @@ async function fetchObligationsOfPoolByWallet(publicKey, poolAddress, programId,
         encoding: "base64",
     });
     const parsedObligations = rawObligations
-        .map((obligation, index) => obligation ? (0, state_1.parseObligation)(obligation.pubkey, obligation.account) : null)
+        .map((obligation) => obligation ? (0, state_1.parseObligation)(obligation.pubkey, obligation.account) : null)
         .filter(Boolean);
     return parsedObligations;
 }

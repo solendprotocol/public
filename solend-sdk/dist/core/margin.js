@@ -58,14 +58,13 @@ class Margin {
                 ? this.obligation.borrows.map((ol) => new web3_js_1.PublicKey(ol.reserveAddress))
                 : [];
     }
-    calculateMaxUserBorrowPower = (collateralValue, collateralReserve) => {
-        let curShortSupplyAmount = (this.obligation?.deposits.find((d) => d.reserveAddress === this.shortReserve.address)?.amount ?? new bignumber_js_1.default(0)).plus(collateralReserve.address === this.shortReserve.address
-            ? collateralValue
-            : 0);
+    calculateMaxUserBorrowPower = () => {
+        console.log("minPriceBorrowLimit", this.obligation?.minPriceBorrowLimit.toString());
+        console.log(this.obligation);
+        let curShortSupplyAmount = this.obligation?.deposits.find((d) => d.reserveAddress === this.shortReserve.address)?.amount ?? new bignumber_js_1.default(0);
+        console.log("short supply", curShortSupplyAmount.toString(), this.shortReserve.address);
         let curShortBorrowAmount = this.obligation?.borrows.find((d) => d.reserveAddress === this.shortReserve.address)?.amount ?? new bignumber_js_1.default(0);
-        let curLongSupplyAmount = (this.obligation?.deposits.find((d) => d.reserveAddress === this.longReserve.address)?.amount ?? new bignumber_js_1.default(0)).plus(collateralReserve.address === this.longReserve.address
-            ? collateralValue
-            : 0);
+        let curLongSupplyAmount = this.obligation?.deposits.find((d) => d.reserveAddress === this.longReserve.address)?.amount ?? new bignumber_js_1.default(0);
         let curLongBorrowAmount = this.obligation?.borrows.find((d) => d.reserveAddress === this.longReserve.address)?.amount ?? new bignumber_js_1.default(0);
         // handle the case where short token has non-zero ltv / infitie borrow weight e.g mSOL/stSOL
         if (this.shortReserve.addedBorrowWeightBPS.toString() === constants_1.U64_MAX ||
@@ -90,9 +89,7 @@ class Margin {
             .plus(new bignumber_js_1.default(10000))
             .dividedBy(new bignumber_js_1.default(10000));
         let totalShortSwapable = new bignumber_js_1.default(0);
-        let curMinPriceBorrowLimit = (this.obligation?.minPriceBorrowLimit ?? (0, bignumber_js_1.default)(0)).plus(new bignumber_js_1.default(collateralValue)
-            .multipliedBy(collateralReserve.loanToValueRatio)
-            .multipliedBy(collateralReserve.minPrice));
+        let curMinPriceBorrowLimit = this.obligation?.minPriceBorrowLimit ?? (0, bignumber_js_1.default)(0);
         let curMaxPriceUserTotalWeightedBorrow = this.obligation?.maxPriceUserTotalWeightedBorrow ?? (0, bignumber_js_1.default)(0);
         for (let i = 0; i < 20; i += 1) {
             if (curMaxPriceUserTotalWeightedBorrow.isGreaterThanOrEqualTo(curMinPriceBorrowLimit)) {
@@ -154,8 +151,9 @@ class Margin {
     };
     setupTx = async (depositCollateralConfig) => {
         const ixs = [];
-        // If we are depositing, the deposit instruction will handle creaeting the obligation
-        if (!this.obligation && !depositCollateralConfig) {
+        // If we are depositing, the deposit instruction will handle creating the obligation
+        if ((!this.obligation || this.obligation.address === "empty") &&
+            !depositCollateralConfig) {
             ixs.push(web3_js_1.SystemProgram.createAccountWithSeed({
                 fromPubkey: this.owner,
                 newAccountPubkey: this.obligationAddress,

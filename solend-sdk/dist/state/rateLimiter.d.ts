@@ -7,7 +7,7 @@ export interface RateLimiter {
     windowStart: BN;
     currentQuantity: BN;
 }
-export declare type ParsedRateLimiter = {
+export type ParsedRateLimiter = {
     config: {
         windowDuration: BigNumber;
         maxOutflow: BigNumber;

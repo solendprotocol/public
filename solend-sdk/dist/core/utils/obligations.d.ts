@@ -3,7 +3,7 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import { Obligation } from "../../state";
 import { ReserveType } from "../types";
-export declare type FormattedObligation = ReturnType<typeof formatObligation>;
+export type FormattedObligation = ReturnType<typeof formatObligation>;
 export declare function formatObligation(obligation: {
     pubkey: PublicKey;
     info: Obligation;

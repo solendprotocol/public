@@ -20,8 +20,8 @@ export declare class Margin {
     depositKeys: Array<PublicKey>;
     borrowKeys: Array<PublicKey>;
     constructor(connection: Connection, owner: PublicKey, longReserve: ReserveType, shortReserve: ReserveType, pool: PoolType, obligationAddress: PublicKey, obligationSeed: string, obligation?: ObligationType, collateralReserve?: ReserveType);
-    calculateMaxUserBorrowPower: (collateralValue: string, collateralReserve: ReserveType) => number;
-    setupTx: (depositCollateralConfig: {
+    calculateMaxUserBorrowPower: () => number;
+    setupTx: (depositCollateralConfig?: {
         collateralReserve: ReserveType;
         amount: string;
     }) => Promise<{

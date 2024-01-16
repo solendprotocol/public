@@ -1,4 +1,3 @@
-/// <reference types="bn.js" />
 /// <reference types="node" />
 import { Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
@@ -82,7 +81,7 @@ export declare function formatReserve(reserve: {
     minPrice: BigNumber;
     maxPrice: BigNumber;
 };
-export declare const getReservesOfPool: (lendingMarketPubkey: PublicKey, connection: Connection, programId: string, currentSlot: number, switchboardProgram?: SwitchboardProgram | undefined, debug?: boolean | undefined) => Promise<{
+export declare const getReservesOfPool: (lendingMarketPubkey: PublicKey, connection: Connection, programId: string, currentSlot: number, switchboardProgram?: SwitchboardProgram, debug?: boolean) => Promise<{
     disabled: boolean;
     cumulativeBorrowRate: BigNumber;
     cTokenExchangeRate: BigNumber;
@@ -144,7 +143,7 @@ export declare const getReservesOfPool: (lendingMarketPubkey: PublicKey, connect
     minPrice: BigNumber;
     maxPrice: BigNumber;
 }[]>;
-export declare const getReservesFromChain: (connection: Connection, switchboardProgram: SwitchboardProgram, programId: string, currentSlot: number, debug?: boolean | undefined) => Promise<{
+export declare const getReservesFromChain: (connection: Connection, switchboardProgram: SwitchboardProgram, programId: string, currentSlot: number, debug?: boolean) => Promise<{
     disabled: boolean;
     cumulativeBorrowRate: BigNumber;
     cTokenExchangeRate: BigNumber;

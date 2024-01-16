@@ -281,7 +281,7 @@ export async function fetchObligationsOfPoolByWallet(
   });
 
   const parsedObligations = rawObligations
-    .map((obligation, index) =>
+    .map((obligation) =>
       obligation ? parseObligation(obligation.pubkey, obligation.account) : null
     )
     .filter(Boolean) as Array<{ info: Obligation; pubkey: PublicKey }>;

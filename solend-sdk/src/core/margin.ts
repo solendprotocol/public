@@ -131,32 +131,29 @@ export class Margin {
         : [];
   }
 
-  calculateMaxUserBorrowPower = (
-    collateralValue: string,
-    collateralReserve: ReserveType
-  ) => {
-    let curShortSupplyAmount = (
+  calculateMaxUserBorrowPower = () => {
+    console.log(
+      "minPriceBorrowLimit",
+      this.obligation?.minPriceBorrowLimit.toString()
+    );
+    console.log(this.obligation);
+    let curShortSupplyAmount =
       this.obligation?.deposits.find(
         (d) => d.reserveAddress === this.shortReserve.address
-      )?.amount ?? new BigNumber(0)
-    ).plus(
-      collateralReserve.address === this.shortReserve.address
-        ? collateralValue
-        : 0
+      )?.amount ?? new BigNumber(0);
+    console.log(
+      "short supply",
+      curShortSupplyAmount.toString(),
+      this.shortReserve.address
     );
     let curShortBorrowAmount =
       this.obligation?.borrows.find(
         (d) => d.reserveAddress === this.shortReserve.address
       )?.amount ?? new BigNumber(0);
-    let curLongSupplyAmount = (
+    let curLongSupplyAmount =
       this.obligation?.deposits.find(
         (d) => d.reserveAddress === this.longReserve.address
-      )?.amount ?? new BigNumber(0)
-    ).plus(
-      collateralReserve.address === this.longReserve.address
-        ? collateralValue
-        : 0
-    );
+      )?.amount ?? new BigNumber(0);
     let curLongBorrowAmount =
       this.obligation?.borrows.find(
         (d) => d.reserveAddress === this.longReserve.address
@@ -197,13 +194,8 @@ export class Margin {
       .plus(new BigNumber(10000))
       .dividedBy(new BigNumber(10000));
     let totalShortSwapable = new BigNumber(0);
-    let curMinPriceBorrowLimit = (
-      this.obligation?.minPriceBorrowLimit ?? BigNumber(0)
-    ).plus(
-      new BigNumber(collateralValue)
-        .multipliedBy(collateralReserve.loanToValueRatio)
-        .multipliedBy(collateralReserve.minPrice)
-    );
+    let curMinPriceBorrowLimit =
+      this.obligation?.minPriceBorrowLimit ?? BigNumber(0);
     let curMaxPriceUserTotalWeightedBorrow =
       this.obligation?.maxPriceUserTotalWeightedBorrow ?? BigNumber(0);
 
@@ -286,13 +278,17 @@ export class Margin {
 
     return totalShortSwapable.times(new BigNumber(".975")).toNumber();
   };
-  setupTx = async (depositCollateralConfig: {
+
+  setupTx = async (depositCollateralConfig?: {
     collateralReserve: ReserveType;
     amount: string;
   }) => {
     const ixs: TransactionInstruction[] = [];
-    // If we are depositing, the deposit instruction will handle creaeting the obligation
-    if (!this.obligation && !depositCollateralConfig) {
+    // If we are depositing, the deposit instruction will handle creating the obligation
+    if (
+      (!this.obligation || this.obligation.address === "empty") &&
+      !depositCollateralConfig
+    ) {
       ixs.push(
         SystemProgram.createAccountWithSeed({
           fromPubkey: this.owner,

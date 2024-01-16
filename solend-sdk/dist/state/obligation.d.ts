@@ -18,7 +18,7 @@ export interface Obligation {
     superUnhealthyBorrowValue: BN;
     borrowingIsolatedAsset: boolean;
 }
-export declare type RawObligationType = ReturnType<typeof parseObligation>;
+export type RawObligationType = ReturnType<typeof parseObligation>;
 export declare function obligationToString(obligation: Obligation): string;
 export interface ObligationCollateral {
     depositReserve: PublicKey;
@@ -50,7 +50,7 @@ export interface ProtoObligation {
     borrowsLen: number;
     dataFlat: Buffer;
 }
-export declare const parseObligation: (pubkey: PublicKey, info: AccountInfo<Buffer>, encoding?: string | undefined) => {
+export declare const parseObligation: (pubkey: PublicKey, info: AccountInfo<Buffer>, encoding?: string) => {
     pubkey: PublicKey;
     account: {
         executable: boolean;

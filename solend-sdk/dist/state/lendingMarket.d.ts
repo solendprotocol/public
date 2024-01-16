@@ -17,7 +17,7 @@ export interface LendingMarket {
 export declare const LendingMarketLayout: typeof BufferLayout.Structure;
 export declare const LENDING_MARKET_SIZE: any;
 export declare const isLendingMarket: (info: AccountInfo<Buffer>) => boolean;
-export declare const parseLendingMarket: (pubkey: PublicKey, info: AccountInfo<Buffer>, encoding?: string | undefined) => {
+export declare const parseLendingMarket: (pubkey: PublicKey, info: AccountInfo<Buffer>, encoding?: string) => {
     pubkey: PublicKey;
     account: {
         executable: boolean;

@@ -2,7 +2,7 @@ import { Connection, PublicKey, Transaction, TransactionInstruction, Transaction
 import BN from "bn.js";
 import { Obligation } from "../state/obligation";
 import { EnvironmentType, PoolType, ReserveType } from "./types";
-export declare type ActionType = "deposit" | "borrow" | "withdraw" | "repay" | "mint" | "redeem" | "depositCollateral" | "withdrawCollateral" | "forgive";
+export type ActionType = "deposit" | "borrow" | "withdraw" | "repay" | "mint" | "redeem" | "depositCollateral" | "withdrawCollateral" | "forgive";
 export declare class SolendActionCore {
     programId: PublicKey;
     connection: Connection;
