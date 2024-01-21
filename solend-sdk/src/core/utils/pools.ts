@@ -163,6 +163,7 @@ export function formatReserve(
       price?.emaPrice && price?.spotPrice
         ? BigNumber.max(price.emaPrice, price.spotPrice)
         : new BigNumber(price?.spotPrice ?? priceResolved),
+    reserveType: reserve.info.config.reserveType,
   };
 }
 
