@@ -39,7 +39,7 @@ var AssetType;
 (function (AssetType) {
     AssetType[AssetType["Regular"] = 0] = "Regular";
     AssetType[AssetType["Isolated"] = 1] = "Isolated";
-})(AssetType = exports.AssetType || (exports.AssetType = {}));
+})(AssetType || (exports.AssetType = AssetType = {}));
 exports.ReserveConfigLayout = BufferLayout.struct([
     BufferLayout.u8("optimalUtilizationRate"),
     BufferLayout.u8("maxUtilizationRate"),

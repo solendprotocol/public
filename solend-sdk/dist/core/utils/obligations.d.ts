@@ -1,4 +1,6 @@
 /// <reference types="node" />
+/// <reference types="@project-serum/anchor/node_modules/@solana/web3.js" />
+/// <reference types="@pythnetwork/client/node_modules/@solana/web3.js" />
 import { Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import { Obligation } from "../../state";

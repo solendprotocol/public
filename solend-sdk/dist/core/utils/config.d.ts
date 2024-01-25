@@ -1,3 +1,5 @@
+/// <reference types="@project-serum/anchor/node_modules/@solana/web3.js" />
+/// <reference types="@pythnetwork/client/node_modules/@solana/web3.js" />
 import { Connection, PublicKey } from "@solana/web3.js";
 import { EnvironmentType, PoolMetadataCoreType } from "../types";
 export declare function fetchPoolMetadata(connection: Connection, environment?: EnvironmentType, useApi?: Boolean, debug?: Boolean): Promise<Array<PoolMetadataCoreType>>;

@@ -24,7 +24,7 @@ var LendingInstruction;
     LendingInstruction[LendingInstruction["FlashRepayReserveLiquidity"] = 20] = "FlashRepayReserveLiquidity";
     LendingInstruction[LendingInstruction["ForgiveDebt"] = 21] = "ForgiveDebt";
     LendingInstruction[LendingInstruction["UpdateMetadata"] = 22] = "UpdateMetadata";
-})(LendingInstruction = exports.LendingInstruction || (exports.LendingInstruction = {}));
+})(LendingInstruction || (exports.LendingInstruction = LendingInstruction = {}));
 /** Instructions defined by the program */
 var TokenInstruction;
 (function (TokenInstruction) {
@@ -49,4 +49,4 @@ var TokenInstruction;
     TokenInstruction[TokenInstruction["InitializeAccount3"] = 18] = "InitializeAccount3";
     TokenInstruction[TokenInstruction["InitializeMultisig2"] = 19] = "InitializeMultisig2";
     TokenInstruction[TokenInstruction["InitializeMint2"] = 20] = "InitializeMint2";
-})(TokenInstruction = exports.TokenInstruction || (exports.TokenInstruction = {}));
+})(TokenInstruction || (exports.TokenInstruction = TokenInstruction = {}));

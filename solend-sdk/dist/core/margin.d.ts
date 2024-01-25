@@ -1,3 +1,5 @@
+/// <reference types="@project-serum/anchor/node_modules/@solana/web3.js" />
+/// <reference types="@pythnetwork/client/node_modules/@solana/web3.js" />
 import { AddressLookupTableAccount, Connection, PublicKey, TransactionInstruction, VersionedTransaction } from "@solana/web3.js";
 import { ObligationType, PoolType, ReserveType } from ".";
 import BN from "bn.js";
