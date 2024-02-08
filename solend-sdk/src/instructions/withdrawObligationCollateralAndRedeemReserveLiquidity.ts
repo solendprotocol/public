@@ -20,7 +20,8 @@ export const withdrawObligationCollateralAndRedeemReserveLiquidity = (
   reserveLiquiditySupply: PublicKey,
   obligationOwner: PublicKey,
   transferAuthority: PublicKey,
-  solendProgramAddress: PublicKey
+  solendProgramAddress: PublicKey,
+  depositReserves: Array<PublicKey>
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
     BufferLayout.u8("instruction"),
@@ -50,7 +51,13 @@ export const withdrawObligationCollateralAndRedeemReserveLiquidity = (
     { pubkey: obligationOwner, isSigner: true, isWritable: false },
     { pubkey: transferAuthority, isSigner: true, isWritable: false },
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    ...depositReserves.map((reserve) => ({
+      pubkey: reserve,
+      isSigner: false,
+      isWritable: true,
+    })),
   ];
+
   return new TransactionInstruction({
     keys,
     programId: solendProgramAddress,

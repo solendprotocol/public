@@ -35,6 +35,7 @@ export const borrowObligationLiquidityInstruction = (
   lendingMarketAuthority: PublicKey,
   obligationOwner: PublicKey,
   solendProgramAddress: PublicKey,
+  depositReserves: Array<PublicKey>,
   hostFeeReceiver?: PublicKey
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
@@ -65,6 +66,11 @@ export const borrowObligationLiquidityInstruction = (
     { pubkey: lendingMarketAuthority, isSigner: false, isWritable: false },
     { pubkey: obligationOwner, isSigner: true, isWritable: false },
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    ...depositReserves.map((reserve) => ({
+      pubkey: reserve,
+      isSigner: false,
+      isWritable: true,
+    })),
   ];
 
   if (hostFeeReceiver) {

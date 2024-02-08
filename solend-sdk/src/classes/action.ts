@@ -596,6 +596,7 @@ export class SolendAction {
         new PublicKey(this.lendingMarket.authorityAddress), // lendingMarketAuthority
         this.publicKey,
         this.programId,
+        this.depositReserves.map((reserve) => new PublicKey(reserve)),
         this.hostAta
       )
     );
@@ -654,7 +655,8 @@ export class SolendAction {
         new PublicKey(this.reserve.liquidityAddress),
         this.publicKey, // obligationOwner
         this.publicKey, // transferAuthority
-        this.programId
+        this.programId,
+        this.depositReserves.map((reserve) => new PublicKey(reserve)),
       )
     );
   }
