@@ -10,48 +10,32 @@ import { LendingInstruction } from "./instruction";
 const BufferLayout = require("buffer-layout");
 
 export const setObligationCloseabilityStatus = (
+obligation: PublicKey,
   lendingMarket: PublicKey,
-  lendingMarketOwner: PublicKey,
+  reserve: PublicKey,
+  riskAuthority: PublicKey,
+  closeable: boolean,
   lendingProgramId: PublicKey,
-  marketName: string,
-  marketDescription: string,
-  marketImageUrl: string
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
     BufferLayout.u8("instruction"),
-    BufferLayout.blob(50, "marketName"),
-    BufferLayout.blob(250, "marketDescription"),
-    BufferLayout.blob(250, "marketImageUrl"),
-    BufferLayout.blob(200, "padding"),
-    BufferLayout.u8("bumpSeed"),
+    BufferLayout.u8("closeable"),
   ]);
-
-  const [lendingMarketMetadata, _] = findProgramAddressSync(
-    [
-      lendingMarket.toBytes(),
-      Buffer.from(anchor.utils.bytes.utf8.encode("MetaData")),
-    ],
-
-    lendingProgramId
-  );
 
   const data = Buffer.alloc(dataLayout.span);
   dataLayout.encode(
     {
-      instruction: LendingInstruction.UpdateMetadata,
-      marketName,
-      marketDescription,
-      marketImageUrl,
-      padding: Buffer.alloc(200),
+      instruction: LendingInstruction.SetObligationCloseabilityStatus,
+      closeable: closeable ? 1 : 0,
     },
     data
   );
 
   const keys = [
+    { pubkey: obligation, isSigner: false, isWritable: true },
     { pubkey: lendingMarket, isSigner: false, isWritable: false },
-    { pubkey: lendingMarketOwner, isSigner: true, isWritable: false },
-    { pubkey: lendingMarketMetadata, isSigner: false, isWritable: true },
-    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    { pubkey: reserve, isSigner: false, isWritable: false },
+    { pubkey: riskAuthority, isSigner: true, isWritable: true },
   ];
 
   return new TransactionInstruction({
