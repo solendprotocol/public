@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
-import { parseReserve } from "../state/reserve";
+import {parseReserve, Reserve} from "../state/reserve";
 import BN from "bn.js";
 import { WAD, WANG } from "./constants";
 import { ReserveConfigType, RewardsDataType, ReserveDataType } from "./shared";
@@ -53,46 +53,80 @@ export class SolendReserve {
   private calculateSupplyAPR(reserve: ParsedReserve) {
     const currentUtilization = this.calculateUtilizationRatio(reserve);
 
-    const borrowAPY = this.calculateBorrowAPR(reserve);
-    return currentUtilization * borrowAPY;
+    const borrowAPR = this.calculateBorrowAPR(reserve);
+    const protocolTakePercentage = BigNumber(1).minus(
+        reserve.config.protocolTakeRate / 100
+    );
+
+    return currentUtilization.times(borrowAPR).times(protocolTakePercentage);
   }
 
   private calculateUtilizationRatio(reserve: ParsedReserve) {
     const totalBorrowsWads = new BigNumber(
       reserve.liquidity.borrowedAmountWads.toString()
-    ).div(WAD);
+    ).shiftedBy(-18);
+    const totalSupply = totalBorrowsWads.plus(
+        reserve.liquidity.availableAmount.toString()
+    );
     const currentUtilization = totalBorrowsWads
-      .dividedBy(
-        totalBorrowsWads.plus(reserve.liquidity.availableAmount.toString())
-      )
-      .toNumber();
+      .dividedBy(totalSupply);
 
     return currentUtilization;
   }
 
-  private calculateBorrowAPR(reserve: ParsedReserve) {
+  private calculateBorrowAPR = (reserve: Reserve) => {
     const currentUtilization = this.calculateUtilizationRatio(reserve);
-    const optimalUtilization = reserve.config.optimalUtilizationRate / 100;
-
+    const optimalUtilization = new BigNumber(
+        reserve.config.optimalUtilizationRate / 100
+    );
+    const maxUtilizationRate = new BigNumber(
+        reserve.config.maxUtilizationRate / 100
+    );
     let borrowAPR;
-    if (optimalUtilization === 1.0 || currentUtilization < optimalUtilization) {
-      const normalizedFactor = currentUtilization / optimalUtilization;
-      const optimalBorrowRate = reserve.config.optimalBorrowRate / 100;
-      const minBorrowRate = reserve.config.minBorrowRate / 100;
-      borrowAPR =
-        normalizedFactor * (optimalBorrowRate - minBorrowRate) + minBorrowRate;
+    if (currentUtilization.isLessThanOrEqualTo(optimalUtilization)) {
+      const minBorrowRate = new BigNumber(reserve.config.minBorrowRate / 100);
+      if (optimalUtilization.isEqualTo(0)) {
+        return minBorrowRate;
+      }
+      const normalizedFactor = currentUtilization.dividedBy(optimalUtilization);
+
+      const optimalBorrowRate = new BigNumber(
+          reserve.config.optimalBorrowRate / 100
+      );
+
+      borrowAPR = normalizedFactor
+          .times(optimalBorrowRate.minus(minBorrowRate))
+          .plus(minBorrowRate);
+    } else if (currentUtilization.isLessThanOrEqualTo(maxUtilizationRate)) {
+      const weight = currentUtilization
+          .minus(optimalUtilization)
+          .dividedBy(maxUtilizationRate.minus(optimalUtilization));
+
+      const optimalBorrowRate = new BigNumber(
+          reserve.config.optimalBorrowRate / 100
+      );
+      const maxBorrowRate = new BigNumber(reserve.config.maxBorrowRate / 100);
+
+      borrowAPR = weight
+          .times(maxBorrowRate.minus(optimalBorrowRate))
+          .plus(optimalBorrowRate);
     } else {
-      const normalizedFactor =
-        (currentUtilization - optimalUtilization) / (1 - optimalUtilization);
-      const optimalBorrowRate = reserve.config.optimalBorrowRate / 100;
-      const maxBorrowRate = reserve.config.maxBorrowRate / 100;
-      borrowAPR =
-        normalizedFactor * (maxBorrowRate - optimalBorrowRate) +
-        optimalBorrowRate;
+      const weight = currentUtilization
+          .minus(maxUtilizationRate)
+          .dividedBy(new BigNumber(1).minus(maxUtilizationRate));
+
+      const maxBorrowRate = new BigNumber(reserve.config.maxBorrowRate / 100);
+      const superMaxBorrowRate = new BigNumber(
+          reserve.config.superMaxBorrowRate.toNumber() / 100
+      );
+
+      borrowAPR = weight
+          .times(superMaxBorrowRate.minus(maxBorrowRate))
+          .plus(maxBorrowRate);
     }
 
     return borrowAPR;
-  }
+  };
 
   setBuffer(buffer: AccountInfo<Buffer> | null) {
     this.buffer = buffer;
