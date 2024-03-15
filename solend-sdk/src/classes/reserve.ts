@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
-import {parseReserve, Reserve} from "../state/reserve";
+import { parseReserve } from "../state/reserve";
 import BN from "bn.js";
 import { WAD, WANG } from "./constants";
 import { ReserveConfigType, RewardsDataType, ReserveDataType } from "./shared";
@@ -74,7 +74,7 @@ export class SolendReserve {
     return currentUtilization;
   }
 
-  private calculateBorrowAPR = (reserve: Reserve) => {
+  private calculateBorrowAPR = (reserve: ParsedReserve) => {
     const currentUtilization = this.calculateUtilizationRatio(reserve);
     const optimalUtilization = new BigNumber(
         reserve.config.optimalUtilizationRate / 100
