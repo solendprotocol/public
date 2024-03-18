@@ -5,7 +5,7 @@ import { parseReserve } from "../state/reserve";
 import BN from "bn.js";
 import { WAD, WANG } from "./constants";
 import { ReserveConfigType, RewardsDataType, ReserveDataType } from "./shared";
-import { SLOTS_PER_YEAR } from "../core/constants";
+import {calculateBorrowInterest, calculateSupplyInterest} from "../core";
 
 type ParsedReserve = NonNullable<ReturnType<typeof parseReserve>>["info"];
 
@@ -29,36 +29,15 @@ export class SolendReserve {
   }
 
   private calculateSupplyAPY = (reserve: ParsedReserve) => {
-    const apr = this.calculateSupplyAPR(reserve);
-    const apy =
-      new BigNumber(1)
-        .plus(new BigNumber(apr).dividedBy(SLOTS_PER_YEAR))
-        .toNumber() **
-        SLOTS_PER_YEAR -
-      1;
-    return apy;
+    return calculateSupplyInterest(reserve, true). toNumber();
   };
 
   private calculateBorrowAPY = (reserve: ParsedReserve) => {
-    const apr = this.calculateBorrowAPR(reserve);
-    const apy =
-      new BigNumber(1)
-        .plus(new BigNumber(apr).dividedBy(SLOTS_PER_YEAR))
-        .toNumber() **
-        SLOTS_PER_YEAR -
-      1;
-    return apy;
+    return calculateBorrowInterest(reserve, true).toNumber();
   };
 
   private calculateSupplyAPR(reserve: ParsedReserve) {
-    const currentUtilization = this.calculateUtilizationRatio(reserve);
-
-    const borrowAPR = this.calculateBorrowAPR(reserve);
-    const protocolTakePercentage = BigNumber(1).minus(
-        reserve.config.protocolTakeRate / 100
-    );
-
-    return currentUtilization.times(borrowAPR).times(protocolTakePercentage);
+    return calculateSupplyInterest(reserve, false). toNumber();
   }
 
   private calculateUtilizationRatio(reserve: ParsedReserve) {
