@@ -93,6 +93,8 @@ export type ReserveDataType = {
   totalLiquidityWads: BN;
   supplyInterestAPY: number;
   borrowInterestAPY: number;
+  supplyInterestAPR: number;
+  borrowInterestAPR: number;
   assetPriceUSD: number;
   protocolTakeRate: number;
   userDepositLimit?: number;
