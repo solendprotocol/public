@@ -5,7 +5,7 @@ import { parseReserve } from "../state/reserve";
 import BN from "bn.js";
 import { WAD, WANG } from "./constants";
 import { ReserveConfigType, RewardsDataType, ReserveDataType } from "./shared";
-import { SLOTS_PER_YEAR } from "../core/constants";
+import { calculateBorrowInterest, calculateSupplyInterest } from "../core";
 
 type ParsedReserve = NonNullable<ReturnType<typeof parseReserve>>["info"];
 
@@ -29,69 +29,19 @@ export class SolendReserve {
   }
 
   private calculateSupplyAPY = (reserve: ParsedReserve) => {
-    const apr = this.calculateSupplyAPR(reserve);
-    const apy =
-      new BigNumber(1)
-        .plus(new BigNumber(apr).dividedBy(SLOTS_PER_YEAR))
-        .toNumber() **
-        SLOTS_PER_YEAR -
-      1;
-    return apy;
+    return calculateSupplyInterest(reserve, true).toNumber();
   };
 
   private calculateBorrowAPY = (reserve: ParsedReserve) => {
-    const apr = this.calculateBorrowAPR(reserve);
-    const apy =
-      new BigNumber(1)
-        .plus(new BigNumber(apr).dividedBy(SLOTS_PER_YEAR))
-        .toNumber() **
-        SLOTS_PER_YEAR -
-      1;
-    return apy;
+    return calculateBorrowInterest(reserve, true).toNumber();
   };
 
   private calculateSupplyAPR(reserve: ParsedReserve) {
-    const currentUtilization = this.calculateUtilizationRatio(reserve);
-
-    const borrowAPY = this.calculateBorrowAPR(reserve);
-    return currentUtilization * borrowAPY;
-  }
-
-  private calculateUtilizationRatio(reserve: ParsedReserve) {
-    const totalBorrowsWads = new BigNumber(
-      reserve.liquidity.borrowedAmountWads.toString()
-    ).div(WAD);
-    const currentUtilization = totalBorrowsWads
-      .dividedBy(
-        totalBorrowsWads.plus(reserve.liquidity.availableAmount.toString())
-      )
-      .toNumber();
-
-    return currentUtilization;
+    return calculateSupplyInterest(reserve, false).toNumber();
   }
 
   private calculateBorrowAPR(reserve: ParsedReserve) {
-    const currentUtilization = this.calculateUtilizationRatio(reserve);
-    const optimalUtilization = reserve.config.optimalUtilizationRate / 100;
-
-    let borrowAPR;
-    if (optimalUtilization === 1.0 || currentUtilization < optimalUtilization) {
-      const normalizedFactor = currentUtilization / optimalUtilization;
-      const optimalBorrowRate = reserve.config.optimalBorrowRate / 100;
-      const minBorrowRate = reserve.config.minBorrowRate / 100;
-      borrowAPR =
-        normalizedFactor * (optimalBorrowRate - minBorrowRate) + minBorrowRate;
-    } else {
-      const normalizedFactor =
-        (currentUtilization - optimalUtilization) / (1 - optimalUtilization);
-      const optimalBorrowRate = reserve.config.optimalBorrowRate / 100;
-      const maxBorrowRate = reserve.config.maxBorrowRate / 100;
-      borrowAPR =
-        normalizedFactor * (maxBorrowRate - optimalBorrowRate) +
-        optimalBorrowRate;
-    }
-
-    return borrowAPR;
+    return calculateBorrowInterest(reserve, false).toNumber();
   }
 
   setBuffer(buffer: AccountInfo<Buffer> | null) {
@@ -105,23 +55,23 @@ export class SolendReserve {
     if (!this.buffer) {
       this.buffer = await this.connection.getAccountInfo(
         new PublicKey(this.config.address),
-        "processed"
+        "processed",
       );
     }
 
     if (!this.buffer) {
       throw Error(
-        `Error requesting account info for ${this.config.liquidityToken.name}`
+        `Error requesting account info for ${this.config.liquidityToken.name}`,
       );
     }
 
     const parsedData = parseReserve(
       new PublicKey(this.config.address),
-      this.buffer
+      this.buffer,
     )?.info;
     if (!parsedData) {
       throw Error(
-        `Unable to parse data of reserve ${this.config.liquidityToken.name}`
+        `Unable to parse data of reserve ${this.config.liquidityToken.name}`,
       );
     }
 
@@ -133,7 +83,7 @@ export class SolendReserve {
     poolSize: string,
     rewardPrice: number,
     tokenPrice: number,
-    decimals: number
+    decimals: number,
   ) {
     const poolValueUSD = new BigNumber(poolSize)
       .times(tokenPrice)
@@ -162,14 +112,14 @@ export class SolendReserve {
         stats.totalDepositsWads.toString(),
         reward.price,
         stats.assetPriceUSD,
-        this.config.liquidityToken.decimals
+        this.config.liquidityToken.decimals,
       ).toNumber(),
       price: reward.price,
     }));
 
     const totalAPY = new BigNumber(stats.supplyInterestAPY)
       .plus(
-        rewards.reduce((acc, reward) => acc.plus(reward.apy), new BigNumber(0))
+        rewards.reduce((acc, reward) => acc.plus(reward.apy), new BigNumber(0)),
       )
       .toNumber();
 
@@ -196,14 +146,14 @@ export class SolendReserve {
         stats.totalBorrowsWads.toString(),
         reward.price,
         stats.assetPriceUSD,
-        this.config.liquidityToken.decimals
+        this.config.liquidityToken.decimals,
       ).toNumber(),
       price: reward.price,
     }));
 
     const totalAPY = new BigNumber(stats.borrowInterestAPY)
       .minus(
-        rewards.reduce((acc, reward) => acc.plus(reward.apy), new BigNumber(0))
+        rewards.reduce((acc, reward) => acc.plus(reward.apy), new BigNumber(0)),
       )
       .toNumber();
 
@@ -215,11 +165,11 @@ export class SolendReserve {
   }
 
   private formatReserveData(
-    parsedData: NonNullable<ReturnType<typeof parseReserve>>["info"]
+    parsedData: NonNullable<ReturnType<typeof parseReserve>>["info"],
   ): ReserveDataType {
     const totalBorrowsWads = parsedData.liquidity.borrowedAmountWads;
     const totalLiquidityWads = parsedData.liquidity.availableAmount.mul(
-      new BN(WAD)
+      new BN(WAD),
     );
     const totalDepositsWads = totalBorrowsWads.add(totalLiquidityWads);
     const cTokenExchangeRate = new BigNumber(totalDepositsWads.toString())
@@ -238,13 +188,13 @@ export class SolendReserve {
       maxBorrowRate: parsedData.config.maxBorrowRate / 100,
       protocolTakeRate: parsedData.config.protocolTakeRate / 100,
       borrowFeePercentage: new BigNumber(
-        parsedData.config.fees.borrowFeeWad.toString()
+        parsedData.config.fees.borrowFeeWad.toString(),
       )
         .dividedBy(WAD)
         .toNumber(),
       hostFeePercentage: parsedData.config.fees.hostFeePercentage / 100,
       flashLoanFeePercentage: new BigNumber(
-        parsedData.config.fees.flashLoanFeeWad.toString()
+        parsedData.config.fees.flashLoanFeeWad.toString(),
       )
         .dividedBy(WAD)
         .toNumber(),
@@ -262,6 +212,8 @@ export class SolendReserve {
       totalLiquidityWads,
       supplyInterestAPY: this.calculateSupplyAPY(parsedData),
       borrowInterestAPY: this.calculateBorrowAPY(parsedData),
+      supplyInterestAPR: this.calculateSupplyAPR(parsedData),
+      borrowInterestAPR: this.calculateBorrowAPR(parsedData),
       assetPriceUSD: new BigNumber(parsedData.liquidity.marketPrice.toString())
         .div(WAD)
         .toNumber(),
