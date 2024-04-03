@@ -1,12 +1,7 @@
 import {
   Connection,
-  Keypair,
-  Transaction,
-  LAMPORTS_PER_SOL,
   PublicKey,
 } from "@solana/web3.js";
-import BN from "bn.js";
-import * as anchor from "@project-serum/anchor";
 import { parseObligation } from "../src";
 
 jest.setTimeout(50_000);

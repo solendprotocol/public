@@ -1,7 +1,7 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { RateLimiterConfig } from "../state/rateLimiter";
 import { ReserveConfig } from "../state/reserve";
-import * as Layout from "../utils/layout";
+import * as Layout from "../layout";
 import { LendingInstruction } from "./instruction";
 
 const BufferLayout = require("buffer-layout");

@@ -6,7 +6,7 @@ import {
 } from "@solana/web3.js";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import BN from "bn.js";
-import * as Layout from "../utils/layout";
+import * as Layout from "../layout";
 import { LendingInstruction } from "./instruction";
 
 const BufferLayout = require("buffer-layout");
