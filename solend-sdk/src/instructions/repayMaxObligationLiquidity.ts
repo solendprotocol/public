@@ -1,10 +1,12 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import BN from "bn.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import * as Layout from "../layout";
-import { LendingInstruction } from "./instruction";
 
+export const WRAPPER_PROGRAM_ID = new PublicKey(
+  "55ttmJsE9v5PtScfnA2q6S9VXgSPopV6WziiwH94SYws"
+);
 const BufferLayout = require("buffer-layout");
+
+// Max repay requires the use of the wrapped program
 
 /// Repay borrowed liquidity to a reserve. Requires a refreshed obligation and reserve.
 ///
@@ -21,8 +23,7 @@ const BufferLayout = require("buffer-layout");
 ///   6. `[signer]` User transfer authority ($authority).
 ///   7. `[]` Clock sysvar.
 ///   8. `[]` Token program id.
-export const repayObligationLiquidityInstruction = (
-  liquidityAmount: number | BN,
+export const repayMaxObligationLiquidityInstruction = (
   sourceLiquidity: PublicKey,
   destinationLiquidity: PublicKey,
   repayReserve: PublicKey,
@@ -31,21 +32,18 @@ export const repayObligationLiquidityInstruction = (
   transferAuthority: PublicKey,
   solendProgramAddress: PublicKey
 ): TransactionInstruction => {
-  const dataLayout = BufferLayout.struct([
-    BufferLayout.u8("instruction"),
-    Layout.uint64("liquidityAmount"),
-  ]);
+  const dataLayout = BufferLayout.struct([BufferLayout.u8("instruction")]);
 
   const data = Buffer.alloc(dataLayout.span);
   dataLayout.encode(
     {
-      instruction: LendingInstruction.RepayObligationLiquidity,
-      liquidityAmount: new BN(liquidityAmount),
+      instruction: 1,
     },
     data
   );
 
   const keys = [
+    { pubkey: solendProgramAddress, isSigner: false, isWritable: false },
     { pubkey: sourceLiquidity, isSigner: false, isWritable: true },
     { pubkey: destinationLiquidity, isSigner: false, isWritable: true },
     { pubkey: repayReserve, isSigner: false, isWritable: true },
@@ -56,7 +54,7 @@ export const repayObligationLiquidityInstruction = (
   ];
   return new TransactionInstruction({
     keys,
-    programId: solendProgramAddress,
+    programId: WRAPPER_PROGRAM_ID,
     data,
   });
 };

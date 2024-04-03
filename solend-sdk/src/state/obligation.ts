@@ -1,7 +1,7 @@
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import * as fzstd from "fzstd";
-import * as Layout from "../utils/layout";
+import * as Layout from "../layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
 
 const BufferLayout = require("buffer-layout");
@@ -24,6 +24,7 @@ export interface Obligation {
   borrowingIsolatedAsset: boolean;
 }
 
+export type RawObligationType = ReturnType<typeof parseObligation>;
 // BN defines toJSON property, which messes up serialization
 // @ts-ignore
 BN.prototype.toJSON = undefined;

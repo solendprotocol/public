@@ -1,14 +1,11 @@
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import BN from "bn.js";
-import * as Layout from "../layout";
-import { LendingInstruction } from "./instruction";
+import { WRAPPER_PROGRAM_ID } from "./repayMaxObligationLiquidity";
 
 const BufferLayout = require("buffer-layout");
 
 /// Deposit liquidity into a reserve in exchange for collateral, and deposit the collateral as well.
-export const depositReserveLiquidityAndObligationCollateralInstruction = (
-  liquidityAmount: number | BN,
+export const depositMaxReserveLiquidityAndObligationCollateralInstruction = (
   sourceLiquidity: PublicKey,
   sourceCollateral: PublicKey,
   reserve: PublicKey,
@@ -24,22 +21,18 @@ export const depositReserveLiquidityAndObligationCollateralInstruction = (
   transferAuthority: PublicKey,
   solendProgramAddress: PublicKey
 ): TransactionInstruction => {
-  const dataLayout = BufferLayout.struct([
-    BufferLayout.u8("instruction"),
-    Layout.uint64("liquidityAmount"),
-  ]);
+  const dataLayout = BufferLayout.struct([BufferLayout.u8("instruction")]);
 
   const data = Buffer.alloc(dataLayout.span);
   dataLayout.encode(
     {
-      instruction:
-        LendingInstruction.DepositReserveLiquidityAndObligationCollateral,
-      liquidityAmount: new BN(liquidityAmount),
+      instruction: 2,
     },
     data
   );
 
   const keys = [
+    { pubkey: solendProgramAddress, isSigner: false, isWritable: false },
     { pubkey: sourceLiquidity, isSigner: false, isWritable: true },
     { pubkey: sourceCollateral, isSigner: false, isWritable: true },
     { pubkey: reserve, isSigner: false, isWritable: true },
@@ -57,7 +50,7 @@ export const depositReserveLiquidityAndObligationCollateralInstruction = (
   ];
   return new TransactionInstruction({
     keys,
-    programId: solendProgramAddress,
+    programId: WRAPPER_PROGRAM_ID,
     data,
   });
 };
