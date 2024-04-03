@@ -5,8 +5,8 @@ import {
 } from "@solana/spl-token";
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
-import { TokenMetadata, WalletType } from "../types";
 import { getBatchMultipleAccountsInfo } from "./utils";
+import { TokenMetadata, WalletType } from "../types";
 
 export function formatWalletAssets(
   rawWalletData: Awaited<ReturnType<typeof fetchWalletAssets>>,

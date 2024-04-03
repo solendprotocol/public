@@ -5,7 +5,7 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import BN from "bn.js";
-import * as Layout from "../utils/layout";
+import * as Layout from "../layout";
 import { ReserveConfig } from "../state";
 import { LendingInstruction } from "./instruction";
 
