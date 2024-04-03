@@ -170,18 +170,20 @@ export function formatReserve(
 export const getReservesOfPool = async (
   lendingMarketPubkey: PublicKey,
   connection: Connection,
-  switchboardProgram: SwitchboardProgram,
   programId: string,
   currentSlot: number,
+  switchboardProgram?: SwitchboardProgram,
   debug?: boolean
 ) => {
   if (debug) console.log("getReservesOfPool");
+
+  let sb =
+    switchboardProgram ?? (await SwitchboardProgram.loadMainnet(connection));
 
   const filters = [
     { dataSize: 619 },
     { memcmp: { offset: 10, bytes: lendingMarketPubkey.toBase58() } },
   ];
-
   const rawReserves = await connection.getProgramAccounts(
     new PublicKey(programId),
     {
@@ -197,12 +199,7 @@ export const getReservesOfPool = async (
     )
     .filter(Boolean) as Array<{ info: Reserve; pubkey: PublicKey }>;
 
-  const prices = await fetchPrices(
-    parsedReserves,
-    connection,
-    switchboardProgram,
-    debug
-  );
+  const prices = await fetchPrices(parsedReserves, connection, sb, debug);
 
   return parsedReserves.map((r) =>
     formatReserve(r, prices[r.pubkey.toBase58()], currentSlot)
@@ -246,3 +243,21 @@ export const getReservesFromChain = async (
     formatReserve(r, prices[r.pubkey.toBase58()], currentSlot)
   );
 };
+
+export async function fetchPoolByAddress(
+  poolAddress: string,
+  connection: Connection,
+  debug?: boolean
+) {
+  if (debug) console.log("fetchPoolByAddress");
+
+  const accountInfo = await connection.getAccountInfo(
+    new PublicKey(poolAddress)
+  );
+
+  if (!accountInfo) {
+    return null;
+  }
+
+  return parseReserve(new PublicKey(poolAddress), accountInfo);
+}

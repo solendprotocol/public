@@ -216,9 +216,9 @@ export const selectedPoolAtom = atom(
     getReservesOfPool(
       new PublicKey(newSelectedPoolAddress),
       connection,
-      switchboardProgram,
       PROGRAM_ID,
       currentSlot,
+      switchboardProgram,
       DEBUG_MODE,
     );
 
