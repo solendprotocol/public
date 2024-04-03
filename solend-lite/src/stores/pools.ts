@@ -14,12 +14,12 @@ import { configAtom } from './config';
 import BigNumber from 'bignumber.js';
 import {
   createObligationAddress,
-  ReserveType,
   fetchPools,
   getReservesOfPool,
   parseLendingMarket,
   parseRateLimiter,
   PoolType,
+  ReserveType
 } from '@solendprotocol/solend-sdk';
 import { DEBUG_MODE, PROGRAM_ID } from 'common/config';
 import { atomWithRefresh } from './shared';
@@ -118,6 +118,7 @@ export const poolsWithMetaDataAtom = atom((get) => {
   const metadata = get(metadataAtom);
   const pools = get(poolsAtom);
 
+  console.log(metadata);
   return Object.fromEntries(
     Object.values(pools).map((p) => [
       p.address,
@@ -130,7 +131,7 @@ export const poolsWithMetaDataAtom = atom((get) => {
         reserves: p.reserves.map((r) => ({
           ...r,
           symbol: metadata[r.mintAddress]?.symbol,
-          logo: metadata[r.mintAddress]?.logoUri,
+          logo: metadata[r.mintAddress]?.logoURI,
         })),
       },
     ]),
@@ -183,11 +184,11 @@ export const selectedPoolAtom = atom(
       reserves: selectedPool.reserves.map((r) => {
         const addressString = r.mintAddress;
         const tokenMetadata = metadata[addressString];
-
+console.log(tokenMetadata);
         return {
           ...r,
           symbol: tokenMetadata?.symbol,
-          logo: tokenMetadata?.logoUri,
+          logo: tokenMetadata?.logoURI,
         };
       }),
     };
@@ -216,9 +217,9 @@ export const selectedPoolAtom = atom(
     getReservesOfPool(
       new PublicKey(newSelectedPoolAddress),
       connection,
-      switchboardProgram,
       PROGRAM_ID,
       currentSlot,
+      switchboardProgram,
       DEBUG_MODE,
     );
 

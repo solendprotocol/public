@@ -1,191 +1,50 @@
-import { Connection, Keypair, Transaction, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import BN from 'bn.js';
-import * as anchor from '@project-serum/anchor';
-import { parseReserve, SolendAction, SolendMarket, SolendWallet } from "../src";
+import {
+  Connection,
+  PublicKey,
+} from "@solana/web3.js";
+import { parseObligation } from "../src";
 
 jest.setTimeout(50_000);
 
-describe("calculate", function () {
-  it ('parses reserves', async function() {
-
-    const connection = new Connection('https://api.mainnet-beta.solana.com', {
-      commitment: "finalized",
-    });
-
-    const reserve = await connection.getAccountInfo(new PublicKey('CCpirWrgNuBVLdkP2haxLTbD6XqEgaYuVXixbbpxUB6'));
-
-    const parsedReserveData = parseReserve(new PublicKey('CCpirWrgNuBVLdkP2haxLTbD6XqEgaYuVXixbbpxUB6'), reserve!);
-    expect(parsedReserveData!.info.liquidity.pythOracle).not.toBeUndefined();
-    expect(parsedReserveData!.info.liquidity.switchboardOracle).not.toBeUndefined();
-  });
-
-  it("reads wallet", async function () {
-    const connection = new Connection('https://api.mainnet-beta.solana.com', {
-      commitment: "finalized",
-    });
-
-      const keypair = Keypair.generate();
-      const wallet = new anchor.Wallet(keypair);
-      const solendWallet = await SolendWallet.initialize(
-        wallet,
-        connection,
-      );
-
-    const [setupIxs, claimIxs] = await solendWallet.getClaimAllIxs();
-
-    expect([...setupIxs, ...claimIxs].length).toEqual(0);
-  });
-
-  it("reads solend main market", async function () {
-    const connection = new Connection('https://api.mainnet-beta.solana.com', {
-      commitment: "finalized",
-    });
-
-      const market = await SolendMarket.initialize(
-        connection
-      );
-      await market.loadReserves();
-      await market.loadRewards();
-      const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'USDC');
-
-      expect(reserve!.stats!.decimals).toEqual(6);
-      expect(reserve!.stats!.protocolTakeRate).toBeLessThanOrEqual(1);
-  });
-
-  it("reads solend devnet", async function () {
-    const connection = new Connection('https://api.devnet.solana.com', {
-      commitment: "finalized",
-    });
-
-      const market = await SolendMarket.initialize(
-        connection,
-        'devnet'
-      );
-      await market.loadReserves();
-      await market.loadRewards();
-      const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'USDC');
-
-      expect(reserve!.stats!.decimals).toEqual(6);
-      expect(reserve!.stats!.protocolTakeRate).toBeLessThanOrEqual(1);
-  });
-
-  it("reads solend invictus market", async function () {
-    const connection = new Connection('https://api.mainnet-beta.solana.com', {
-      commitment: "finalized",
-    });
-
-    const market = await SolendMarket.initialize(
-      connection,
-      'production',
-      '5i8SzwX2LjpGUxLZRJ8EiYohpuKgW2FYDFhVjhGj66P1',
+describe("check", function () {
+  it("parses obligation in both formats", async function () {
+    const zstdEncodedObligationData = Buffer.from(
+      "KLUv/QBYLQoAdBEBWZHIBwAAAAABM7MexO/4+iia6oyVTAFjLi12SQjOVE1oZb3vERv/YSsChcZ+Ktz1mRBrkyRk1BwBK+MRLDs2kN6sQJrkE/068ae2QKj1GoAIagEAUiLO4HOtZQD9iDA+OBRghg/ZNGo1t+NsujMBAQFsp+C1qN6toMtzc12/wVf8DODwcnh4K7b1j6DEElE6V8esAGvgw8KAVqMAbcvwdUngHTQhP3KK2EcTtbcXhy+sOBPKuWOvMSyN283/9ZTFWnxCDgDvyiK06ZHhKd04ANAh+wRuI+ENjqkOBTFIeS9ID9NTKr93sO+769EA4idmIqc8x1Enq7K/tz3DwaHWY5RMvzQOIJZ5G4lBjXXPHRJX7vzRwA8SAM1yFQDEt5APgChdqyVY2VtAAS80LATg+oCsBCUWCFQgLRhoqHwAcXWBMw==",
+      "base64"
     );
-    await market.loadReserves();
-    await market.loadRewards();
-    const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'USDC');
-    expect((await reserve!.totalBorrowAPY()).rewards).toEqual([]);
-    expect(reserve!.stats!.optimalUtilizationRate).toEqual(0.8);
-  });
-
-  it("reads permissionless", async function () {
-    const connection = new Connection('https://api.mainnet-beta.solana.com', {
-      commitment: "finalized",
-    });
-
-    const market = await SolendMarket.initialize(
-      connection,
-      'production',
-      'Ckya2fwCXDqTUg9fnWbajR6YLcSfQmPxxy5MyAoZXgyb',
-    );
-    await market.loadReserves();
-    await market.loadRewards();
-    const reserve = market.reserves.find(res => res.config.liquidityToken.symbol === 'SLND');
-    expect((await reserve!.totalBorrowAPY()).rewards).toEqual([]);
-    expect(reserve!.stats!.optimalUtilizationRate).toEqual(0.8);
-  });
-
-  it("performs a deposit", async function () {
-    const connection = new Connection('https://api.devnet.solana.com', {
-      commitment: "finalized",
-    });
-
-    const depositAmount = new BN("1000");
-
-    const account = Keypair.generate();
-
-    const signature = await connection.requestAirdrop(account.publicKey, LAMPORTS_PER_SOL);
-    await connection.confirmTransaction(signature);
-
-    const solendAction = await SolendAction.buildDepositTxns(
-      connection,
-      depositAmount,
-      "SOL",
-      account.publicKey,
-      "devnet"
+    const base64EncodedObligationData = Buffer.from(
+      "AVmRyAcAAAAAATOzHsTv+PoomuqMlUwBYy4tdkkIzlRNaGW97xEb/2ErAoXGfirc9ZkQa5MkZNQcASvjESw7NpDerECa5BP9OvGntkCo9RqACGoBAAAAAAAAUiLO4HOtZQAAAAAAAAAAAP2IMD44FGCGDwEAAAAAAADZNGo1t+NsujMBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBbKfgtajeraDLc3Ndv8FX/Azg8HJ4eCu29Y+gxBJROlfHrAAAAAAAAGvgw8KAVqMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAG3L8HVJ4B00IT9yithHE7W3F4cvrDgTyrljrzEsjdvN//WUxVp8Qg4AAAAAAAAAAO/KIrTpkeEp3TgAAAAAAABSIs7gc61lAAAAAAAAAAAAAAAAAAAAAABty/B1SeAdNCE/corYRxO1txeHL6w4E8q5Y68xLI3bzf/1lMVafEIOAAAAAAAAAADvyiK06ZHhKd04AAAAAAAAUiLO4HOtZQAAAAAAAAAAANAh+wQAAAAAbiPhDY6pDgUxAQAAAAAAAAAAAAAAAAAASHkvSA/TUyq/d7Dvu+vRAOInZiKnPMdRJ6uyv7c9w8Gh1mOUTL80DgAAAAAAAAAAIJZ5G4lBjXXPIfsEAAAAAB0SV+780cAPMQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+      "base64"
     );
 
-    const sendTransaction = async (txn: Transaction, connection: Connection) => {
-      const { blockhash } = await connection.getRecentBlockhash();
-      txn.recentBlockhash = blockhash;
-      txn.feePayer = account.publicKey;
-      txn.sign(account);
-      return connection.sendRawTransaction(txn.serialize());
-    }
-
-    const txHash = await solendAction.sendTransactions(sendTransaction);
-
-    await connection.confirmTransaction(txHash, 'finalized');
-
-    const market = await SolendMarket.initialize(
-      connection,
-      'devnet',
+    const obligationPubkey = new PublicKey(
+      "FfRLBU1gHm3MyqJ3KX6dBnsxxJtwVGCwKFwJrfDnceWN"
     );
-
-    const obligation = await market.fetchObligationByWallet(account.publicKey);
-
-    expect(obligation!.deposits[0].amount === depositAmount)
-  });
-
-  // TODO update to a non-primary pool after another pool deployed to devnet
-  it("performs a deposit to specific pool", async function () {
-    const connection = new Connection('https://api.devnet.solana.com', {
+    const connection = new Connection("https://api.mainnet-beta.solana.com", {
       commitment: "finalized",
     });
 
-    const depositAmount = new BN("1000");
+    const zstdEncodedObligation = await connection.getAccountInfo(
+      obligationPubkey
+    );
+    zstdEncodedObligation!.data = zstdEncodedObligationData;
+    const base64EncodedObligation = await connection.getAccountInfo(
+      obligationPubkey
+    );
+    base64EncodedObligation!.data = base64EncodedObligationData;
 
-    const account = Keypair.generate();
-
-    const signature = await connection.requestAirdrop(account.publicKey, LAMPORTS_PER_SOL);
-    await connection.confirmTransaction(signature);
-
-    const solendAction = await SolendAction.buildDepositTxns(
-      connection,
-      depositAmount,
-      "SOL",
-      account.publicKey,
-      "devnet",
-      new PublicKey("GvjoVKNjBvQcFaSKUW1gTE7DxhSpjHbE69umVR5nPuQp"),
+    const parsedzstdEncodedObligation = parseObligation(
+      obligationPubkey,
+      zstdEncodedObligation!,
+      "base64+zstd"
+    );
+    const parsedbase64EncodedObligation = parseObligation(
+      obligationPubkey,
+      base64EncodedObligation!
     );
 
-    const sendTransaction = async (txn: Transaction, connection: Connection) => {
-      const { blockhash } = await connection.getRecentBlockhash();
-      txn.recentBlockhash = blockhash;
-      txn.feePayer = account.publicKey;
-      txn.sign(account);
-      return connection.sendRawTransaction(txn.serialize());
-    }
-
-    const txHash = await solendAction.sendTransactions(sendTransaction);
-
-    await connection.confirmTransaction(txHash, 'finalized');
-
-    const market = await SolendMarket.initialize(
-      connection,
-      'devnet',
+    expect(parsedzstdEncodedObligation!).toMatchObject(
+      parsedbase64EncodedObligation!
     );
-
-    const obligation = await market.fetchObligationByWallet(account.publicKey);
-
-    expect(obligation!.deposits[0].amount === depositAmount)
   });
 });

@@ -1,5 +1,5 @@
 import { DEBUG_MODE } from 'common/config';
-import { fetchTokensInfo, TokenMetadata } from '@solendprotocol/solend-sdk';
+import { getTokenInfosFromMetadata, TokenInfo, TokenMetadata } from '@solendprotocol/solend-sdk';
 import { atom } from 'jotai';
 import { unqiueAssetsAtom } from './pools';
 import { connectionAtom } from './settings';
@@ -15,7 +15,12 @@ export const loadMetadataAtom = atom(
     const connection = get(connectionAtom);
 
     if (mints.length) {
-      set(metadataAtom, await fetchTokensInfo(mints, connection, DEBUG_MODE));
+      const tokenInfoArray = await getTokenInfosFromMetadata(mints, connection, DEBUG_MODE)
+      const tokenInfo = tokenInfoArray.reduce((acc, t) => {
+        acc[t.address] = t;
+        return acc;
+      }, {} as Record<string, TokenInfo>);
+      set(metadataAtom, tokenInfo);
     }
   },
 );

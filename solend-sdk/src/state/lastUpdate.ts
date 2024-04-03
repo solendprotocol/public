@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import * as Layout from "../utils/layout";
+import * as Layout from "../layout";
 
 const BufferLayout = require("buffer-layout");
 
