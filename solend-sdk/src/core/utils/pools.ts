@@ -177,7 +177,7 @@ export const getReservesOfPool = async (
 ) => {
   if (debug) console.log("getReservesOfPool");
 
-  let sb =
+  const sb =
     switchboardProgram ?? (await SwitchboardProgram.loadMainnet(connection));
 
   const filters = [
