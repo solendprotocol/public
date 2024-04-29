@@ -1,4 +1,4 @@
-import { Client, Token } from "@solflare-wallet/utl-sdk";
+import { Client, Token } from "@solendprotocol/utl-sdk";
 import { Connection, PublicKey } from "@solana/web3.js";
 
 export const fetchTokensInfo = async (
