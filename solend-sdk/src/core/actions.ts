@@ -1,10 +1,13 @@
 import {
+  AddressLookupTableAccount,
   Connection,
   PublicKey,
   SystemProgram,
   Transaction,
   TransactionInstruction,
+  TransactionMessage,
   TransactionSignature,
+  VersionedTransaction,
 } from "@solana/web3.js";
 import {
   NATIVE_MINT,
@@ -94,6 +97,8 @@ export class SolendActionCore {
 
   borrowReserves: Array<PublicKey>;
 
+  lookupTableAccount?: AddressLookupTableAccount;
+
   private constructor(
     programId: PublicKey,
     connection: Connection,
@@ -109,7 +114,8 @@ export class SolendActionCore {
     amount: BN,
     depositReserves: Array<PublicKey>,
     borrowReserves: Array<PublicKey>,
-    hostAta?: PublicKey
+    hostAta?: PublicKey,
+    lookupTableAccount?: AddressLookupTableAccount
   ) {
     this.programId = programId;
     this.connection = connection;
@@ -131,6 +137,7 @@ export class SolendActionCore {
     this.postTxnIxs = [];
     this.depositReserves = depositReserves;
     this.borrowReserves = borrowReserves;
+    this.lookupTableAccount = lookupTableAccount;
   }
 
   static async initialize(
@@ -143,7 +150,8 @@ export class SolendActionCore {
     environment: EnvironmentType = "production",
     customObligationAddress?: PublicKey,
     hostAta?: PublicKey,
-    customObligationSeed?: string
+    customObligationSeed?: string,
+    lookupTableAddress?: PublicKey
   ) {
     const seed = customObligationSeed ?? pool.address.slice(0, 32);
     const programId = getProgramId(environment);
@@ -211,6 +219,10 @@ export class SolendActionCore {
       true
     );
 
+    const lookupTableAccount = lookupTableAddress
+      ? (await connection.getAddressLookupTable(lookupTableAddress)).value
+      : undefined;
+
     return new SolendActionCore(
       programId,
       connection,
@@ -226,7 +238,8 @@ export class SolendActionCore {
       amount,
       depositReserves,
       borrowReserves,
-      hostAta
+      hostAta,
+      lookupTableAccount ?? undefined
     );
   }
 
@@ -237,7 +250,8 @@ export class SolendActionCore {
     amount: string,
     publicKey: PublicKey,
     obligationAddress: PublicKey,
-    environment: EnvironmentType = "production"
+    environment: EnvironmentType = "production",
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -247,7 +261,10 @@ export class SolendActionCore {
       publicKey,
       connection,
       environment,
-      obligationAddress
+      obligationAddress,
+      undefined,
+      undefined,
+      lookupTableAddress
     );
 
     await axn.addSupportIxs("forgive");
@@ -264,7 +281,8 @@ export class SolendActionCore {
     publicKey: PublicKey,
     environment: EnvironmentType = "production",
     obligationAddress?: PublicKey,
-    obligationSeed?: string
+    obligationSeed?: string,
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -276,7 +294,8 @@ export class SolendActionCore {
       environment,
       obligationAddress,
       undefined,
-      obligationSeed
+      obligationSeed,
+      lookupTableAddress
     );
 
     await axn.addSupportIxs("deposit");
@@ -292,7 +311,8 @@ export class SolendActionCore {
     amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production",
-    hostAta?: PublicKey
+    hostAta?: PublicKey,
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -303,7 +323,9 @@ export class SolendActionCore {
       connection,
       environment,
       undefined,
-      hostAta
+      hostAta,
+      undefined,
+      lookupTableAddress
     );
 
     await axn.addSupportIxs("borrow");
@@ -317,7 +339,8 @@ export class SolendActionCore {
     connection: Connection,
     amount: string,
     publicKey: PublicKey,
-    environment: EnvironmentType = "production"
+    environment: EnvironmentType = "production",
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -326,7 +349,11 @@ export class SolendActionCore {
       new BN(amount),
       publicKey,
       connection,
-      environment
+      environment,
+      undefined,
+      undefined,
+      undefined,
+      lookupTableAddress
     );
     await axn.addSupportIxs("mint");
     await axn.addDepositReserveLiquidityIx();
@@ -339,7 +366,8 @@ export class SolendActionCore {
     connection: Connection,
     amount: string,
     publicKey: PublicKey,
-    environment: EnvironmentType = "production"
+    environment: EnvironmentType = "production",
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -348,7 +376,11 @@ export class SolendActionCore {
       new BN(amount),
       publicKey,
       connection,
-      environment
+      environment,
+      undefined,
+      undefined,
+      undefined,
+      lookupTableAddress
     );
     await axn.addSupportIxs("redeem");
     await axn.addRedeemReserveCollateralIx();
@@ -361,7 +393,8 @@ export class SolendActionCore {
     connection: Connection,
     amount: string,
     publicKey: PublicKey,
-    environment: EnvironmentType = "production"
+    environment: EnvironmentType = "production",
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -370,7 +403,11 @@ export class SolendActionCore {
       new BN(amount),
       publicKey,
       connection,
-      environment
+      environment,
+      undefined,
+      undefined,
+      undefined,
+      lookupTableAddress
     );
     await axn.addSupportIxs("depositCollateral");
     await axn.addDepositObligationCollateralIx();
@@ -383,7 +420,8 @@ export class SolendActionCore {
     connection: Connection,
     amount: string,
     publicKey: PublicKey,
-    environment: EnvironmentType = "production"
+    environment: EnvironmentType = "production",
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -392,7 +430,11 @@ export class SolendActionCore {
       new BN(amount),
       publicKey,
       connection,
-      environment
+      environment,
+      undefined,
+      undefined,
+      undefined,
+      lookupTableAddress
     );
 
     await axn.addSupportIxs("withdrawCollateral");
@@ -407,7 +449,10 @@ export class SolendActionCore {
     connection: Connection,
     amount: string,
     publicKey: PublicKey,
-    environment: EnvironmentType = "production"
+    environment: EnvironmentType = "production",
+    obligationAddress?: PublicKey,
+    obligationSeed?: string,
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -416,7 +461,11 @@ export class SolendActionCore {
       new BN(amount),
       publicKey,
       connection,
-      environment
+      environment,
+      obligationAddress,
+      undefined,
+      obligationSeed,
+      lookupTableAddress
     );
 
     await axn.addSupportIxs("withdraw");
@@ -431,7 +480,8 @@ export class SolendActionCore {
     connection: Connection,
     amount: string,
     publicKey: PublicKey,
-    environment: EnvironmentType = "production"
+    environment: EnvironmentType = "production",
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -440,13 +490,35 @@ export class SolendActionCore {
       new BN(amount),
       publicKey,
       connection,
-      environment
+      environment,
+      undefined,
+      undefined,
+      undefined,
+      lookupTableAddress
     );
 
     await axn.addSupportIxs("repay");
     await axn.addRepayIx();
 
     return axn;
+  }
+
+  async getVersionedTransaction() {
+    return new VersionedTransaction(
+      new TransactionMessage({
+        payerKey: this.publicKey,
+        recentBlockhash: (await this.connection.getRecentBlockhash()).blockhash,
+        instructions: [
+          ...this.preTxnIxs,
+          ...this.setupIxs,
+          ...this.lendingIxs,
+          ...this.cleanupIxs,
+          ...this.postTxnIxs,
+        ],
+      }).compileToV0Message(
+        this.lookupTableAccount ? [this.lookupTableAccount] : []
+      )
+    );
   }
 
   async getTransactions() {
@@ -854,7 +926,7 @@ export class SolendActionCore {
             new PublicKey(this.reserve.mintAddress)
           );
 
-        if (this.positions === POSITION_LIMIT && this.hostAta) {
+        if (!this.lookupTableAccount) {
           this.preTxnIxs.push(createUserTokenAccountIx);
         } else {
           this.setupIxs.push(createUserTokenAccountIx);
@@ -876,10 +948,7 @@ export class SolendActionCore {
             new PublicKey(this.reserve.cTokenMint)
           );
 
-        if (
-          this.positions === POSITION_LIMIT &&
-          this.reserve.mintAddress === NATIVE_MINT.toBase58()
-        ) {
+        if (!this.lookupTableAccount) {
           this.preTxnIxs.push(createUserCollateralAccountIx);
         } else {
           this.setupIxs.push(createUserCollateralAccountIx);
@@ -985,7 +1054,7 @@ export class SolendActionCore {
       postIxs.push(closeWSOLAccountIx);
     }
 
-    if (this.positions && this.positions >= POSITION_LIMIT) {
+    if (!this.lookupTableAccount) {
       this.preTxnIxs.push(...preIxs);
       this.postTxnIxs.push(...postIxs);
     } else {
