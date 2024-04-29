@@ -9,8 +9,11 @@ import {
 } from "@solana/web3.js";
 import {
   createAssociatedTokenAccountInstruction,
+  createCloseAccountInstruction,
+  createInitializeAccountInstruction,
   getAssociatedTokenAddress,
   getAssociatedTokenAddressSync,
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import { ObligationType, PoolType, ReserveType } from ".";
@@ -28,12 +31,15 @@ import {
   refreshObligationInstruction,
   refreshReserveInstruction,
   repayObligationLiquidityInstruction,
+  withdrawExact,
   withdrawObligationCollateralAndRedeemReserveLiquidity,
 } from "../instructions";
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import JSBI from "jsbi";
 import { SolendActionCore } from "./actions";
+import { repayMaxObligationLiquidityInstruction } from "../instructions/repayMaxObligationLiquidity";
+import { depositMaxReserveLiquidityAndObligationCollateralInstruction } from "../instructions/depositMaxReserveLiquidityAndObligationCollateral";
 
 function dustAmountThreshold(decimals: number) {
   const dustDecimal = new BigNumber(decimals / 2).integerValue(
@@ -67,7 +73,7 @@ export class Margin {
 
   shortReserveCollateralAta: PublicKey;
 
-  obligationSeed: string;
+  obligationSeed?: string;
 
   lendingMarketAuthority: PublicKey;
 
@@ -82,7 +88,7 @@ export class Margin {
     shortReserve: ReserveType,
     pool: PoolType,
     obligationAddress: PublicKey,
-    obligationSeed: string,
+    obligationSeed?: string,
     obligation?: ObligationType,
     collateralReserve?: ReserveType
   ) {
@@ -125,27 +131,27 @@ export class Margin {
       this.obligation && this.obligation.deposits.length > 0
         ? this.obligation.deposits.map((ol) => new PublicKey(ol.reserveAddress))
         : [];
+
     this.borrowKeys =
       this.obligation && this.obligation.borrows.length > 0
         ? this.obligation.borrows.map((ol) => new PublicKey(ol.reserveAddress))
         : [];
   }
 
-  calculateMaxUserBorrowPower = () => {
-    console.log(
-      "minPriceBorrowLimit",
-      this.obligation?.minPriceBorrowLimit.toString()
-    );
-    console.log(this.obligation);
+  calculateMaxUserBorrowPower = (
+    closeMode?: "keepLong" | "keepShort",
+    exchangeRate?: string
+  ) => {
+    const shortTokenPrice = this.shortReserve.price;
+    const longTokenPrice = this.longReserve.price;
+    const conversion = exchangeRate
+      ? new BigNumber(exchangeRate)
+      : longTokenPrice.dividedBy(shortTokenPrice);
+
     let curShortSupplyAmount =
       this.obligation?.deposits.find(
         (d) => d.reserveAddress === this.shortReserve.address
       )?.amount ?? new BigNumber(0);
-    console.log(
-      "short supply",
-      curShortSupplyAmount.toString(),
-      this.shortReserve.address
-    );
     let curShortBorrowAmount =
       this.obligation?.borrows.find(
         (d) => d.reserveAddress === this.shortReserve.address
@@ -158,6 +164,50 @@ export class Margin {
       this.obligation?.borrows.find(
         (d) => d.reserveAddress === this.longReserve.address
       )?.amount ?? new BigNumber(0);
+
+    if (closeMode) {
+      const shortTokenToRepayAll =
+        closeMode === "keepLong"
+          ? conversion.multipliedBy(curLongBorrowAmount)
+          : curShortSupplyAmount;
+
+      // convert to base and round up to match calculation logic in margin.tsx
+      const flashLoanFeeBase = shortTokenToRepayAll
+        .multipliedBy(this.shortReserve.flashLoanFee)
+        .multipliedBy(new BigNumber(10 ** this.shortReserve.decimals))
+        .integerValue(BigNumber.ROUND_CEIL);
+      const flashLoanFee = new BigNumber(
+        flashLoanFeeBase
+          .dividedBy(new BigNumber(10 ** this.shortReserve.decimals))
+          .toString()
+      );
+
+      let maxPossibleSwap =
+        closeMode === "keepLong"
+          ? shortTokenToRepayAll.plus(flashLoanFee)
+          : shortTokenToRepayAll.minus(flashLoanFee);
+
+      // If user doesn't have enough short token supplied, we re-calculate given their max short token supplied
+      if (
+        curShortSupplyAmount.isLessThan(maxPossibleSwap) &&
+        closeMode === "keepLong"
+      ) {
+        // convert to base and round up to match calculation logic in margin.tsx
+        const flashLoanFeeBase = curShortSupplyAmount
+          .multipliedBy(this.shortReserve.flashLoanFee)
+          .multipliedBy(new BigNumber(10 ** this.shortReserve.decimals))
+          .integerValue(BigNumber.ROUND_CEIL);
+        const flashLoanFee = new BigNumber(
+          flashLoanFeeBase
+            .dividedBy(new BigNumber(10 ** this.shortReserve.decimals))
+            .toString()
+        );
+        maxPossibleSwap = curShortSupplyAmount.minus(flashLoanFee);
+      }
+
+      return maxPossibleSwap.toNumber();
+    }
+
     // handle the case where short token has non-zero ltv / infitie borrow weight e.g mSOL/stSOL
     if (
       this.shortReserve.addedBorrowWeightBPS.toString() === U64_MAX ||
@@ -179,9 +229,6 @@ export class Margin {
 
       return maxPossibleSwap.toNumber();
     }
-
-    const shortTokenPrice = this.shortReserve.price;
-    const longTokenPrice = this.longReserve.price;
 
     const shortTokenBorrowWeight = new BigNumber(
       this.shortReserve.addedBorrowWeightBPS.toString()
@@ -244,16 +291,14 @@ export class Margin {
       }
 
       totalShortSwapable = totalShortSwapable.plus(swapable);
-      const longRecievedInSwap = swapable
-        .times(shortTokenPrice)
-        .dividedBy(longTokenPrice);
+      const longRecievedInSwap = swapable.dividedBy(conversion);
 
       if (curLongBorrowAmount > longRecievedInSwap) {
         curLongBorrowAmount = curLongBorrowAmount.minus(longRecievedInSwap);
         curMaxPriceUserTotalWeightedBorrow =
           curMaxPriceUserTotalWeightedBorrow.minus(
             longRecievedInSwap
-              .times(longTokenPrice)
+              .times(this.longReserve.maxPrice)
               .times(longTokenBorrowWeight)
           );
       } else {
@@ -263,13 +308,13 @@ export class Margin {
         curMaxPriceUserTotalWeightedBorrow =
           curMaxPriceUserTotalWeightedBorrow.minus(
             curLongBorrowAmount
-              .times(longTokenPrice)
+              .times(this.longReserve.maxPrice)
               .times(longTokenBorrowWeight)
           );
         curMinPriceBorrowLimit = curMinPriceBorrowLimit.plus(
           longRecievedInSwap
             .minus(curLongBorrowAmount)
-            .times(longTokenPrice)
+            .times(this.longReserve.minPrice)
             .times(new BigNumber(this.longReserve.loanToValueRatio))
         );
         curLongBorrowAmount = new BigNumber(0);
@@ -279,16 +324,21 @@ export class Margin {
     return totalShortSwapable.times(new BigNumber(".975")).toNumber();
   };
 
-  setupTx = async (depositCollateralConfig?: {
-    collateralReserve: ReserveType;
-    amount: string;
-  }) => {
+  setupTx = async (
+    lookupTableAccount?: AddressLookupTableAccount,
+    depositCollateralConfig?: {
+      collateralReserve: ReserveType;
+      amount: string;
+    }
+  ) => {
     const ixs: TransactionInstruction[] = [];
     // If we are depositing, the deposit instruction will handle creating the obligation
     if (
       (!this.obligation || this.obligation.address === "empty") &&
       !depositCollateralConfig
     ) {
+      if (!this.obligationSeed)
+        throw Error("Seed required for new obligations");
       ixs.push(
         SystemProgram.createAccountWithSeed({
           fromPubkey: this.owner,
@@ -311,6 +361,7 @@ export class Margin {
         )
       );
     }
+    let longATA = PublicKey.default;
 
     await Promise.all(
       [
@@ -324,6 +375,18 @@ export class Margin {
           this.owner,
           true
         );
+
+        // track long token's ATA for cleanup later
+        if (mint.toString() === this.longReserve.mintAddress) {
+          longATA = tokenAccount;
+        }
+
+        // if depositing collateral, ctoken ATA will be created by deposit txn
+        if (
+          mint.toString() === this.longReserve.cTokenMint &&
+          depositCollateralConfig
+        )
+          return;
 
         if (!(await this.connection.getAccountInfo(tokenAccount))) {
           ixs.push(
@@ -369,6 +432,70 @@ export class Margin {
       }
     }
 
+    // create a temp account to hold post swap tokens. gets closed in the clean up tx
+    const seed = `margin-${this.longReserve.symbol}-${this.pool.address}`.slice(
+      0,
+      32
+    );
+
+    const longTmpAccount = await PublicKey.createWithSeed(
+      this.owner,
+      seed,
+      TOKEN_PROGRAM_ID
+    );
+
+    if (!(await this.connection.getAccountInfo(longTmpAccount))) {
+      ixs.push(
+        SystemProgram.createAccountWithSeed({
+          fromPubkey: this.owner,
+          newAccountPubkey: longTmpAccount,
+          basePubkey: this.owner,
+          seed,
+          lamports: await this.connection.getMinimumBalanceForRentExemption(
+            165
+          ),
+          space: 165,
+          programId: TOKEN_PROGRAM_ID,
+        })
+      );
+      ixs.push(
+        createInitializeAccountInstruction(
+          longTmpAccount,
+          new PublicKey(this.longReserve.mintAddress),
+          this.owner
+        )
+      );
+    }
+
+    const blockhash = await this.connection
+      .getLatestBlockhash()
+      .then((res) => res.blockhash);
+
+    const messageV0 = new TransactionMessage({
+      payerKey: this.owner,
+      recentBlockhash: blockhash,
+      instructions: ixs,
+    }).compileToV0Message(lookupTableAccount ? [lookupTableAccount] : []);
+
+    const tx = new VersionedTransaction(messageV0);
+
+    return {
+      tx: ixs.length ? tx : null,
+      obligationAddress: this.obligationAddress,
+      longTokenAccounts: {
+        longTmpAccount,
+        longATA,
+      },
+    };
+  };
+
+  buildCleanupTx = async (longTmpAccount: PublicKey, longATA: PublicKey) => {
+    const ixs: TransactionInstruction[] = [];
+
+    ixs.push(
+      createCloseAccountInstruction(longTmpAccount, longATA, this.owner, [])
+    );
+
     const blockhash = await this.connection
       .getLatestBlockhash()
       .then((res) => res.blockhash);
@@ -379,12 +506,9 @@ export class Margin {
       instructions: ixs,
     }).compileToV0Message();
 
-    const tx = new VersionedTransaction(messageV0);
+    const cleanupTx = new VersionedTransaction(messageV0);
 
-    return {
-      tx,
-      obligationAddress: this.obligationAddress,
-    };
+    return cleanupTx;
   };
 
   getSolendAccountCount = () => {
@@ -564,6 +688,7 @@ export class Margin {
         SOLEND_PRODUCTION_PROGRAM_ID
       )
     );
+
     const txn = new TransactionMessage({
       payerKey: this.owner,
       recentBlockhash: "",
@@ -580,7 +705,8 @@ export class Margin {
       slippageBps: number;
     },
     swapInstructions: Array<TransactionInstruction>,
-    lookupTableAccounts: AddressLookupTableAccount[]
+    lookupTableAccounts: AddressLookupTableAccount[],
+    longTmpAccount: PublicKey
   ) => {
     const swapBaseBigNumber = new BigNumber(swapBaseAmount.toString());
     const fee = swapBaseBigNumber
@@ -622,6 +748,7 @@ export class Margin {
       this.obligation?.borrows
         ?.find((b) => b.reserveAddress === this.longReserve.address)
         ?.amount?.shiftedBy(this.longReserve.decimals)
+        ?.integerValue(BigNumber.ROUND_FLOOR)
         .toString() ?? "0";
     const maxLongRepayAmount = BigNumber.min(
       prevLongBorrowAmount,
@@ -631,20 +758,15 @@ export class Margin {
       longBalancePostSlippage.minus(maxLongRepayAmount);
     if (!maxLongRepayAmount.isZero()) {
       // non-zero deposit amount post repay means we need to max repay
-      let repayAmount;
-      if (longBalancePostRepay.isZero()) {
-        repayAmount = new BN(maxLongRepayAmount.toString());
-      } else {
-        repayAmount = new BN(U64_MAX);
+      if (!longBalancePostRepay.isZero()) {
         this.borrowKeys = this.borrowKeys.filter(
           (k) => k.toString() !== this.longReserve.address
         );
       }
 
       ixs.push(
-        repayObligationLiquidityInstruction(
-          repayAmount,
-          new PublicKey(this.longReserveLiquidityAta),
+        repayMaxObligationLiquidityInstruction(
+          longTmpAccount,
           new PublicKey(this.longReserve.liquidityAddress),
           new PublicKey(this.longReserve.address),
           new PublicKey(this.obligationAddress),
@@ -665,9 +787,8 @@ export class Margin {
       }
 
       ixs.push(
-        depositReserveLiquidityAndObligationCollateralInstruction(
-          new BN(longBalancePostRepay.toString()),
-          new PublicKey(this.longReserveLiquidityAta),
+        depositMaxReserveLiquidityAndObligationCollateralInstruction(
+          longTmpAccount,
           new PublicKey(this.longReserveCollateralAta),
           new PublicKey(this.longReserve.address),
           new PublicKey(this.longReserve.liquidityAddress),
@@ -690,7 +811,8 @@ export class Margin {
     const prevShortSupplyAmount =
       this.obligation?.deposits
         ?.find((b) => b.reserveAddress === this.shortReserve.address)
-        ?.amount?.shiftedBy(this.shortReserve.decimals) ?? new BigNumber("0");
+        ?.amount?.shiftedBy(this.shortReserve.decimals)
+        ?.integerValue(BigNumber.ROUND_FLOOR) ?? new BigNumber("0");
     const shortWithdrawAmount = BigNumber.min(
       flashLoanAmountWithFee,
       prevShortSupplyAmount
@@ -750,35 +872,50 @@ export class Margin {
             .integerValue(BigNumber.ROUND_FLOOR)
             .toString()
         );
+
+        ixs.push(
+          withdrawExact(
+            withdrawCtokens,
+            new PublicKey(this.shortReserve.cTokenLiquidityAddress),
+            new PublicKey(this.shortReserveCollateralAta),
+            new PublicKey(this.shortReserve.address),
+            new PublicKey(this.shortReserveLiquidityAta),
+            new PublicKey(this.shortReserve.cTokenMint),
+            new PublicKey(this.shortReserve.liquidityAddress),
+            new PublicKey(this.obligationAddress),
+            new PublicKey(this.pool.address),
+            this.lendingMarketAuthority,
+            new PublicKey(this.owner),
+            new PublicKey(this.owner),
+            SOLEND_PRODUCTION_PROGRAM_ID
+          )
+        );
       } else {
         withdrawCtokens = new BN(U64_MAX);
         this.depositKeys = this.depositKeys.filter(
           (k) => k.toString() !== this.shortReserve.address
         );
-      }
 
-      ixs.push(
-        withdrawObligationCollateralAndRedeemReserveLiquidity(
-          withdrawCtokens,
-          new PublicKey(this.shortReserve.cTokenLiquidityAddress),
-          new PublicKey(this.shortReserveCollateralAta),
-          new PublicKey(this.shortReserve.address),
-          new PublicKey(this.obligationAddress),
-          new PublicKey(this.pool.address),
-          this.lendingMarketAuthority,
-          new PublicKey(this.shortReserveLiquidityAta),
-          new PublicKey(this.shortReserve.cTokenMint),
-          new PublicKey(this.shortReserve.liquidityAddress),
-          new PublicKey(this.owner),
-          new PublicKey(this.owner),
-          SOLEND_PRODUCTION_PROGRAM_ID
-        )
-      );
+        ixs.push(
+          withdrawObligationCollateralAndRedeemReserveLiquidity(
+            withdrawCtokens,
+            new PublicKey(this.shortReserve.cTokenLiquidityAddress),
+            new PublicKey(this.shortReserveCollateralAta),
+            new PublicKey(this.shortReserve.address),
+            new PublicKey(this.obligationAddress),
+            new PublicKey(this.pool.address),
+            this.lendingMarketAuthority,
+            new PublicKey(this.shortReserveLiquidityAta),
+            new PublicKey(this.shortReserve.cTokenMint),
+            new PublicKey(this.shortReserve.liquidityAddress),
+            new PublicKey(this.owner),
+            new PublicKey(this.owner),
+            SOLEND_PRODUCTION_PROGRAM_ID
+          )
+        );
+      }
     }
-    console.log(
-      "borrow short token amount needed after withdrawwal: ",
-      shortBorrowAmountPostWithdrawal.toString()
-    );
+
     // 6) borrow short token amount to repay flash loan if necessary
     if (!shortBorrowAmountPostWithdrawal.isZero()) {
       const allKeys = this.depositKeys.concat(this.borrowKeys);
@@ -857,6 +994,15 @@ export class Margin {
     const blockhash = await this.connection
       .getLatestBlockhash()
       .then((res) => res.blockhash);
+
+    ixs.push(
+      createCloseAccountInstruction(
+        longTmpAccount,
+        this.longReserveCollateralAta,
+        this.owner,
+        []
+      )
+    );
 
     const messageV0 = new TransactionMessage({
       payerKey: this.owner,
