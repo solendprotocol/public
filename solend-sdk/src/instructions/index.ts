@@ -18,4 +18,5 @@ export * from "./flashRepayReserveLiquidity";
 export * from "./forgiveDebt";
 export * from "./setLendingMarketOwnerAndConfig";
 export * from "./updateMetadata";
+export * from "./withdrawExact";
 export * from "./instruction";

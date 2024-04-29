@@ -6,6 +6,7 @@ import * as fzstd from "fzstd";
 import { RateLimiterLayout, RateLimiter } from "./rateLimiter";
 import * as Layout from "../layout";
 import { LastUpdate, LastUpdateLayout } from "./lastUpdate";
+import { U64_MAX } from "../core/constants";
 
 const BufferLayout = require("buffer-layout");
 
@@ -217,10 +218,13 @@ function decodeReserve(buffer: Buffer): Reserve {
       protocolLiquidationFee: reserve.protocolLiquidationFee,
       protocolTakeRate: reserve.protocolTakeRate,
       addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
-      borrowWeight: new BigNumber(reserve.addedBorrowWeightBPS.toString())
-        .dividedBy(new BigNumber(10000))
-        .plus(new BigNumber(1))
-        .toNumber(),
+      borrowWeight:
+        reserve.addedBorrowWeightBPS.toString() === U64_MAX
+          ? Number(U64_MAX)
+          : new BigNumber(reserve.addedBorrowWeightBPS.toString())
+              .dividedBy(new BigNumber(10000))
+              .plus(new BigNumber(1))
+              .toNumber(),
       reserveType:
         reserve.reserveType == 0 ? AssetType.Regular : AssetType.Isolated,
     },
