@@ -1,8 +1,6 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { LendingInstruction } from "./instruction";
-
 const BufferLayout = require("buffer-layout");
-
 /// Accrue interest and update market price of liquidity on a reserve.
 ///
 /// Accounts expected by this instruction:
@@ -15,8 +13,9 @@ const BufferLayout = require("buffer-layout");
 export const refreshReserveInstruction = (
   reserve: PublicKey,
   solendProgramAddress: PublicKey,
-  oracle?: PublicKey,
-  switchboardFeedAddress?: PublicKey
+  oracle: PublicKey,
+  switchboardFeedAddress?: PublicKey,
+  extraOracle?: PublicKey
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([BufferLayout.u8("instruction")]);
 
@@ -25,12 +24,19 @@ export const refreshReserveInstruction = (
 
   const keys = [{ pubkey: reserve, isSigner: false, isWritable: true }];
 
-  if (oracle) {
-    keys.push({ pubkey: oracle, isSigner: false, isWritable: false });
-  }
+  keys.push({ pubkey: oracle, isSigner: false, isWritable: false });
+
   if (switchboardFeedAddress) {
     keys.push({
       pubkey: switchboardFeedAddress,
+      isSigner: false,
+      isWritable: false,
+    });
+  }
+
+  if (extraOracle) {
+    keys.push({
+      pubkey: extraOracle,
       isSigner: false,
       isWritable: false,
     });

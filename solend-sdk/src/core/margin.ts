@@ -331,7 +331,7 @@ export class Margin {
       amount: string;
     }
   ) => {
-    const ixs: TransactionInstruction[] = [];
+    const ixs = [];
     // If we are depositing, the deposit instruction will handle creating the obligation
     if (
       (!this.obligation || this.obligation.address === "empty") &&
@@ -401,6 +401,8 @@ export class Margin {
       })
     );
 
+    const blockhash = await this.connection.getLatestBlockhash();
+
     if (depositCollateralConfig) {
       const solendAction = await SolendActionCore.buildDepositTxns(
         this.pool,
@@ -410,10 +412,11 @@ export class Margin {
         this.owner,
         "production",
         this.obligationAddress,
-        this.obligationSeed
+        this.obligationSeed,
+        lookupTableAccount?.key
       );
       const { preLendingTxn, lendingTxn } =
-        await solendAction.getTransactions();
+        await solendAction.getLegacyTransactions();
       ixs.push(
         ...(preLendingTxn?.instructions ?? []),
         ...(lendingTxn?.instructions ?? [])
@@ -466,14 +469,9 @@ export class Margin {
         )
       );
     }
-
-    const blockhash = await this.connection
-      .getLatestBlockhash()
-      .then((res) => res.blockhash);
-
     const messageV0 = new TransactionMessage({
       payerKey: this.owner,
-      recentBlockhash: blockhash,
+      recentBlockhash: blockhash.blockhash,
       instructions: ixs,
     }).compileToV0Message(lookupTableAccount ? [lookupTableAccount] : []);
 
@@ -615,7 +613,8 @@ export class Margin {
         new PublicKey(this.shortReserve.liquidityAddress),
         new PublicKey(this.owner),
         new PublicKey(this.owner),
-        SOLEND_PRODUCTION_PROGRAM_ID
+        SOLEND_PRODUCTION_PROGRAM_ID,
+        depositKeys
       )
     );
     // 6) borrow short token amount to repay flash loan if necessary
@@ -669,7 +668,8 @@ export class Margin {
         new PublicKey(this.pool.address),
         this.lendingMarketAuthority,
         this.owner,
-        SOLEND_PRODUCTION_PROGRAM_ID
+        SOLEND_PRODUCTION_PROGRAM_ID,
+        depositKeys
       )
     );
 
@@ -887,7 +887,8 @@ export class Margin {
             this.lendingMarketAuthority,
             new PublicKey(this.owner),
             new PublicKey(this.owner),
-            SOLEND_PRODUCTION_PROGRAM_ID
+            SOLEND_PRODUCTION_PROGRAM_ID,
+            this.depositKeys
           )
         );
       } else {
@@ -910,7 +911,8 @@ export class Margin {
             new PublicKey(this.shortReserve.liquidityAddress),
             new PublicKey(this.owner),
             new PublicKey(this.owner),
-            SOLEND_PRODUCTION_PROGRAM_ID
+            SOLEND_PRODUCTION_PROGRAM_ID,
+            this.depositKeys
           )
         );
       }
@@ -970,7 +972,8 @@ export class Margin {
           new PublicKey(this.pool.address),
           this.lendingMarketAuthority,
           this.owner,
-          SOLEND_PRODUCTION_PROGRAM_ID
+          SOLEND_PRODUCTION_PROGRAM_ID,
+          this.depositKeys
         )
       );
     }

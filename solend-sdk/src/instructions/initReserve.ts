@@ -31,7 +31,7 @@ export const initReserveInstruction = (
   transferAuthority: PublicKey,
   lendingProgramId: PublicKey
 ): TransactionInstruction => {
-  const dataLayout = BufferLayout.struct([
+  const dataAccounts = [
     BufferLayout.u8("instruction"),
     Layout.uint64("liquidityAmount"),
     BufferLayout.u8("optimalUtilizationRate"),
@@ -55,7 +55,16 @@ export const initReserveInstruction = (
     BufferLayout.u8("reserveType"),
     BufferLayout.u8("maxLiquidationBonus"),
     BufferLayout.u8("maxLiquidationThreshold"),
-  ]);
+    Layout.int64("scaledPriceOffsetBPS"),
+    BufferLayout.u8("extraOracle"),
+    Layout.uint64("attributedBorrowLimitOpen"),
+    Layout.uint64("attributedBorrowLimitClose"),
+  ];
+
+  if (config.extraOracle) {
+    dataAccounts.splice(25, 0, Layout.publicKey("extraOraclePubkey"));
+  }
+  const dataLayout = BufferLayout.struct(dataAccounts);
 
   const data = Buffer.alloc(dataLayout.span);
   dataLayout.encode(
@@ -83,6 +92,11 @@ export const initReserveInstruction = (
       reserveType: config.reserveType,
       maxLiquidationBonus: config.maxLiquidationBonus,
       maxLiquidationThreshold: config.maxLiquidationThreshold,
+      scaledPriceOffsetBPS: config.scaledPriceOffsetBPS,
+      extraOracle: Number(Boolean(config.extraOracle)),
+      extraOraclePublicKey: config.extraOracle,
+      attributedBorrowLimitOpen: config.attributedBorrowLimitOpen,
+      attributedBorrowLimitClose: config.attributedBorrowLimitClose,
     },
     data
   );
