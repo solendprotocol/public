@@ -67,44 +67,19 @@ export interface ReserveConfig {
   addedBorrowWeightBPS: BN;
   borrowWeight: number;
   reserveType: AssetType;
+  extraOracle?: PublicKey;
+  scaledPriceOffsetBPS: BN;
+  attributedBorrowLimitOpen: BN;
+  attributedBorrowLimitClose: BN;
+  liquidityExtraMarketPriceFlag: number;
+  liquidityExtraMarketPrice: BN;
+  attributedBorrowValue: BN;
 }
 
 export enum AssetType {
   Regular = 0,
   Isolated = 1,
 }
-
-export const ReserveConfigLayout = BufferLayout.struct(
-  [
-    BufferLayout.u8("optimalUtilizationRate"),
-    BufferLayout.u8("maxUtilizationRate"),
-    BufferLayout.u8("loanToValueRatio"),
-    BufferLayout.u8("liquidationBonus"),
-    BufferLayout.u8("maxLiquidationBonus"),
-    BufferLayout.u8("liquidationThreshold"),
-    BufferLayout.u8("maxLiquidationThreshold"),
-    BufferLayout.u8("minBorrowRate"),
-    BufferLayout.u8("optimalBorrowRate"),
-    BufferLayout.u8("maxBorrowRate"),
-    BufferLayout.u8("superMaxBorrowRate"),
-    BufferLayout.struct(
-      [
-        Layout.uint64("borrowFeeWad"),
-        Layout.uint64("flashLoanFeeWad"),
-        BufferLayout.u8("hostFeePercentage"),
-      ],
-      "fees"
-    ),
-    Layout.uint64("depositLimit"),
-    Layout.uint64("borrowLimit"),
-    Layout.publicKey("feeReceiver"),
-    BufferLayout.u8("protocolLiquidationFee"),
-    BufferLayout.u8("protocolTakeRate"),
-    Layout.uint64("addedBorrowWeightBPS"),
-    BufferLayout.u8("reserveType"),
-  ],
-  "config"
-);
 
 export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
   [
@@ -152,7 +127,14 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
     Layout.uint64("superMaxBorrowRate"),
     BufferLayout.u8("maxLiquidationBonus"),
     BufferLayout.u8("maxLiquidationThreshold"),
-    BufferLayout.blob(138, "padding"),
+    Layout.int64("scaledPriceOffsetBPS"),
+    Layout.publicKey("extraOracle"),
+    BufferLayout.u8("liquidityExtraMarketPriceFlag"),
+    Layout.uint128("liquidityExtraMarketPrice"),
+    Layout.uint128("attributedBorrowValue"),
+    Layout.uint64("attributedBorrowLimitOpen"),
+    Layout.uint64("attributedBorrowLimitClose"),
+    BufferLayout.blob(49, "padding"),
   ]
 );
 
@@ -227,6 +209,13 @@ function decodeReserve(buffer: Buffer): Reserve {
               .toNumber(),
       reserveType:
         reserve.reserveType == 0 ? AssetType.Regular : AssetType.Isolated,
+      liquidityExtraMarketPriceFlag: reserve.liquidityExtraMarketPriceFlag,
+      liquidityExtraMarketPrice: reserve.liquidityExtraMarketPrice,
+      attributedBorrowValue: reserve.attributedBorrowValue,
+      scaledPriceOffsetBPS: reserve.scaledPriceOffsetBPS,
+      extraOracle: reserve.extraOracle,
+      attributedBorrowLimitOpen: reserve.attributedBorrowLimitOpen,
+      attributedBorrowLimitClose: reserve.attributedBorrowLimitClose,
     },
     rateLimiter: reserve.rateLimiter,
   };

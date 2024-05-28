@@ -5,6 +5,9 @@ export const WAD = "1".concat(Array(18 + 1).join("0"));
 export const POSITION_LIMIT = 6;
 export const SOL_PADDING_FOR_INTEREST = "1000000";
 export const SLOTS_PER_YEAR = 63072000;
+export const WRAPPER_PROGRAM_ID = new PublicKey(
+  "7DB3ff3sUijh7C5HEwNqejjAGCJ1nkUs1kwBqrRSfbnS"
+);
 export const SOLEND_ADDRESSES = [
   "5pHk2TmnqQzRF9L6egy5FfiyBgS7G9cMZ5RFaJAvghzw",
   "yaDPAockQPna7Srx5LB2TugJSKHUduHghyZdQcn7zYz",
