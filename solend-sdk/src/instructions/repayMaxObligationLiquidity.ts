@@ -1,9 +1,7 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { WRAPPER_PROGRAM_ID } from "../core/constants";
 
-export const WRAPPER_PROGRAM_ID = new PublicKey(
-  "55ttmJsE9v5PtScfnA2q6S9VXgSPopV6WziiwH94SYws"
-);
 const BufferLayout = require("buffer-layout");
 
 // Max repay requires the use of the wrapped program

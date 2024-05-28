@@ -1,8 +1,8 @@
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import BN from "bn.js";
-import { WRAPPER_PROGRAM_ID } from "./repayMaxObligationLiquidity";
 import * as Layout from "../layout";
+import { WRAPPER_PROGRAM_ID } from "../core/constants";
 
 const BufferLayout = require("buffer-layout");
 
@@ -20,7 +20,8 @@ export const withdrawExact = (
   lendingMarketAuthority: PublicKey,
   obligationOwner: PublicKey,
   transferAuthority: PublicKey,
-  solendProgramAddress: PublicKey
+  solendProgramAddress: PublicKey,
+  depositReserves: Array<PublicKey>
 ): TransactionInstruction => {
   const dataLayout = BufferLayout.struct([
     BufferLayout.u8("instruction"),
@@ -50,6 +51,11 @@ export const withdrawExact = (
     { pubkey: obligationOwner, isSigner: true, isWritable: false },
     { pubkey: transferAuthority, isSigner: true, isWritable: false },
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    ...depositReserves.map((reserve) => ({
+      pubkey: reserve,
+      isSigner: false,
+      isWritable: true,
+    })),
   ];
   return new TransactionInstruction({
     keys,

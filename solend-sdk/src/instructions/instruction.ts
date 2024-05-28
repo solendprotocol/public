@@ -20,6 +20,7 @@ export enum LendingInstruction {
   FlashRepayReserveLiquidity = 20,
   ForgiveDebt = 21,
   UpdateMetadata = 22,
+  SetObligationCloseabilityStatus = 23,
 }
 
 /** Instructions defined by the program */
@@ -45,4 +46,10 @@ export enum TokenInstruction {
   InitializeAccount3 = 18,
   InitializeMultisig2 = 19,
   InitializeMint2 = 20,
+}
+
+export enum WrapperLendingInstruction {
+  RepayMaxObligationLiquidityInstruction = 1,
+  DepositMaxReserveLiquidityAndObligationCollateral = 2,
+  WithdrawExact = 3,
 }

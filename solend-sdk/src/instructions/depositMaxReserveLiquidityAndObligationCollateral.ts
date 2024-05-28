@@ -1,6 +1,6 @@
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { WRAPPER_PROGRAM_ID } from "./repayMaxObligationLiquidity";
+import { WRAPPER_PROGRAM_ID } from "../core/constants";
 
 const BufferLayout = require("buffer-layout");
 
