@@ -29,7 +29,7 @@ export const updateReserveConfig = (
   rateLimiterConfig: RateLimiterConfig,
   solendProgramAddress: PublicKey
 ): TransactionInstruction => {
-  const dataLayout = BufferLayout.struct([
+  const dataAccounts = [
     BufferLayout.u8("instruction"),
     BufferLayout.u8("optimalUtilizationRate"),
     BufferLayout.u8("maxUtilizationRate"),
@@ -52,10 +52,19 @@ export const updateReserveConfig = (
     BufferLayout.u8("reserveType"),
     BufferLayout.u8("maxLiquidationBonus"),
     BufferLayout.u8("maxLiquidationThreshold"),
+    Layout.int64("scaledPriceOffsetBPS"),
+    BufferLayout.u8("extraOracle"),
+    Layout.uint64("attributedBorrowLimitOpen"),
+    Layout.uint64("attributedBorrowLimitClose"),
     Layout.uint64("windowDuration"),
     Layout.uint64("maxOutflow"),
-  ]);
+  ];
 
+  if (reserveConfig.extraOracle) {
+    dataAccounts.splice(24, 0, Layout.publicKey("extraOraclePubkey"));
+  }
+
+  const dataLayout = BufferLayout.struct(dataAccounts);
   const data = Buffer.alloc(dataLayout.span);
 
   dataLayout.encode(
@@ -81,6 +90,11 @@ export const updateReserveConfig = (
       addedBorrowWeightBPS: reserveConfig.addedBorrowWeightBPS,
       reserveType: reserveConfig.reserveType,
       maxLiquidationBonus: reserveConfig.maxLiquidationBonus,
+      scaledPriceOffsetBPS: reserveConfig.scaledPriceOffsetBPS,
+      extraOracle: Number(Boolean(reserveConfig.extraOracle)),
+      extraOraclePubkey: reserveConfig.extraOracle,
+      attributedBorrowLimitOpen: reserveConfig.attributedBorrowLimitOpen,
+      attributedBorrowLimitClose: reserveConfig.attributedBorrowLimitClose,
       maxLiquidationThreshold: reserveConfig.maxLiquidationThreshold,
       windowDuration: rateLimiterConfig.windowDuration,
       maxOutflow: rateLimiterConfig.maxOutflow,
@@ -97,6 +111,14 @@ export const updateReserveConfig = (
     { pubkey: pythPrice, isSigner: false, isWritable: false },
     { pubkey: switchboardOracle, isSigner: false, isWritable: false },
   ];
+
+  if (reserveConfig.extraOracle) {
+    keys.push({
+      pubkey: reserveConfig.extraOracle,
+      isSigner: false,
+      isWritable: false,
+    });
+  }
 
   return new TransactionInstruction({
     keys,

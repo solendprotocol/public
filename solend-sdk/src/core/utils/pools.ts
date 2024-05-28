@@ -164,6 +164,14 @@ export function formatReserve(
         ? BigNumber.max(price.emaPrice, price.spotPrice)
         : new BigNumber(price?.spotPrice ?? priceResolved),
     reserveType: reserve.info.config.reserveType,
+    scaledPriceOffsetBPS: reserve.info.config.scaledPriceOffsetBPS,
+    extraOracle: reserve.info.config.extraOracle?.toBase58(),
+    liquidityExtraMarketPriceFlag:
+      reserve.info.config.liquidityExtraMarketPriceFlag,
+    liquidityExtraMarketPrice: reserve.info.config.liquidityExtraMarketPrice,
+    attributedBorrowValue: reserve.info.config.attributedBorrowValue,
+    attributedBorrowLimitOpen: reserve.info.config.attributedBorrowLimitOpen,
+    attributedBorrowLimitClose: reserve.info.config.attributedBorrowLimitClose,
   };
 }
 
