@@ -151,12 +151,12 @@ export const rateLimiterAtom = atom(async (get) => {
     new PublicKey(selectedPoolAddress),
   );
   if (pool) {
-    const raterLimiter = parseLendingMarket(
+    const rateLimiter = parseLendingMarket(
       new PublicKey(selectedPoolAddress),
       pool,
     ).info.rateLimiter;
 
-    return parseRateLimiter(raterLimiter, currentSlot);
+    return parseRateLimiter(rateLimiter, currentSlot);
   }
 
   return null;
