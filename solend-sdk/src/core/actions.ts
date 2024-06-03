@@ -316,9 +316,9 @@ export class SolendActionCore {
     amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production",
+    customObligationAddress?: PublicKey,
     hostAta?: PublicKey,
-    lookupTableAddress?: PublicKey,
-    customObligationAddress?: PublicKey
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -373,8 +373,7 @@ export class SolendActionCore {
     amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production",
-    lookupTableAddress?: PublicKey,
-    customObligationAddress?: PublicKey
+    lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -384,7 +383,7 @@ export class SolendActionCore {
       publicKey,
       connection,
       environment,
-      customObligationAddress,
+      undefined,
       undefined,
       undefined,
       lookupTableAddress
@@ -490,8 +489,8 @@ export class SolendActionCore {
     amount: string,
     publicKey: PublicKey,
     environment: EnvironmentType = "production",
-    ownerPublicKey?: PublicKey,
     customObligationAddress?: PublicKey,
+    ownerPublicKey?: PublicKey,
     lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
@@ -671,7 +670,7 @@ export class SolendActionCore {
         this.userCollateralAccountAddress,
         new PublicKey(this.reserve.address),
         new PublicKey(this.reserve.liquidityAddress),
-        new PublicKey(this.reserve.cTokenLiquidityAddress),
+        new PublicKey(this.reserve.cTokenMint),
         new PublicKey(this.pool.address),
         new PublicKey(this.pool.authorityAddress),
         this.publicKey, // transferAuthority
@@ -687,7 +686,7 @@ export class SolendActionCore {
         this.userCollateralAccountAddress,
         this.userTokenAccountAddress,
         new PublicKey(this.reserve.address),
-        new PublicKey(this.reserve.cTokenLiquidityAddress),
+        new PublicKey(this.reserve.cTokenMint),
         new PublicKey(this.reserve.liquidityAddress),
         new PublicKey(this.pool.address), // pool
         new PublicKey(this.pool.authorityAddress), // poolAuthority
