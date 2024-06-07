@@ -1,8 +1,9 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import * as BufferLayout from "buffer-layout";
 import * as Layout from "../layout";
 import { LendingInstruction } from "./instruction";
 import BN from "bn.js";
+
+const BufferLayout = require("buffer-layout");
 
 export const forgiveDebtInstruction = (
   obligation: PublicKey,

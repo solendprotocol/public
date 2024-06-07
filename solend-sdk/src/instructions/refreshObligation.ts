@@ -1,6 +1,6 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import BufferLayout from "buffer-layout";
 import { LendingInstruction } from "./instruction";
+const BufferLayout = require("buffer-layout");
 
 /// Refresh an obligation"s accrued interest and collateral and liquidity prices. Requires
 /// refreshed reserves, as all obligation collateral deposit reserves in order, followed by all
