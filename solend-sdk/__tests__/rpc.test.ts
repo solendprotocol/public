@@ -1,6 +1,6 @@
 import { Connection } from '@solana/web3.js';
 import { StatsD } from 'hot-shots';
-import { InstrumentedConnection, MultiConnection, RetryConnection, SolendRPCConnection } from '../src/utils/rpc';
+import { InstrumentedConnection, MultiConnection, RetryConnection, SolendRPCConnection } from '../src/rpc';
 
 jest.setTimeout(1_000);
 
