@@ -4,7 +4,7 @@ import {
   getProgramId,
   LENDING_MARKET_SIZE,
   PoolMetadataCoreType,
-} from "@solendprotocol/solend-sdk";
+} from "../../index";
 import { SOLEND_ADDRESSES } from "../constants";
 import { titleCase } from "./utils";
 import axios from "axios";
