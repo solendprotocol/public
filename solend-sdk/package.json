@@ -22,7 +22,7 @@
     "@project-serum/anchor": "^0.24.2",
     "@pythnetwork/client": "^2.5.1",
     "@solana/buffer-layout": "=4.0.1",
-    "@solana/spl-token": "=0.1.8",
+    "@solana/spl-token": "=0.4.6",
     "@solana/web3.js": "=1.92.3",
     "@solendprotocol/utl-sdk": "^1.4.1",
     "@switchboard-xyz/sbv2-lite": "^0.2.4",
