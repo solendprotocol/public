@@ -1,8 +1,8 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
-import * as BufferLayout from "buffer-layout";
 import { RateLimiterConfig } from "../state/rateLimiter";
 import * as Layout from "../layout";
 import { LendingInstruction } from "./instruction";
+const BufferLayout = require("buffer-layout");
 
 /// Sets the new owner of a lending market.
 ///
