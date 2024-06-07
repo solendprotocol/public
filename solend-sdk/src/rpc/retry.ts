@@ -85,7 +85,7 @@ export class RetryConnection implements SolendRPCConnection {
   getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
-  ): Promise<RpcResponseAndContext<GetProgramAccountsResponse>> {
+  ): Promise<GetProgramAccountsResponse> {
     return this.withRetries(
       this.connection.getProgramAccounts(programId, configOrCommitment)
     );

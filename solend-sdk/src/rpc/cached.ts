@@ -163,7 +163,7 @@ export class CachedConnection implements SolendRPCConnection {
   async getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
-  ): Promise<RpcResponseAndContext<GetProgramAccountsResponse>> {
+  ): Promise<GetProgramAccountsResponse> {
     const key = `getProgramAccounts_${programId.toBase58()}_${JSON.stringify(
       configOrCommitment
     )}`;

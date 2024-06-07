@@ -97,7 +97,7 @@ export class InstrumentedConnection implements SolendRPCConnection {
   getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
-  ): Promise<RpcResponseAndContext<GetProgramAccountsResponse>> {
+  ): Promise<GetProgramAccountsResponse> {
     return this.withStats(
       this.connection.getProgramAccounts(programId, configOrCommitment),
       "getProgramAccounts"
