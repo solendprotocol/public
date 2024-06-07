@@ -106,7 +106,7 @@ export class MultiConnection implements SolendRPCConnection {
   getProgramAccounts(
     programId: PublicKey,
     configOrCommitment?: GetProgramAccountsConfig | Commitment
-  ): Promise<RpcResponseAndContext<GetProgramAccountsResponse>> {
+  ): Promise<GetProgramAccountsResponse> {
     return Promise.race(
       this.connections.map((c, index) =>
         delayed(
