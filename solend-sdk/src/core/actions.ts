@@ -169,7 +169,8 @@ export class SolendActionCore {
       (await PublicKey.createWithSeed(publicKey, seed, programId));
 
     const obligationAccountInfo = await connection.getAccountInfo(
-      obligationAddress
+      obligationAddress,
+      "processed"
     );
 
     let obligationDetails = null;
