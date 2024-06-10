@@ -25,7 +25,7 @@ export default function TransactionTab({
   onFinish: (res: ResultConfigType) => void;
   value: string;
   setValue: (arg: string) => void;
-  onSubmit: () => Promise<string> | undefined;
+  onSubmit: () => Promise<string[] | undefined> | undefined;
   selectedReserve: SelectedReserveType;
   maxValue: BigNumber;
   action: 'supply' | 'borrow' | 'withdraw' | 'repay';

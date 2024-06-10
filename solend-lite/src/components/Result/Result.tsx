@@ -21,7 +21,7 @@ type ErrorResultType = {
 type SuccessResultType = {
   type: 'success';
   amountString: string;
-  signature: string;
+  signatures: Array<string>;
   symbol: string;
   action: string;
   onBack?: () => void;
@@ -98,17 +98,24 @@ export default function Result({ result, setResult }: ResultPropsType) {
         <Text textAlign='center' variant='title'>
           {titleCase(result.action)} successful
           <br />
-          {formatToken(result.amountString)} {result.symbol}
+          <div>
+            {formatToken(result.amountString)} {result.symbol}
+          </div>
         </Text>
-        <Text color='secondary'>
-          <a
-            target='_blank'
-            rel='noreferrer'
-            href={`https://solscan.io/tx/${result.signature}?cluster=${ENVIRONMENT}`}
-          >
-            <u>View on Solscan</u>
-          </a>
-        </Text>
+        {result.signatures.map((signature, index) => (
+          <>
+            {index > 0 && <br />}
+            <Text color='secondary'>
+              <a
+                target='_blank'
+                rel='noreferrer'
+                href={`https://solscan.io/tx/${signature}?cluster=${ENVIRONMENT}`}
+              >
+                <u>View on Solscan</u>
+              </a>
+            </Text>
+          </>
+        ))}
         <Button
           size='md'
           w='100%'

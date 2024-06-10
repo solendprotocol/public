@@ -34,7 +34,7 @@ import { SKIP_PREFLIGHT } from 'common/config';
 import { selectedModalTabAtom, selectedReserveAtom } from 'stores/modal';
 
 export default function TransactionTakeover() {
-  const { sendTransaction } = useWallet();
+  const { sendTransaction, signAllTransactions } = useWallet();
   const [publicKey] = useAtom(publicKeyAtom);
   const [connection] = useAtom(connectionAtom);
   const [rateLimiter] = useAtom(rateLimiterAtom);
@@ -147,11 +147,13 @@ export default function TransactionTakeover() {
                   selectedPool,
                   selectedReserve,
                   connection,
-                  SKIP_PREFLIGHT
-                    ? (transaction) => sendTransaction(transaction, connection)
-                    : sendTransaction,
+                  sendTransaction,
+                  signAllTransactions,
+                  undefined,
                   undefined,
                   () => setResult({ type: 'loading' }),
+                  undefined,
+                  SKIP_PREFLIGHT,
                 );
               }
             }}
@@ -187,11 +189,13 @@ export default function TransactionTakeover() {
                   selectedPool,
                   selectedReserve,
                   connection,
-                  SKIP_PREFLIGHT
-                    ? (transaction) => sendTransaction(transaction, connection)
-                    : sendTransaction,
+                  sendTransaction,
+                  signAllTransactions,
+                  undefined,
                   undefined,
                   () => setResult({ type: 'loading' }),
+                  undefined,
+                  SKIP_PREFLIGHT,
                 );
               }
             }}
@@ -229,11 +233,13 @@ export default function TransactionTakeover() {
                   selectedPool,
                   selectedReserve,
                   connection,
-                  SKIP_PREFLIGHT
-                    ? (transaction) => sendTransaction(transaction, connection)
-                    : sendTransaction,
+                  sendTransaction,
+                  signAllTransactions,
+                  undefined,
                   undefined,
                   () => setResult({ type: 'loading' }),
+                  undefined,
+                  SKIP_PREFLIGHT,
                 );
               }
             }}
@@ -271,11 +277,13 @@ export default function TransactionTakeover() {
                   selectedPool,
                   selectedReserve,
                   connection,
-                  SKIP_PREFLIGHT
-                    ? (transaction) => sendTransaction(transaction, connection)
-                    : sendTransaction,
+                  sendTransaction,
+                  signAllTransactions,
+                  undefined,
                   undefined,
                   () => setResult({ type: 'loading' }),
+                  undefined,
+                  SKIP_PREFLIGHT,
                 );
               }
             }}

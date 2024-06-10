@@ -74,7 +74,7 @@ export const int64 = (property = "int64"): unknown => {
       // Create a Buffer filled with 0xff for negative number twos complement
       const invertedData = Buffer.from(data.map((byte: any) => byte ^ 0xff));
       const negated = new BN(
-        [...invertedData]
+        Array.from(invertedData)
           .reverse()
           .map((i) => `00${i.toString(16)}`.slice(-2))
           .join(""),

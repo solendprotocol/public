@@ -1,9 +1,4 @@
-import {
-  Connection,
-  PublicKey,
-  Transaction,
-  TransactionSignature,
-} from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { ObligationType } from 'stores/obligations';
 import { SelectedReserveType } from 'stores/pools';
@@ -13,10 +8,12 @@ import {
   SolendActionCore,
   U64_MAX,
   WalletType,
+  ParsedRateLimiter,
 } from '@solendprotocol/solend-sdk';
 import { getAssociatedTokenAddress, NATIVE_MINT } from '@solana/spl-token';
 import { ENVIRONMENT, HOST_ATA } from 'common/config';
-import { ParsedRateLimiter } from '@solendprotocol/solend-sdk/src/state/rateLimiter';
+import { sendAndConfirmStrategy } from 'components/TransactionTakeover/util';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 const SOL_PADDING_FOR_RENT_AND_FEE = 0.02;
 
@@ -35,13 +32,13 @@ export const supplyConfigs = {
     pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
-    sendTransaction: (
-      txn: Transaction,
-      connection: Connection,
-    ) => Promise<TransactionSignature>,
+    sendTransaction: WalletContextState['sendTransaction'],
+    signAllTransactions: WalletContextState['signAllTransactions'],
+    signCallback?: () => void,
     preCallback?: () => void,
     lendingCallback?: () => void,
     postCallback?: () => void,
+    skipPreflight?: boolean,
   ) => {
     const solendAction = await SolendActionCore.buildDepositTxns(
       pool,
@@ -52,11 +49,16 @@ export const supplyConfigs = {
       ENVIRONMENT,
     );
 
-    return solendAction.sendTransactions(
+    return sendAndConfirmStrategy(
+      solendAction,
+      connection,
       sendTransaction,
+      signAllTransactions,
+      signCallback,
       preCallback,
       lendingCallback,
       postCallback,
+      skipPreflight,
     );
   },
   verifyAction: (
@@ -160,13 +162,13 @@ export const borrowConfigs = {
     pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
-    sendTransaction: (
-      txn: Transaction,
-      connection: Connection,
-    ) => Promise<TransactionSignature>,
+    sendTransaction: WalletContextState['sendTransaction'],
+    signAllTransactions: WalletContextState['signAllTransactions'],
+    signCallback?: () => void,
     preCallback?: () => void,
     lendingCallback?: () => void,
     postCallback?: () => void,
+    skipPreflight?: boolean,
   ) => {
     let hostAta = undefined;
     if (HOST_ATA) {
@@ -191,14 +193,20 @@ export const borrowConfigs = {
       value,
       new PublicKey(publicKey),
       ENVIRONMENT,
+      undefined,
       hostAta,
     );
 
-    return solendAction.sendTransactions(
+    return sendAndConfirmStrategy(
+      solendAction,
+      connection,
       sendTransaction,
+      signAllTransactions,
+      signCallback,
       preCallback,
       lendingCallback,
       postCallback,
+      skipPreflight,
     );
   },
   verifyAction: (
@@ -355,13 +363,13 @@ export const withdrawConfigs = {
     pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
-    sendTransaction: (
-      txn: Transaction,
-      connection: Connection,
-    ) => Promise<TransactionSignature>,
+    sendTransaction: WalletContextState['sendTransaction'],
+    signAllTransactions: WalletContextState['signAllTransactions'],
+    signCallback?: () => void,
     preCallback?: () => void,
     lendingCallback?: () => void,
     postCallback?: () => void,
+    skipPreflight?: boolean,
   ) => {
     const solendAction = await SolendActionCore.buildWithdrawTxns(
       pool,
@@ -372,11 +380,16 @@ export const withdrawConfigs = {
       ENVIRONMENT,
     );
 
-    return solendAction.sendTransactions(
+    return sendAndConfirmStrategy(
+      solendAction,
+      connection,
       sendTransaction,
+      signAllTransactions,
+      signCallback,
       preCallback,
       lendingCallback,
       postCallback,
+      skipPreflight,
     );
   },
   verifyAction: (
@@ -543,13 +556,13 @@ export const repayConfigs = {
     pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
-    sendTransaction: (
-      txn: Transaction,
-      connection: Connection,
-    ) => Promise<TransactionSignature>,
+    sendTransaction: WalletContextState['sendTransaction'],
+    signAllTransactions: WalletContextState['signAllTransactions'],
+    signCallback?: () => void,
     preCallback?: () => void,
     lendingCallback?: () => void,
     postCallback?: () => void,
+    skipPreflight?: boolean,
   ) => {
     const solendAction = await SolendActionCore.buildRepayTxns(
       pool,
@@ -560,11 +573,16 @@ export const repayConfigs = {
       ENVIRONMENT,
     );
 
-    return solendAction.sendTransactions(
+    return sendAndConfirmStrategy(
+      solendAction,
+      connection,
       sendTransaction,
+      signAllTransactions,
+      signCallback,
       preCallback,
       lendingCallback,
       postCallback,
+      skipPreflight,
     );
   },
   verifyAction: (
