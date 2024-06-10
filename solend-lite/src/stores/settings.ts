@@ -10,7 +10,7 @@ type RpcEndpoint = {
 };
 
 export const selectedRpcAtom = atomWithStorage<RpcEndpoint>(
-  'selectedRpc',
+  'selectedRpcBeta',
   DEFAULT_RPC_ENDPOINTS[0],
 );
 

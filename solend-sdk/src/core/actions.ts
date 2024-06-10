@@ -194,18 +194,17 @@ export class SolendActionCore {
 
     // Union of addresses
     const distinctReserveCount =
-      [
-        ...new Set([
+      Array.from(new Set([
           ...borrowReserves.map((e) => e.toBase58()),
           ...(action === "borrow" ? [reserve.address] : []),
         ]),
-      ].length +
-      [
-        ...new Set([
+      ).length +
+      Array.from(
+        new Set([
           ...depositReserves.map((e) => e.toBase58()),
           ...(action === "deposit" ? [reserve.address] : []),
         ]),
-      ].length;
+      ).length;
 
     if (distinctReserveCount > POSITION_LIMIT) {
       throw Error(
@@ -834,13 +833,12 @@ export class SolendActionCore {
 
   private async addRefreshIxs(action: ActionType) {
     // Union of addresses
-    const allReserveAddresses = [
-      ...new Set([
+    const allReserveAddresses = Array.from(new Set([
         ...this.depositReserves.map((e) => e.toBase58()),
         ...this.borrowReserves.map((e) => e.toBase58()),
         this.reserve.address,
       ]),
-    ];
+    );
 
     allReserveAddresses.forEach((reserveAddress) => {
       const reserveInfo = this.pool.reserves.find(
