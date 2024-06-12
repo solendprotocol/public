@@ -35,10 +35,8 @@
     "hot-shots": "^9.3.0",
     "isomorphic-fetch": "^3.0.0",
     "jsbi": "^4.3.0",
+    "rpc-websockets": "7.11.0",
     "typedoc-plugin-cname": "^1.0.1"
-  },
-  "resolutions": {
-    "rpc-websockets": "7.11.0"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",
