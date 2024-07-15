@@ -1,6 +1,6 @@
 {
   "name": "@solendprotocol/solend-sdk",
-  "version": "0.10.8",
+  "version": "0.10.9",
   "private": true,
   "main": "src/index.ts",
   "module": "src/index.ts",
@@ -41,6 +41,7 @@
   "devDependencies": {
     "@types/bn.js": "^5.1.0",
     "@types/jest": "^29.2.3",
+    "@types/node": "^20.14.10",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
     "eslint": "^8.50.0",
@@ -55,6 +56,6 @@
     "ts-jest": "^28.0.7",
     "ts-node": "^10.9.1",
     "typedoc": "^0.22.10",
-    "typescript": "=4.9.5"
+    "typescript": "~5.3.3"
   }
 }
