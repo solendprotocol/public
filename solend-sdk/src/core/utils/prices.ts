@@ -1,8 +1,10 @@
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { parsePriceData } from "@pythnetwork/client";
 import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
+import { PythSolanaReceiver } from '@pythnetwork/pyth-solana-receiver';
 import { getBatchMultipleAccountsInfo } from "./utils";
 import { Reserve } from "../../state";
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 
 const SBV2_MAINNET = "SW1TCH7qEPTdLsDHRgPuMQjbQxKdH2aBStViMFnt64f";
 
@@ -20,6 +22,7 @@ export async function fetchPrices(
     );
 
   const priceAccounts = await getBatchMultipleAccountsInfo(oracles, connection);
+  const pythSolanaReceiver = new PythSolanaReceiver({ connection, wallet: new NodeWallet(Keypair.fromSeed(new Uint8Array(32).fill(1))) });
 
   return parsedReserves.reduce((acc, reserve, i) => {
     const pythOracleData = priceAccounts[i];
@@ -33,6 +36,29 @@ export async function fetchPrices(
       | undefined;
 
     if (pythOracleData) {
+      if (
+        pythOracleData.owner.toBase58() ===
+        pythSolanaReceiver.receiver.programId.toBase58()
+      ) {
+        // pythData = pythSolanaReceiver.receiver.coder.accounts.decode(
+        //   'priceUpdateV2',
+        //   pythOracleData.data,
+        // );
+        const priceUpdate =
+          pythSolanaReceiver.receiver.account.priceUpdateV2.coder.accounts.decode(
+            'priceUpdateV2',
+            pythOracleData.data,
+          );
+        const exponent = 10 ** priceUpdate.priceMessage.exponent;
+        const spotPrice = priceUpdate.priceMessage.price.toNumber() * exponent;
+        const emaPrice = priceUpdate.priceMessage.emaPrice.toNumber() * exponent;
+
+        priceData = {
+          spotPrice,
+          emaPrice,
+        };
+
+      } else {
       const { price, previousPrice, emaPrice } = parsePriceData(
         pythOracleData.data as Buffer
       );
@@ -44,6 +70,7 @@ export async function fetchPrices(
           emaPrice: emaPrice?.value ?? (price || previousPrice),
         };
       }
+    }
     }
 
     // Only attempt to fetch from switchboard if not already available from pyth
