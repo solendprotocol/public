@@ -1,7 +1,9 @@
 import {
   AddressLookupTableAccount,
   BlockhashWithExpiryBlockHeight,
+  ComputeBudgetProgram,
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -18,6 +20,7 @@ import {
 } from "@solana/spl-token";
 import BN from "bn.js";
 import BigNumber from "bignumber.js";
+import { PythSolanaReceiver } from "@pythnetwork/pyth-solana-receiver";
 import {
   Obligation,
   OBLIGATION_SIZE,
@@ -45,6 +48,10 @@ import {
 import { POSITION_LIMIT } from "./constants";
 import { EnvironmentType, PoolType, ReserveType } from "./types";
 import { getProgramId, U64_MAX, WAD } from "./constants";
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
+import { PriceServiceConnection } from "@pythnetwork/price-service-client";
+import { AnchorProvider, Program } from "@coral-xyz/anchor-30";
+import { CrossbarClient, loadLookupTables, PullFeed, SB_ON_DEMAND_PID } from "@switchboard-xyz/on-demand";
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
 
@@ -85,6 +92,9 @@ export class SolendActionCore {
   amount: BN;
 
   hostAta?: PublicKey;
+
+  // TODO: potentially don't need to keep signers
+  pullPriceTxns: Array<VersionedTransaction>;
 
   setupIxs: Array<TransactionInstruction>;
 
@@ -136,6 +146,7 @@ export class SolendActionCore {
     this.obligationAddress = obligationAddress;
     this.userTokenAccountAddress = userTokenAccountAddress;
     this.userCollateralAccountAddress = userCollateralAccountAddress;
+    this.pullPriceTxns = [] as Array<VersionedTransaction>;
     this.setupIxs = [];
     this.lendingIxs = [];
     this.cleanupIxs = [];
@@ -562,15 +573,17 @@ export class SolendActionCore {
     return txns;
   }
 
-  async getTransactions(blockhash: BlockhashWithExpiryBlockHeight) {
+  async getTransactions(blockhash: BlockhashWithExpiryBlockHeight, tipAmount?: 9000 ) {
     const txns: {
       preLendingTxn: VersionedTransaction | null;
       lendingTxn: VersionedTransaction | null;
       postLendingTxn: VersionedTransaction | null;
+      pullPriceTxns: VersionedTransaction[] | null
     } = {
       preLendingTxn: null,
       lendingTxn: null,
       postLendingTxn: null,
+      pullPriceTxns: null,
     };
 
     if (this.preTxnIxs.length) {
@@ -591,6 +604,7 @@ export class SolendActionCore {
           ...this.setupIxs,
           ...this.lendingIxs,
           ...this.cleanupIxs,
+          ...this.
         ],
       }).compileToV0Message(
         this.lookupTableAccount ? [this.lookupTableAccount] : []
@@ -605,6 +619,10 @@ export class SolendActionCore {
           instructions: this.postTxnIxs,
         }).compileToV0Message()
       );
+    }
+
+    if (this.pullPriceTxns.length) {
+      txns.pullPriceTxns = this.pullPriceTxns;
     }
 
     return txns;
@@ -831,6 +849,95 @@ export class SolendActionCore {
     }
   }
 
+  private async buildPullPriceTxns(oracleKeys: Array<string>) {
+    const oracleAccounts = await this.connection.getMultipleAccountsInfo(oracleKeys.map((o) => new PublicKey(o)), 'processed')
+    const priceServiceConnection = new PriceServiceConnection("https://hermes.pyth.network");
+    const pythSolanaReceiver = new PythSolanaReceiver({ 
+      connection: this.connection,
+      wallet: new NodeWallet(Keypair.fromSeed(new Uint8Array(32).fill(1)))
+    });
+    const transactionBuilder = pythSolanaReceiver.newTransactionBuilder({
+      closeUpdateAccounts: true,
+    });
+
+    const provider = new AnchorProvider(this.connection, new NodeWallet(Keypair.fromSeed(new Uint8Array(32).fill(1))), {});
+    const idl = (await Program.fetchIdl(SB_ON_DEMAND_PID, provider))!;
+    const sbod = new Program(idl, provider);
+
+    const pythPulledOracles = oracleAccounts.filter(o => o?.owner.toBase58() === pythSolanaReceiver.receiver.programId.toBase58());
+    if (pythPulledOracles.length) {
+      const shuffledPriceIds = pythPulledOracles
+      .map((pythOracleData, index) => {
+        if (!pythOracleData) {
+          throw new Error(`Could not find oracle data at index ${index}`);
+        }
+        const priceUpdate = pythSolanaReceiver.receiver.account.priceUpdateV2.coder.accounts.decode(
+            'priceUpdateV2',
+            pythOracleData.data,
+          );
+  
+        return { key: Math.random() , priceFeedId: priceUpdate.priceMessage.feedId };
+      })
+      .sort((a, b) => a.key - b.key)
+      .map((x) => x.priceFeedId);
+  
+    let priceFeedUpdateData;
+      priceFeedUpdateData = await priceServiceConnection.getLatestVaas(
+        shuffledPriceIds
+      );
+  
+      await transactionBuilder.addUpdatePriceFeed(
+        priceFeedUpdateData,
+        0 // shardId of 0
+      );
+  
+      const transactionsWithSigners = await transactionBuilder.buildVersionedTransactions({
+        tightComputeBudget: true,
+      });
+  
+      for (const transaction of transactionsWithSigners) {
+        const signers = transaction.signers;
+        let tx = transaction.tx;
+          if (signers) {
+            tx.sign(signers);
+            this.pullPriceTxns.push(tx);
+          }
+        }
+    }
+
+    const sbPulledOracles = oracleKeys.filter((_o, index) => oracleAccounts[index]?.owner.toBase58() === sbod.programId.toBase58())
+      if (sbPulledOracles.length) {
+        const feedAccounts = sbPulledOracles.map((oracleKey) => new PullFeed(sbod as any, oracleKey));
+        const crossbar = new CrossbarClient("https://crossbar.switchboard.xyz");
+  
+        // Responses is Array<[pullIx, responses, success]>
+        const responses =  await Promise.all(feedAccounts.map((feedAccount) => feedAccount.fetchUpdateIx({ numSignatures: 1, crossbarClient: crossbar })));
+        const oracles = responses.flatMap((x) => x[1].map(y => y.oracle));
+        const lookupTables = await loadLookupTables([...oracles, ...feedAccounts]);
+      
+        const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: 100_000,
+        });
+      
+        // Get the latest context
+        const {
+          value: { blockhash },
+        } = await this.connection.getLatestBlockhashAndContext();
+      
+        // Get Transaction Message 
+        const message = new TransactionMessage({
+          payerKey: this.publicKey,
+          recentBlockhash: blockhash,
+          instructions: [priorityFeeIx, ...responses.map(r => r[0]!)],
+        }).compileToV0Message(lookupTables);
+        
+        // Get Versioned Transaction
+        const vtx = new VersionedTransaction(message);
+  
+        this.pullPriceTxns.push(vtx);
+      }
+  }
+
   private async addRefreshIxs(action: ActionType) {
     // Union of addresses
     const allReserveAddresses = Array.from(new Set([
@@ -839,6 +946,8 @@ export class SolendActionCore {
         this.reserve.address,
       ]),
     );
+
+    await this.buildPullPriceTxns(allReserveAddresses);
 
     allReserveAddresses.forEach((reserveAddress) => {
       const reserveInfo = this.pool.reserves.find(
