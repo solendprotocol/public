@@ -37,6 +37,7 @@ import {
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import JSBI from "jsbi";
+import { Wallet } from "@coral-xyz/anchor";
 import { SolendActionCore } from "./actions";
 import { repayMaxObligationLiquidityInstruction } from "../instructions/repayMaxObligationLiquidity";
 import { depositMaxReserveLiquidityAndObligationCollateralInstruction } from "../instructions/depositMaxReserveLiquidityAndObligationCollateral";
@@ -53,7 +54,7 @@ export class Margin {
 
   obligation?: ObligationType;
 
-  owner: PublicKey;
+  wallet: Wallet;
 
   obligationAddress: PublicKey;
 
@@ -83,7 +84,7 @@ export class Margin {
 
   constructor(
     connection: Connection,
-    owner: PublicKey,
+    wallet: Wallet,
     longReserve: ReserveType,
     shortReserve: ReserveType,
     pool: PoolType,
@@ -94,7 +95,7 @@ export class Margin {
   ) {
     this.connection = connection;
     this.obligation = obligation;
-    this.owner = owner;
+    this.wallet = wallet;
     this.longReserve = longReserve;
     this.shortReserve = shortReserve;
     this.obligationAddress = obligationAddress;
@@ -104,20 +105,20 @@ export class Margin {
 
     this.longReserveLiquidityAta = getAssociatedTokenAddressSync(
       new PublicKey(this.longReserve.mintAddress),
-      this.owner
+      this.wallet.publicKey
     );
     this.longReserveCollateralAta = getAssociatedTokenAddressSync(
       new PublicKey(this.longReserve.cTokenMint),
-      this.owner
+      this.wallet.publicKey
     );
 
     this.shortReserveLiquidityAta = getAssociatedTokenAddressSync(
       new PublicKey(this.shortReserve.mintAddress),
-      this.owner
+      this.wallet.publicKey
     );
     this.shortReserveCollateralAta = getAssociatedTokenAddressSync(
       new PublicKey(this.shortReserve.cTokenMint),
-      this.owner
+      this.wallet.publicKey
     );
 
     const [lendingMarketAuthority, _] = findProgramAddressSync(
@@ -341,9 +342,9 @@ export class Margin {
         throw Error("Seed required for new obligations");
       ixs.push(
         SystemProgram.createAccountWithSeed({
-          fromPubkey: this.owner,
+          fromPubkey: this.wallet.publicKey,
           newAccountPubkey: this.obligationAddress,
-          basePubkey: this.owner,
+          basePubkey: this.wallet.publicKey,
           seed: this.obligationSeed,
           lamports: await this.connection.getMinimumBalanceForRentExemption(
             1300
@@ -356,7 +357,7 @@ export class Margin {
         initObligationInstruction(
           this.obligationAddress,
           new PublicKey(this.pool.address),
-          this.owner,
+          this.wallet.publicKey,
           SOLEND_PRODUCTION_PROGRAM_ID
         )
       );
@@ -372,7 +373,7 @@ export class Margin {
       ].map(async (mint) => {
         const tokenAccount = await getAssociatedTokenAddress(
           mint,
-          this.owner,
+          this.wallet.publicKey,
           true
         );
 
@@ -391,9 +392,9 @@ export class Margin {
         if (!(await this.connection.getAccountInfo(tokenAccount))) {
           ixs.push(
             createAssociatedTokenAccountInstruction(
-              this.owner,
+              this.wallet.publicKey,
               tokenAccount,
-              this.owner,
+              this.wallet.publicKey,
               mint
             )
           );
@@ -409,7 +410,7 @@ export class Margin {
         depositCollateralConfig.collateralReserve,
         this.connection,
         depositCollateralConfig.amount,
-        this.owner,
+        this.wallet,
         "production",
         this.obligationAddress,
         this.obligationSeed,
@@ -442,7 +443,7 @@ export class Margin {
     );
 
     const longTmpAccount = await PublicKey.createWithSeed(
-      this.owner,
+      this.wallet.publicKey,
       seed,
       TOKEN_PROGRAM_ID
     );
@@ -450,9 +451,9 @@ export class Margin {
     if (!(await this.connection.getAccountInfo(longTmpAccount))) {
       ixs.push(
         SystemProgram.createAccountWithSeed({
-          fromPubkey: this.owner,
+          fromPubkey: this.wallet.publicKey,
           newAccountPubkey: longTmpAccount,
-          basePubkey: this.owner,
+          basePubkey: this.wallet.publicKey,
           seed,
           lamports: await this.connection.getMinimumBalanceForRentExemption(
             165
@@ -465,12 +466,12 @@ export class Margin {
         createInitializeAccountInstruction(
           longTmpAccount,
           new PublicKey(this.longReserve.mintAddress),
-          this.owner
+          this.wallet.publicKey
         )
       );
     }
     const messageV0 = new TransactionMessage({
-      payerKey: this.owner,
+      payerKey: this.wallet.publicKey,
       recentBlockhash: blockhash.blockhash,
       instructions: ixs,
     }).compileToV0Message(lookupTableAccount ? [lookupTableAccount] : []);
@@ -491,7 +492,12 @@ export class Margin {
     const ixs: TransactionInstruction[] = [];
 
     ixs.push(
-      createCloseAccountInstruction(longTmpAccount, longATA, this.owner, [])
+      createCloseAccountInstruction(
+        longTmpAccount,
+        longATA,
+        this.wallet.publicKey,
+        []
+      )
     );
 
     const blockhash = await this.connection
@@ -499,7 +505,7 @@ export class Margin {
       .then((res) => res.blockhash);
 
     const messageV0 = new TransactionMessage({
-      payerKey: this.owner,
+      payerKey: this.wallet.publicKey,
       recentBlockhash: blockhash,
       instructions: ixs,
     }).compileToV0Message();
@@ -540,7 +546,7 @@ export class Margin {
         new PublicKey(this.longReserve.address),
         new PublicKey(this.obligationAddress),
         new PublicKey(this.pool.address),
-        this.owner,
+        this.wallet.publicKey,
         SOLEND_PRODUCTION_PROGRAM_ID
       )
     );
@@ -562,10 +568,10 @@ export class Margin {
         this.lendingMarketAuthority,
         new PublicKey(this.longReserve.cTokenLiquidityAddress),
         this.obligationAddress,
-        this.owner,
+        this.wallet.publicKey,
         new PublicKey(this.longReserve.pythOracle),
         new PublicKey(this.longReserve.switchboardOracle),
-        this.owner,
+        this.wallet.publicKey,
         SOLEND_PRODUCTION_PROGRAM_ID
       )
     );
@@ -611,8 +617,8 @@ export class Margin {
         new PublicKey(this.shortReserveLiquidityAta),
         new PublicKey(this.shortReserve.cTokenMint),
         new PublicKey(this.shortReserve.liquidityAddress),
-        new PublicKey(this.owner),
-        new PublicKey(this.owner),
+        new PublicKey(this.wallet.publicKey),
+        new PublicKey(this.wallet.publicKey),
         SOLEND_PRODUCTION_PROGRAM_ID,
         depositKeys
       )
@@ -667,7 +673,7 @@ export class Margin {
         new PublicKey(this.obligationAddress),
         new PublicKey(this.pool.address),
         this.lendingMarketAuthority,
-        this.owner,
+        this.wallet.publicKey,
         SOLEND_PRODUCTION_PROGRAM_ID,
         depositKeys
       )
@@ -684,13 +690,13 @@ export class Margin {
         new PublicKey(this.shortReserve.feeReceiverAddress) ?? NULL_ORACLE,
         new PublicKey(this.shortReserve.address),
         new PublicKey(this.pool.address),
-        this.owner,
+        this.wallet.publicKey,
         SOLEND_PRODUCTION_PROGRAM_ID
       )
     );
 
     const txn = new TransactionMessage({
-      payerKey: this.owner,
+      payerKey: this.wallet.publicKey,
       recentBlockhash: "",
       instructions: ixs,
     }).compileToLegacyMessage();
@@ -771,7 +777,7 @@ export class Margin {
           new PublicKey(this.longReserve.address),
           new PublicKey(this.obligationAddress),
           new PublicKey(this.pool.address),
-          this.owner,
+          this.wallet.publicKey,
           SOLEND_PRODUCTION_PROGRAM_ID
         )
       );
@@ -797,10 +803,10 @@ export class Margin {
           this.lendingMarketAuthority,
           new PublicKey(this.longReserve.cTokenLiquidityAddress),
           new PublicKey(this.obligationAddress),
-          this.owner,
+          this.wallet.publicKey,
           new PublicKey(this.longReserve.pythOracle),
           new PublicKey(this.longReserve.switchboardOracle),
-          this.owner,
+          this.wallet.publicKey,
           SOLEND_PRODUCTION_PROGRAM_ID
         )
       );
@@ -885,8 +891,8 @@ export class Margin {
             new PublicKey(this.obligationAddress),
             new PublicKey(this.pool.address),
             this.lendingMarketAuthority,
-            new PublicKey(this.owner),
-            new PublicKey(this.owner),
+            new PublicKey(this.wallet.publicKey),
+            new PublicKey(this.wallet.publicKey),
             SOLEND_PRODUCTION_PROGRAM_ID,
             this.depositKeys
           )
@@ -909,8 +915,8 @@ export class Margin {
             new PublicKey(this.shortReserveLiquidityAta),
             new PublicKey(this.shortReserve.cTokenMint),
             new PublicKey(this.shortReserve.liquidityAddress),
-            new PublicKey(this.owner),
-            new PublicKey(this.owner),
+            new PublicKey(this.wallet.publicKey),
+            new PublicKey(this.wallet.publicKey),
             SOLEND_PRODUCTION_PROGRAM_ID,
             this.depositKeys
           )
@@ -971,7 +977,7 @@ export class Margin {
           new PublicKey(this.obligationAddress),
           new PublicKey(this.pool.address),
           this.lendingMarketAuthority,
-          this.owner,
+          this.wallet.publicKey,
           SOLEND_PRODUCTION_PROGRAM_ID,
           this.depositKeys
         )
@@ -989,7 +995,7 @@ export class Margin {
         new PublicKey(this.shortReserve.feeReceiverAddress) ?? NULL_ORACLE,
         new PublicKey(this.shortReserve.address),
         new PublicKey(this.pool.address),
-        this.owner,
+        this.wallet.publicKey,
         SOLEND_PRODUCTION_PROGRAM_ID
       )
     );
@@ -1002,13 +1008,13 @@ export class Margin {
       createCloseAccountInstruction(
         longTmpAccount,
         this.longReserveCollateralAta,
-        this.owner,
+        this.wallet.publicKey,
         []
       )
     );
 
     const messageV0 = new TransactionMessage({
-      payerKey: this.owner,
+      payerKey: this.wallet.publicKey,
       recentBlockhash: blockhash,
       instructions: ixs,
     }).compileToV0Message(finalAddressLookupTableAccounts);

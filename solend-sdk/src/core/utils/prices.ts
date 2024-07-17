@@ -1,7 +1,7 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { parsePriceData } from "@pythnetwork/client";
 import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
-import { PythSolanaReceiver } from '@pythnetwork/pyth-solana-receiver';
+import { PythSolanaReceiver } from "@pythnetwork/pyth-solana-receiver";
 import { getBatchMultipleAccountsInfo } from "./utils";
 import { Reserve } from "../../state";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
@@ -22,7 +22,10 @@ export async function fetchPrices(
     );
 
   const priceAccounts = await getBatchMultipleAccountsInfo(oracles, connection);
-  const pythSolanaReceiver = new PythSolanaReceiver({ connection, wallet: new NodeWallet(Keypair.fromSeed(new Uint8Array(32).fill(1))) });
+  const pythSolanaReceiver = new PythSolanaReceiver({
+    connection,
+    wallet: new NodeWallet(Keypair.fromSeed(new Uint8Array(32).fill(1))),
+  });
 
   return parsedReserves.reduce((acc, reserve, i) => {
     const pythOracleData = priceAccounts[i];
@@ -46,31 +49,31 @@ export async function fetchPrices(
         // );
         const priceUpdate =
           pythSolanaReceiver.receiver.account.priceUpdateV2.coder.accounts.decode(
-            'priceUpdateV2',
-            pythOracleData.data,
+            "priceUpdateV2",
+            pythOracleData.data
           );
         const exponent = 10 ** priceUpdate.priceMessage.exponent;
         const spotPrice = priceUpdate.priceMessage.price.toNumber() * exponent;
-        const emaPrice = priceUpdate.priceMessage.emaPrice.toNumber() * exponent;
+        const emaPrice =
+          priceUpdate.priceMessage.emaPrice.toNumber() * exponent;
 
         priceData = {
           spotPrice,
           emaPrice,
         };
-
       } else {
-      const { price, previousPrice, emaPrice } = parsePriceData(
-        pythOracleData.data as Buffer
-      );
+        const { price, previousPrice, emaPrice } = parsePriceData(
+          pythOracleData.data as Buffer
+        );
 
-      if (price || previousPrice) {
-        // use latest price if available otherwise fallback to previous
-        priceData = {
-          spotPrice: price || previousPrice,
-          emaPrice: emaPrice?.value ?? (price || previousPrice),
-        };
+        if (price || previousPrice) {
+          // use latest price if available otherwise fallback to previous
+          priceData = {
+            spotPrice: price || previousPrice,
+            emaPrice: emaPrice?.value ?? (price || previousPrice),
+          };
+        }
       }
-    }
     }
 
     // Only attempt to fetch from switchboard if not already available from pyth
