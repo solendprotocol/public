@@ -45,15 +45,30 @@ import {
   depositMaxReserveLiquidityAndObligationCollateralInstruction,
   withdrawExact,
 } from "../instructions";
-import { POSITION_LIMIT } from "./constants";
+import { NULL_ORACLE, POSITION_LIMIT } from "./constants";
 import { EnvironmentType, PoolType, ReserveType } from "./types";
 import { getProgramId, U64_MAX, WAD } from "./constants";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { PriceServiceConnection } from "@pythnetwork/price-service-client";
 import { AnchorProvider, Program } from "@coral-xyz/anchor-30";
-import { CrossbarClient, loadLookupTables, PullFeed, SB_ON_DEMAND_PID } from "@switchboard-xyz/on-demand";
+import {
+  CrossbarClient,
+  loadLookupTables,
+  PullFeed,
+  SB_ON_DEMAND_PID,
+} from "@switchboard-xyz/on-demand";
+import { Wallet } from "@coral-xyz/anchor";
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
+
+const toHexString = (byteArray: number[]) => {
+  return (
+    "0x" +
+    Array.from(byteArray, function (byte) {
+      return byte.toString(16).padStart(2, "0");
+    }).join("")
+  );
+};
 
 export type ActionType =
   | "deposit"
@@ -114,12 +129,16 @@ export class SolendActionCore {
 
   ownerPublicKey?: PublicKey;
 
+  jitoTipAmount: number;
+
+  wallet: Wallet;
+
   private constructor(
     programId: PublicKey,
     connection: Connection,
     reserve: ReserveType,
     pool: PoolType,
-    publicKey: PublicKey,
+    wallet: Wallet,
     obligationAddress: PublicKey,
     obligationAccountInfo: Obligation | null,
     userTokenAccountAddress: PublicKey,
@@ -135,7 +154,7 @@ export class SolendActionCore {
   ) {
     this.programId = programId;
     this.connection = connection;
-    this.publicKey = publicKey;
+    this.publicKey = wallet.publicKey;
     this.amount = new BN(amount);
     this.positions = positions;
     this.hostAta = hostAta;
@@ -156,6 +175,8 @@ export class SolendActionCore {
     this.borrowReserves = borrowReserves;
     this.lookupTableAccount = lookupTableAccount;
     this.ownerPublicKey = ownerPublicKey;
+    this.jitoTipAmount = 1000;
+    this.wallet = wallet;
   }
 
   static async initialize(
@@ -163,7 +184,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     action: ActionType,
     amount: BN,
-    publicKey: PublicKey,
+    wallet: Wallet,
     connection: Connection,
     environment: EnvironmentType = "production",
     customObligationAddress?: PublicKey,
@@ -177,7 +198,7 @@ export class SolendActionCore {
 
     const obligationAddress =
       customObligationAddress ??
-      (await PublicKey.createWithSeed(publicKey, seed, programId));
+      (await PublicKey.createWithSeed(wallet.publicKey, seed, programId));
 
     const obligationAccountInfo = await connection.getAccountInfo(
       obligationAddress,
@@ -205,16 +226,17 @@ export class SolendActionCore {
 
     // Union of addresses
     const distinctReserveCount =
-      Array.from(new Set([
+      Array.from(
+        new Set([
           ...borrowReserves.map((e) => e.toBase58()),
           ...(action === "borrow" ? [reserve.address] : []),
-        ]),
+        ])
       ).length +
       Array.from(
         new Set([
           ...depositReserves.map((e) => e.toBase58()),
           ...(action === "deposit" ? [reserve.address] : []),
-        ]),
+        ])
       ).length;
 
     if (distinctReserveCount > POSITION_LIMIT) {
@@ -225,12 +247,12 @@ export class SolendActionCore {
 
     const userTokenAccountAddress = await getAssociatedTokenAddress(
       new PublicKey(reserve.mintAddress),
-      publicKey,
+      wallet.publicKey,
       true
     );
     const userCollateralAccountAddress = await getAssociatedTokenAddress(
       new PublicKey(reserve.cTokenMint),
-      publicKey,
+      wallet.publicKey,
       true
     );
 
@@ -243,7 +265,7 @@ export class SolendActionCore {
       connection,
       reserve,
       pool,
-      publicKey,
+      wallet,
       obligationAddress,
       obligationDetails,
       userTokenAccountAddress,
@@ -264,7 +286,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    publicKey: PublicKey,
+    wallet: Wallet,
     obligationAddress: PublicKey,
     environment: EnvironmentType = "production",
     lookupTableAddress?: PublicKey
@@ -274,7 +296,7 @@ export class SolendActionCore {
       reserve,
       "deposit",
       new BN(amount),
-      publicKey,
+      wallet,
       connection,
       environment,
       obligationAddress,
@@ -294,7 +316,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    publicKey: PublicKey,
+    wallet: Wallet,
     environment: EnvironmentType = "production",
     obligationAddress?: PublicKey,
     obligationSeed?: string,
@@ -305,7 +327,7 @@ export class SolendActionCore {
       reserve,
       "deposit",
       new BN(amount),
-      publicKey,
+      wallet,
       connection,
       environment,
       obligationAddress,
@@ -325,7 +347,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    publicKey: PublicKey,
+    wallet: Wallet,
     environment: EnvironmentType = "production",
     customObligationAddress?: PublicKey,
     hostAta?: PublicKey,
@@ -336,7 +358,7 @@ export class SolendActionCore {
       reserve,
       "borrow",
       new BN(amount),
-      publicKey,
+      wallet,
       connection,
       environment,
       customObligationAddress,
@@ -355,7 +377,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    publicKey: PublicKey,
+    wallet: Wallet,
     environment: EnvironmentType = "production",
     lookupTableAddress?: PublicKey
   ) {
@@ -364,7 +386,7 @@ export class SolendActionCore {
       reserve,
       "mint",
       new BN(amount),
-      publicKey,
+      wallet,
       connection,
       environment,
       undefined,
@@ -382,7 +404,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    publicKey: PublicKey,
+    wallet: Wallet,
     environment: EnvironmentType = "production",
     lookupTableAddress?: PublicKey
   ) {
@@ -391,7 +413,7 @@ export class SolendActionCore {
       reserve,
       "redeem",
       new BN(amount),
-      publicKey,
+      wallet,
       connection,
       environment,
       undefined,
@@ -409,7 +431,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    publicKey: PublicKey,
+    wallet: Wallet,
     environment: EnvironmentType = "production",
     lookupTableAddress?: PublicKey,
     customObligationAddress?: PublicKey
@@ -419,7 +441,7 @@ export class SolendActionCore {
       reserve,
       "depositCollateral",
       new BN(amount),
-      publicKey,
+      wallet,
       connection,
       environment,
       customObligationAddress,
@@ -437,7 +459,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    publicKey: PublicKey,
+    wallet: Wallet,
     environment: EnvironmentType = "production",
     lookupTableAddress?: PublicKey,
     customObligationAddress?: PublicKey
@@ -447,7 +469,7 @@ export class SolendActionCore {
       reserve,
       "withdrawCollateral",
       new BN(amount),
-      publicKey,
+      wallet,
       connection,
       environment,
       customObligationAddress,
@@ -467,7 +489,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    publicKey: PublicKey,
+    wallet: Wallet,
     environment: EnvironmentType = "production",
     obligationAddress?: PublicKey,
     obligationSeed?: string,
@@ -478,13 +500,14 @@ export class SolendActionCore {
       reserve,
       "withdraw",
       new BN(amount),
-      publicKey,
+      wallet,
       connection,
       environment,
       obligationAddress,
       undefined,
       obligationSeed,
-      lookupTableAddress
+      lookupTableAddress,
+      undefined
     );
 
     await axn.addSupportIxs("withdraw");
@@ -498,7 +521,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    publicKey: PublicKey,
+    wallet: Wallet,
     environment: EnvironmentType = "production",
     customObligationAddress?: PublicKey,
     ownerPublicKey?: PublicKey,
@@ -509,7 +532,7 @@ export class SolendActionCore {
       reserve,
       "repay",
       new BN(amount),
-      publicKey,
+      wallet,
       connection,
       environment,
       customObligationAddress,
@@ -573,18 +596,47 @@ export class SolendActionCore {
     return txns;
   }
 
-  async getTransactions(blockhash: BlockhashWithExpiryBlockHeight, tipAmount?: 9000 ) {
+  private getTipIx() {
+    if (!this.jitoTipAmount) return;
+
+    const tipAccounts = [
+      "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+      "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
+      "Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY",
+      "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
+      "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh",
+      "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
+      "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL",
+      "3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT",
+    ];
+
+    const tipAccount = new PublicKey(
+      tipAccounts[Math.floor(Math.random() * tipAccounts.length)]
+    );
+
+    return SystemProgram.transfer({
+      fromPubkey: this.publicKey,
+      toPubkey: tipAccount,
+      lamports: this.jitoTipAmount,
+    });
+  }
+
+  async getTransactions(blockhash: BlockhashWithExpiryBlockHeight) {
     const txns: {
       preLendingTxn: VersionedTransaction | null;
       lendingTxn: VersionedTransaction | null;
       postLendingTxn: VersionedTransaction | null;
-      pullPriceTxns: VersionedTransaction[] | null
+      pullPriceTxns: VersionedTransaction[] | null;
     } = {
       preLendingTxn: null,
       lendingTxn: null,
       postLendingTxn: null,
       pullPriceTxns: null,
     };
+
+    if (this.pullPriceTxns.length) {
+      txns.pullPriceTxns = this.pullPriceTxns;
+    }
 
     if (this.preTxnIxs.length) {
       txns.preLendingTxn = new VersionedTransaction(
@@ -596,16 +648,22 @@ export class SolendActionCore {
       );
     }
 
+    const instructions = [
+      ...this.setupIxs,
+      ...this.lendingIxs,
+      ...this.cleanupIxs,
+    ];
+
+    const tip = this.getTipIx();
+    if (tip && this.pullPriceTxns.length >= 5) {
+      instructions.push(tip);
+    }
+
     txns.lendingTxn = new VersionedTransaction(
       new TransactionMessage({
         payerKey: this.publicKey,
         recentBlockhash: blockhash.blockhash,
-        instructions: [
-          ...this.setupIxs,
-          ...this.lendingIxs,
-          ...this.cleanupIxs,
-          ...this.
-        ],
+        instructions,
       }).compileToV0Message(
         this.lookupTableAccount ? [this.lookupTableAccount] : []
       )
@@ -621,11 +679,11 @@ export class SolendActionCore {
       );
     }
 
-    if (this.pullPriceTxns.length) {
-      txns.pullPriceTxns = this.pullPriceTxns;
-    }
-
     return txns;
+  }
+
+  configureTip(jitoTipAmount: number) {
+    this.jitoTipAmount = jitoTipAmount;
   }
 
   addForgiveIx() {
@@ -850,104 +908,160 @@ export class SolendActionCore {
   }
 
   private async buildPullPriceTxns(oracleKeys: Array<string>) {
-    const oracleAccounts = await this.connection.getMultipleAccountsInfo(oracleKeys.map((o) => new PublicKey(o)), 'processed')
-    const priceServiceConnection = new PriceServiceConnection("https://hermes.pyth.network");
-    const pythSolanaReceiver = new PythSolanaReceiver({ 
+    const oracleAccounts = await this.connection.getMultipleAccountsInfo(
+      oracleKeys.map((o) => new PublicKey(o)),
+      "processed"
+    );
+    const priceServiceConnection = new PriceServiceConnection(
+      "https://hermes.pyth.network"
+    );
+    const pythSolanaReceiver = new PythSolanaReceiver({
       connection: this.connection,
-      wallet: new NodeWallet(Keypair.fromSeed(new Uint8Array(32).fill(1)))
+      wallet: this.wallet,
     });
     const transactionBuilder = pythSolanaReceiver.newTransactionBuilder({
       closeUpdateAccounts: true,
     });
 
-    const provider = new AnchorProvider(this.connection, new NodeWallet(Keypair.fromSeed(new Uint8Array(32).fill(1))), {});
+    const provider = new AnchorProvider(
+      this.connection,
+      new NodeWallet(Keypair.fromSeed(new Uint8Array(32).fill(1))),
+      {}
+    );
     const idl = (await Program.fetchIdl(SB_ON_DEMAND_PID, provider))!;
     const sbod = new Program(idl, provider);
 
-    const pythPulledOracles = oracleAccounts.filter(o => o?.owner.toBase58() === pythSolanaReceiver.receiver.programId.toBase58());
+    const sbPulledOracles = oracleKeys.filter(
+      (_o, index) =>
+        oracleAccounts[index]?.owner.toBase58() === sbod.programId.toBase58()
+    );
+    if (sbPulledOracles.length) {
+      const feedAccounts = sbPulledOracles.map(
+        (oracleKey) => new PullFeed(sbod as any, oracleKey)
+      );
+      const crossbar = new CrossbarClient("https://crossbar.switchboard.xyz");
+
+      // Responses is Array<[pullIx, responses, success]>
+      const responses = await Promise.all(
+        feedAccounts.map((feedAccount) =>
+          feedAccount.fetchUpdateIx({
+            numSignatures: 1,
+            crossbarClient: crossbar,
+          })
+        )
+      );
+      const oracles = responses.flatMap((x) => x[1].map((y) => y.oracle));
+      const lookupTables = await loadLookupTables([
+        ...oracles,
+        ...feedAccounts,
+      ]);
+
+      const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: 100_000,
+      });
+
+      const instructions = [priorityFeeIx, ...responses.map((r) => r[0]!)];
+
+      const tip = this.getTipIx();
+      if (tip) {
+        instructions.push(tip);
+      }
+
+      // Get the latest context
+      const {
+        value: { blockhash },
+      } = await this.connection.getLatestBlockhashAndContext();
+
+      // Get Transaction Message
+      const message = new TransactionMessage({
+        payerKey: this.publicKey,
+        recentBlockhash: blockhash,
+        instructions,
+      }).compileToV0Message(lookupTables);
+
+      // Get Versioned Transaction
+      const vtx = new VersionedTransaction(message);
+
+      this.pullPriceTxns.push(vtx);
+    }
+
+    const pythPulledOracles = oracleAccounts.filter(
+      (o) =>
+        o?.owner.toBase58() === pythSolanaReceiver.receiver.programId.toBase58()
+    );
+
     if (pythPulledOracles.length) {
       const shuffledPriceIds = pythPulledOracles
-      .map((pythOracleData, index) => {
-        if (!pythOracleData) {
-          throw new Error(`Could not find oracle data at index ${index}`);
-        }
-        const priceUpdate = pythSolanaReceiver.receiver.account.priceUpdateV2.coder.accounts.decode(
-            'priceUpdateV2',
-            pythOracleData.data,
-          );
-  
-        return { key: Math.random() , priceFeedId: priceUpdate.priceMessage.feedId };
-      })
-      .sort((a, b) => a.key - b.key)
-      .map((x) => x.priceFeedId);
-  
-    let priceFeedUpdateData;
-      priceFeedUpdateData = await priceServiceConnection.getLatestVaas(
+        .map((pythOracleData, index) => {
+          if (!pythOracleData) {
+            throw new Error(`Could not find oracle data at index ${index}`);
+          }
+          const priceUpdate =
+            pythSolanaReceiver.receiver.account.priceUpdateV2.coder.accounts.decode(
+              "priceUpdateV2",
+              pythOracleData.data
+            );
+
+          return {
+            key: Math.random(),
+            priceFeedId: toHexString(priceUpdate.priceMessage.feedId),
+          };
+        })
+        .sort((a, b) => a.key - b.key)
+        .map((x) => x.priceFeedId);
+
+      const priceFeedUpdateData = await priceServiceConnection.getLatestVaas(
         shuffledPriceIds
       );
-  
+
       await transactionBuilder.addUpdatePriceFeed(
         priceFeedUpdateData,
         0 // shardId of 0
       );
-  
-      const transactionsWithSigners = await transactionBuilder.buildVersionedTransactions({
-        tightComputeBudget: true,
-      });
-  
+
+      const transactionsWithSigners =
+        await transactionBuilder.buildVersionedTransactions({
+          tightComputeBudget: true,
+          jitoTipLamports: sbPulledOracles.length
+            ? undefined
+            : this.jitoTipAmount,
+        });
+
       for (const transaction of transactionsWithSigners) {
         const signers = transaction.signers;
-        let tx = transaction.tx;
-          if (signers) {
-            tx.sign(signers);
-            this.pullPriceTxns.push(tx);
-          }
+        const tx = transaction.tx;
+        if (signers) {
+          tx.sign(signers);
         }
-    }
-
-    const sbPulledOracles = oracleKeys.filter((_o, index) => oracleAccounts[index]?.owner.toBase58() === sbod.programId.toBase58())
-      if (sbPulledOracles.length) {
-        const feedAccounts = sbPulledOracles.map((oracleKey) => new PullFeed(sbod as any, oracleKey));
-        const crossbar = new CrossbarClient("https://crossbar.switchboard.xyz");
-  
-        // Responses is Array<[pullIx, responses, success]>
-        const responses =  await Promise.all(feedAccounts.map((feedAccount) => feedAccount.fetchUpdateIx({ numSignatures: 1, crossbarClient: crossbar })));
-        const oracles = responses.flatMap((x) => x[1].map(y => y.oracle));
-        const lookupTables = await loadLookupTables([...oracles, ...feedAccounts]);
-      
-        const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports: 100_000,
-        });
-      
-        // Get the latest context
-        const {
-          value: { blockhash },
-        } = await this.connection.getLatestBlockhashAndContext();
-      
-        // Get Transaction Message 
-        const message = new TransactionMessage({
-          payerKey: this.publicKey,
-          recentBlockhash: blockhash,
-          instructions: [priorityFeeIx, ...responses.map(r => r[0]!)],
-        }).compileToV0Message(lookupTables);
-        
-        // Get Versioned Transaction
-        const vtx = new VersionedTransaction(message);
-  
-        this.pullPriceTxns.push(vtx);
+        this.pullPriceTxns.push(tx);
       }
+    }
   }
 
   private async addRefreshIxs(action: ActionType) {
     // Union of addresses
-    const allReserveAddresses = Array.from(new Set([
+    const reserveMap = this.pool.reserves.reduce((acc, reserve) => {
+      acc[reserve.address] = reserve;
+      return acc;
+    }, {} as Record<string, ReserveType>);
+
+    const allReserveAddresses = Array.from(
+      new Set([
         ...this.depositReserves.map((e) => e.toBase58()),
         ...this.borrowReserves.map((e) => e.toBase58()),
         this.reserve.address,
-      ]),
+      ])
     );
 
-    await this.buildPullPriceTxns(allReserveAddresses);
+    await this.buildPullPriceTxns([
+      ...allReserveAddresses.map((address) => reserveMap[address].pythOracle),
+      ...allReserveAddresses.map(
+        (address) => reserveMap[address].switchboardOracle
+      ),
+      ...allReserveAddresses.map(
+        (address) => reserveMap[address].extraOracle ?? NULL_ORACLE.toBase58()
+      ),
+    ]);
 
     allReserveAddresses.forEach((reserveAddress) => {
       const reserveInfo = this.pool.reserves.find(
