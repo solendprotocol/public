@@ -935,29 +935,38 @@ export class SolendActionCore {
       (_o, index) =>
         oracleAccounts[index]?.owner.toBase58() === sbod.programId.toBase58()
     );
-    if (sbPulledOracles.length) {
-      const feedAccounts = sbPulledOracles.map(
-        (oracleKey) => new PullFeed(sbod as any, oracleKey)
-      );
+    const feedAccounts = sbPulledOracles.map(
+      (oracleKey) => new PullFeed(sbod as any, oracleKey)
+    );
+
+    const feedData = await Promise.all(
+      feedAccounts.map((feedAccount) => feedAccount.loadData())
+    );
+
+    const feedsThatNeedUpdate = feedData.map(
+      (feed) =>
+        Date.now() / 1000 - Number(feed.lastUpdateTimestamp.toString()) > 70
+    );
+    const updateFeeds = feedAccounts.filter(
+      (_, index) => feedsThatNeedUpdate[index]
+    );
+
+    if (updateFeeds.length) {
       const crossbar = new CrossbarClient(
         "https://crossbar-fvumormova-uc.a.run.app"
       );
 
       // Responses is Array<[pullIx, responses, success]>
       const responses = await Promise.all(
-        feedAccounts.map((feedAccount) =>
+        updateFeeds.map((feedAccount) =>
           feedAccount.fetchUpdateIx({
-            numSignatures: 1,
             crossbarClient: crossbar,
             gateway: "https://xoracle-1-mn.switchboard.xyz",
           })
         )
       );
       const oracles = responses.flatMap((x) => x[1].map((y) => y.oracle));
-      const lookupTables = await loadLookupTables([
-        ...oracles,
-        ...feedAccounts,
-      ]);
+      const lookupTables = await loadLookupTables([...oracles, ...updateFeeds]);
 
       const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
         microLamports: 100_000,
