@@ -3,7 +3,6 @@ import {
   BlockhashWithExpiryBlockHeight,
   ComputeBudgetProgram,
   Connection,
-  Keypair,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -48,7 +47,6 @@ import {
 import { NULL_ORACLE, POSITION_LIMIT } from "./constants";
 import { EnvironmentType, PoolType, ReserveType } from "./types";
 import { getProgramId, U64_MAX, WAD } from "./constants";
-import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { PriceServiceConnection } from "@pythnetwork/price-service-client";
 import { AnchorProvider, Program } from "@coral-xyz/anchor-30";
 import {
@@ -150,7 +148,8 @@ export class SolendActionCore {
     borrowReserves: Array<PublicKey>,
     hostAta?: PublicKey,
     lookupTableAccount?: AddressLookupTableAccount,
-    ownerPublicKey?: PublicKey
+    ownerPublicKey?: PublicKey,
+    tipAmount?: number
   ) {
     this.programId = programId;
     this.connection = connection;
@@ -175,7 +174,7 @@ export class SolendActionCore {
     this.borrowReserves = borrowReserves;
     this.lookupTableAccount = lookupTableAccount;
     this.ownerPublicKey = ownerPublicKey;
-    this.jitoTipAmount = 1000;
+    this.jitoTipAmount = tipAmount ?? 1000;
     this.wallet = wallet;
   }
 
@@ -191,7 +190,8 @@ export class SolendActionCore {
     hostAta?: PublicKey,
     customObligationSeed?: string,
     lookupTableAddress?: PublicKey,
-    ownerPublicKey?: PublicKey
+    ownerPublicKey?: PublicKey,
+    tipAmount?: number
   ) {
     const seed = customObligationSeed ?? pool.address.slice(0, 32);
     const programId = getProgramId(environment);
@@ -277,7 +277,8 @@ export class SolendActionCore {
       borrowReserves,
       hostAta,
       lookupTableAccount ?? undefined,
-      ownerPublicKey
+      ownerPublicKey,
+      tipAmount
     );
   }
 
@@ -351,7 +352,8 @@ export class SolendActionCore {
     environment: EnvironmentType = "production",
     customObligationAddress?: PublicKey,
     hostAta?: PublicKey,
-    lookupTableAddress?: PublicKey
+    lookupTableAddress?: PublicKey,
+    tipAmount?: number
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -364,7 +366,9 @@ export class SolendActionCore {
       customObligationAddress,
       hostAta,
       undefined,
-      lookupTableAddress
+      lookupTableAddress,
+      undefined,
+      tipAmount
     );
 
     await axn.addSupportIxs("borrow");
@@ -493,7 +497,8 @@ export class SolendActionCore {
     environment: EnvironmentType = "production",
     obligationAddress?: PublicKey,
     obligationSeed?: string,
-    lookupTableAddress?: PublicKey
+    lookupTableAddress?: PublicKey,
+    tipAmount?: number
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -507,7 +512,8 @@ export class SolendActionCore {
       undefined,
       obligationSeed,
       lookupTableAddress,
-      undefined
+      undefined,
+      tipAmount
     );
 
     await axn.addSupportIxs("withdraw");
@@ -597,8 +603,6 @@ export class SolendActionCore {
   }
 
   private getTipIx() {
-    if (!this.jitoTipAmount) return;
-
     const tipAccounts = [
       "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
       "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
@@ -923,11 +927,7 @@ export class SolendActionCore {
       closeUpdateAccounts: true,
     });
 
-    const provider = new AnchorProvider(
-      this.connection,
-      new NodeWallet(Keypair.fromSeed(new Uint8Array(32).fill(1))),
-      {}
-    );
+    const provider = new AnchorProvider(this.connection, this.wallet, {});
     const idl = (await Program.fetchIdl(SB_ON_DEMAND_PID, provider))!;
     const sbod = new Program(idl, provider);
 
@@ -939,7 +939,9 @@ export class SolendActionCore {
       const feedAccounts = sbPulledOracles.map(
         (oracleKey) => new PullFeed(sbod as any, oracleKey)
       );
-      const crossbar = new CrossbarClient("https://crossbar.switchboard.xyz");
+      const crossbar = new CrossbarClient(
+        "https://crossbar-fvumormova-uc.a.run.app"
+      );
 
       // Responses is Array<[pullIx, responses, success]>
       const responses = await Promise.all(
@@ -947,6 +949,7 @@ export class SolendActionCore {
           feedAccount.fetchUpdateIx({
             numSignatures: 1,
             crossbarClient: crossbar,
+            gateway: "https://xoracle-1-mn.switchboard.xyz",
           })
         )
       );
@@ -962,10 +965,7 @@ export class SolendActionCore {
 
       const instructions = [priorityFeeIx, ...responses.map((r) => r[0]!)];
 
-      const tip = this.getTipIx();
-      if (tip) {
-        instructions.push(tip);
-      }
+      instructions.push(this.getTipIx());
 
       // Get the latest context
       const {
@@ -990,8 +990,8 @@ export class SolendActionCore {
         o?.owner.toBase58() === pythSolanaReceiver.receiver.programId.toBase58()
     );
 
-    if (pythPulledOracles.length) {
-      const shuffledPriceIds = pythPulledOracles
+    const shuffledPriceIds = (
+      pythPulledOracles
         .map((pythOracleData, index) => {
           if (!pythOracleData) {
             throw new Error(`Could not find oracle data at index ${index}`);
@@ -1002,14 +1002,27 @@ export class SolendActionCore {
               pythOracleData.data
             );
 
-          return {
-            key: Math.random(),
-            priceFeedId: toHexString(priceUpdate.priceMessage.feedId),
-          };
-        })
-        .sort((a, b) => a.key - b.key)
-        .map((x) => x.priceFeedId);
+          const needUpdate =
+            Date.now() / 1000 -
+              Number(priceUpdate.priceMessage.publishTime.toString()) >
+            70;
 
+          return needUpdate
+            ? {
+                key: Math.random(),
+                priceFeedId: toHexString(priceUpdate.priceMessage.feedId),
+              }
+            : undefined;
+        })
+        .filter(Boolean) as Array<{
+        key: number;
+        priceFeedId: string;
+      }>
+    )
+      .sort((a, b) => a.key - b.key)
+      .map((x) => x.priceFeedId);
+
+    if (shuffledPriceIds.length) {
       const priceFeedUpdateData = await priceServiceConnection.getLatestVaas(
         shuffledPriceIds
       );
