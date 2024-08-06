@@ -25,7 +25,7 @@ function AccountMetrics(): ReactElement {
           label='Net value'
           value={
             obligation
-              ? `${formatUsd(obligation.netAccountValue.toString())}`
+              ? formatUsd(obligation.netAccountValue.toString())
               : '-'
           }
           tooltip='The value of your account calculated as (supply balance - borrow balance).'
@@ -34,7 +34,7 @@ function AccountMetrics(): ReactElement {
           label='Supply balance'
           value={
             obligation
-              ? `${formatUsd(obligation.totalSupplyValue.toString())}`
+              ? formatUsd(obligation.totalSupplyValue.toString())
               : '-'
           }
           tooltip='Supply balance is the sum of all assets supplied. Increasing this value increases your borrow limit and liquidation threshold.'
@@ -43,7 +43,7 @@ function AccountMetrics(): ReactElement {
           label='Borrow balance'
           value={
             obligation
-              ? `${formatUsd(obligation.totalBorrowValue.toString())}`
+              ? formatUsd(obligation.totalBorrowValue.toString())
               : '-'
           }
           tooltip='Borrow balance is the sum of all assets borrowed.'
@@ -54,7 +54,7 @@ function AccountMetrics(): ReactElement {
           label='Weighted borrow'
           value={
             obligation
-              ? `${formatUsd(obligation.weightedTotalBorrowValue.toString())}`
+              ? formatUsd(obligation.weightedTotalBorrowValue.toString())
               : '-'
           }
           tooltip='Borrow balance is the sum of all assets borrowed.'
@@ -62,7 +62,7 @@ function AccountMetrics(): ReactElement {
         <Metric
           label='Borrow limit'
           value={
-            obligation ? `${formatUsd(obligation.borrowLimit.toString())}` : '-'
+            obligation ? formatUsd(obligation.borrowLimit.toString()) : '-'
           }
           tooltip={
             <>
@@ -98,7 +98,7 @@ function AccountMetrics(): ReactElement {
           label='Liquidation threshold'
           value={
             obligation
-              ? `${formatUsd(obligation.liquidationThreshold.toString())}`
+              ? formatUsd(obligation.liquidationThreshold.toString())
               : '-'
           }
           tooltip={

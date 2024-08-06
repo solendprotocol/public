@@ -43,6 +43,7 @@ import {
   repayMaxObligationLiquidityInstruction,
   depositMaxReserveLiquidityAndObligationCollateralInstruction,
   withdrawExact,
+  liquidateObligationAndRedeemReserveCollateral,
 } from "../instructions";
 import { NULL_ORACLE, POSITION_LIMIT } from "./constants";
 import { EnvironmentType, PoolType, ReserveType } from "./types";
@@ -59,7 +60,7 @@ import { Wallet } from "@coral-xyz/anchor";
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
 
-const toHexString = (byteArray: number[]) => {
+export const toHexString = (byteArray: number[]) => {
   return (
     "0x" +
     Array.from(byteArray, function (byte) {
@@ -77,7 +78,8 @@ export type ActionType =
   | "redeem"
   | "depositCollateral"
   | "withdrawCollateral"
-  | "forgive";
+  | "forgive"
+  | "liquidate";
 
 export class SolendActionCore {
   programId: PublicKey;
@@ -125,11 +127,13 @@ export class SolendActionCore {
 
   lookupTableAccount?: AddressLookupTableAccount;
 
-  ownerPublicKey?: PublicKey;
-
   jitoTipAmount: number;
 
   wallet: Wallet;
+
+  userWithdrawTokenAccountAddress?: PublicKey;
+
+  userWithdrawCollateralAccountAddress?: PublicKey;
 
   private constructor(
     programId: PublicKey,
@@ -148,8 +152,9 @@ export class SolendActionCore {
     borrowReserves: Array<PublicKey>,
     hostAta?: PublicKey,
     lookupTableAccount?: AddressLookupTableAccount,
-    ownerPublicKey?: PublicKey,
-    tipAmount?: number
+    tipAmount?: number,
+    userWithdrawTokenAccountAddress?: PublicKey,
+    userWithdrawCollateralAccountAddress?: PublicKey
   ) {
     this.programId = programId;
     this.connection = connection;
@@ -173,9 +178,11 @@ export class SolendActionCore {
     this.depositReserves = depositReserves;
     this.borrowReserves = borrowReserves;
     this.lookupTableAccount = lookupTableAccount;
-    this.ownerPublicKey = ownerPublicKey;
     this.jitoTipAmount = tipAmount ?? 1000;
     this.wallet = wallet;
+    this.userWithdrawTokenAccountAddress = userWithdrawTokenAccountAddress;
+    this.userWithdrawCollateralAccountAddress =
+      userWithdrawCollateralAccountAddress;
   }
 
   static async initialize(
@@ -190,8 +197,8 @@ export class SolendActionCore {
     hostAta?: PublicKey,
     customObligationSeed?: string,
     lookupTableAddress?: PublicKey,
-    ownerPublicKey?: PublicKey,
-    tipAmount?: number
+    tipAmount?: number,
+    withdrawReserve?: ReserveType
   ) {
     const seed = customObligationSeed ?? pool.address.slice(0, 32);
     const programId = getProgramId(environment);
@@ -260,6 +267,20 @@ export class SolendActionCore {
       ? (await connection.getAddressLookupTable(lookupTableAddress)).value
       : undefined;
 
+    const userWithdrawTokenAccountAddress = withdrawReserve
+      ? await getAssociatedTokenAddress(
+          new PublicKey(withdrawReserve.mintAddress),
+          wallet.publicKey,
+          true
+        )
+      : undefined;
+
+    const userWithdrawCollateralAccountAddress = withdrawReserve ? await getAssociatedTokenAddress(
+        new PublicKey(withdrawReserve.cTokenMint),
+        wallet.publicKey,
+        true
+      ) : undefined;
+
     return new SolendActionCore(
       programId,
       connection,
@@ -277,8 +298,9 @@ export class SolendActionCore {
       borrowReserves,
       hostAta,
       lookupTableAccount ?? undefined,
-      ownerPublicKey,
-      tipAmount
+      tipAmount,
+      userWithdrawTokenAccountAddress,
+      userWithdrawCollateralAccountAddress
     );
   }
 
@@ -367,7 +389,6 @@ export class SolendActionCore {
       hostAta,
       undefined,
       lookupTableAddress,
-      undefined,
       tipAmount
     );
 
@@ -512,7 +533,6 @@ export class SolendActionCore {
       undefined,
       obligationSeed,
       lookupTableAddress,
-      undefined,
       tipAmount
     );
 
@@ -530,7 +550,6 @@ export class SolendActionCore {
     wallet: Wallet,
     environment: EnvironmentType = "production",
     customObligationAddress?: PublicKey,
-    ownerPublicKey?: PublicKey,
     lookupTableAddress?: PublicKey
   ) {
     const axn = await SolendActionCore.initialize(
@@ -544,12 +563,45 @@ export class SolendActionCore {
       customObligationAddress,
       undefined,
       undefined,
-      lookupTableAddress,
-      ownerPublicKey
+      lookupTableAddress
     );
 
     await axn.addSupportIxs("repay");
     await axn.addRepayIx();
+
+    return axn;
+  }
+
+  static async buildLiquidateTxns(
+    pool: PoolType,
+    repayReserve: ReserveType,
+    withdrawReserve: ReserveType,
+    connection: Connection,
+    amount: string,
+    wallet: Wallet,
+    environment: EnvironmentType = "production",
+    customObligationAddress?: PublicKey,
+    lookupTableAddress?: PublicKey,
+    tipAmount?: number
+  ) {
+    const axn = await SolendActionCore.initialize(
+      pool,
+      repayReserve,
+      "liquidate",
+      new BN(amount),
+      wallet,
+      connection,
+      environment,
+      customObligationAddress,
+      undefined,
+      undefined,
+      lookupTableAddress,
+      tipAmount,
+      withdrawReserve,
+    );
+
+    await axn.addSupportIxs("liquidate");
+    await axn.addLiquidateIx(withdrawReserve);
 
     return axn;
   }
@@ -663,11 +715,18 @@ export class SolendActionCore {
       instructions.push(tip);
     }
 
+    const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+      microLamports: 1_000_000,
+    });
+    const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_000_000,
+    });
+
     txns.lendingTxn = new VersionedTransaction(
       new TransactionMessage({
         payerKey: this.publicKey,
         recentBlockhash: blockhash.blockhash,
-        instructions,
+        instructions: [priorityFeeIx, modifyComputeUnits, ...instructions],
       }).compileToV0Message(
         this.lookupTableAccount ? [this.lookupTableAccount] : []
       )
@@ -891,6 +950,35 @@ export class SolendActionCore {
     );
   }
 
+  async addLiquidateIx(withdrawReserve: ReserveType) {
+    if (
+      !this.userWithdrawCollateralAccountAddress ||
+      !this.userWithdrawTokenAccountAddress
+    ) {
+      throw Error("Not correctly initialized with a withdraw reserve.");
+    }
+    this.lendingIxs.push(
+      liquidateObligationAndRedeemReserveCollateral(
+        this.amount,
+        this.userTokenAccountAddress,
+        this.userWithdrawCollateralAccountAddress,
+        this.userWithdrawTokenAccountAddress,
+        new PublicKey(this.reserve.address),
+        new PublicKey(this.reserve.liquidityAddress),
+        new PublicKey(withdrawReserve.address),
+        new PublicKey(withdrawReserve.cTokenMint),
+        new PublicKey(withdrawReserve.cTokenLiquidityAddress),
+        new PublicKey(withdrawReserve.liquidityAddress),
+        new PublicKey(withdrawReserve.feeReceiverAddress),
+        this.obligationAddress,
+        new PublicKey(this.pool.address),
+        new PublicKey(this.pool.authorityAddress),
+        this.publicKey,
+        this.programId
+      )
+    );
+  }
+
   async addSupportIxs(action: ActionType) {
     if (
       [
@@ -899,11 +987,12 @@ export class SolendActionCore {
         "withdrawCollateral",
         "forgive",
         "redeem",
+        "liquidate",
       ].includes(action)
     ) {
       await this.addRefreshIxs(action);
     }
-    if (!["mint", "redeem", "forgive"].includes(action)) {
+    if (!["mint", "redeem", "forgive", "liquidate"].includes(action)) {
       await this.addObligationIxs();
     }
     if (action !== "forgive") {
@@ -947,13 +1036,14 @@ export class SolendActionCore {
       (feed) =>
         Date.now() / 1000 - Number(feed.lastUpdateTimestamp.toString()) > 70
     );
+
     const updateFeeds = feedAccounts.filter(
       (_, index) => feedsThatNeedUpdate[index]
     );
 
     if (updateFeeds.length) {
       const crossbar = new CrossbarClient(
-        "https://crossbar-fvumormova-uc.a.run.app"
+        "https://crossbar.switchboard.xyz/"
       );
 
       // Responses is Array<[pullIx, responses, success]>
@@ -961,15 +1051,19 @@ export class SolendActionCore {
         updateFeeds.map((feedAccount) =>
           feedAccount.fetchUpdateIx({
             crossbarClient: crossbar,
-            gateway: "https://xoracle-1-mn.switchboard.xyz",
+            gateway:
+              "https://95.179.134.103.xip.switchboard-oracles.xyz/mainnet",
           })
         )
       );
+
+      console.log(responses);
+
       const oracles = responses.flatMap((x) => x[1].map((y) => y.oracle));
       const lookupTables = await loadLookupTables([...oracles, ...updateFeeds]);
 
       const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: 100_000,
+        microLamports: 1_000_000,
       });
 
       const instructions = [priorityFeeIx, ...responses.map((r) => r[0]!)];
@@ -1199,6 +1293,59 @@ export class SolendActionCore {
           this.preTxnIxs.push(createUserCollateralAccountIx);
         } else {
           this.setupIxs.push(createUserCollateralAccountIx);
+        }
+      }
+    }
+
+    if (
+      action === "liquidate" &&
+      this.userWithdrawCollateralAccountAddress &&
+      this.userWithdrawTokenAccountAddress
+    ) {
+      const userWithdrawTokenAccountInfo = await this.connection.getAccountInfo(
+        this.userWithdrawTokenAccountAddress
+      );
+      if (!userWithdrawTokenAccountInfo) {
+        const createUserWithdrawTokenAccountIx =
+          createAssociatedTokenAccountInstruction(
+            this.publicKey,
+            this.userWithdrawTokenAccountAddress,
+            this.publicKey,
+            new PublicKey(this.reserve.mintAddress)
+          );
+
+        if (
+          this.positions === POSITION_LIMIT &&
+          this.hostAta &&
+          !this.lookupTableAccount
+        ) {
+          this.preTxnIxs.push(createUserWithdrawTokenAccountIx);
+        } else {
+          this.setupIxs.push(createUserWithdrawTokenAccountIx);
+        }
+      }
+
+      const userWithdrawCollateralAccountInfo =
+        await this.connection.getAccountInfo(
+          this.userWithdrawCollateralAccountAddress
+        );
+      if (!userWithdrawCollateralAccountInfo) {
+        const createUserWithdrawCollateralAccountIx =
+          createAssociatedTokenAccountInstruction(
+            this.publicKey,
+            this.userWithdrawCollateralAccountAddress,
+            this.publicKey,
+            new PublicKey(this.reserve.cTokenMint)
+          );
+
+        if (
+          this.positions === POSITION_LIMIT &&
+          this.hostAta &&
+          !this.lookupTableAccount
+        ) {
+          this.preTxnIxs.push(createUserWithdrawCollateralAccountIx);
+        } else {
+          this.setupIxs.push(createUserWithdrawCollateralAccountIx);
         }
       }
     }

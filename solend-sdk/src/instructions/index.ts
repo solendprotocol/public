@@ -7,6 +7,7 @@ export * from "./refreshObligation";
 export * from "./refreshReserve";
 export * from "./repayObligationLiquidity";
 export * from "./repayMaxObligationLiquidity";
+export * from "./liquidateObligationAndRedeemReserveCollateral";
 export * from "./withdrawObligationCollateral";
 export * from "./depositReserveLiquidityAndObligationCollateral";
 export * from "./depositMaxReserveLiquidityAndObligationCollateral";
