@@ -18,6 +18,7 @@ export interface Reserve {
   collateral: ReserveCollateral;
   config: ReserveConfig;
   rateLimiter: RateLimiter;
+  pubkey: PublicKey;
 }
 
 export interface ReserveLiquidity {
@@ -65,7 +66,7 @@ export interface ReserveConfig {
   protocolLiquidationFee: number;
   protocolTakeRate: number;
   addedBorrowWeightBPS: BN;
-  borrowWeight: number;
+  borrowWeight: string;
   reserveType: AssetType;
   extraOracle?: PublicKey;
   scaledPriceOffsetBPS: BN;
@@ -138,7 +139,7 @@ export const ReserveLayout: typeof BufferLayout.Structure = BufferLayout.struct(
   ]
 );
 
-function decodeReserve(buffer: Buffer): Reserve {
+function decodeReserve(buffer: Buffer, pubkey: PublicKey): Reserve {
   const reserve = ReserveLayout.decode(buffer);
   return {
     version: reserve.version,
@@ -202,11 +203,11 @@ function decodeReserve(buffer: Buffer): Reserve {
       addedBorrowWeightBPS: reserve.addedBorrowWeightBPS,
       borrowWeight:
         reserve.addedBorrowWeightBPS.toString() === U64_MAX
-          ? Number(U64_MAX)
+          ? U64_MAX
           : new BigNumber(reserve.addedBorrowWeightBPS.toString())
               .dividedBy(new BigNumber(10000))
               .plus(new BigNumber(1))
-              .toNumber(),
+              .toString(),
       reserveType:
         reserve.reserveType == 0 ? AssetType.Regular : AssetType.Isolated,
       liquidityExtraMarketPriceFlag: reserve.liquidityExtraMarketPriceFlag,
@@ -218,6 +219,7 @@ function decodeReserve(buffer: Buffer): Reserve {
       attributedBorrowLimitClose: reserve.attributedBorrowLimitClose,
     },
     rateLimiter: reserve.rateLimiter,
+    pubkey,
   };
 }
 
@@ -236,7 +238,7 @@ export const parseReserve = (
   }
   const { data } = info;
   const buffer = Buffer.from(data);
-  const reserve = decodeReserve(buffer);
+  const reserve = decodeReserve(buffer, pubkey);
 
   if (reserve.lastUpdate.slot.isZero()) {
     return null;

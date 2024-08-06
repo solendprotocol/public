@@ -22,6 +22,7 @@ export interface Obligation {
   unhealthyBorrowValue: BN; // decimals
   superUnhealthyBorrowValue: BN; // decimals
   borrowingIsolatedAsset: boolean;
+  pubkey: PublicKey; // add on
 }
 
 export type RawObligationType = ReturnType<typeof parseObligation>;
@@ -182,6 +183,7 @@ export const parseObligation = (
     borrowedValueUpperBound,
     deposits,
     borrows,
+    pubkey,
   } as Obligation;
 
   const details = {

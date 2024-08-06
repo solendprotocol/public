@@ -30,6 +30,7 @@ export function formatWalletAssets(
           -decimals
         ),
         mintAddress: tokenMetadata?.symbol === "SOL" ? "wSOL" : mintAddress,
+        logoUri: tokenMetadata?.logoUri,
       };
     })
     .filter(Boolean) as WalletType;
@@ -41,6 +42,7 @@ export function formatWalletAssets(
       address: wSolAddress,
       amount: nativeSolBalance,
       mintAddress: NATIVE_MINT.toBase58(),
+      logo: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
     },
   ]);
 }

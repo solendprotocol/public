@@ -49,6 +49,7 @@ export type WalletAssetType = {
   symbol: string;
   decimals: number;
   address: string;
+  logo?: string;
 };
 
 export type WalletType = Array<WalletAssetType>;
