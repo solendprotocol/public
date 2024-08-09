@@ -16,6 +16,7 @@ import {
   createAssociatedTokenAccountInstruction,
   getMinimumBalanceForRentExemptAccount,
   createCloseAccountInstruction,
+  TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import BN from "bn.js";
 import BigNumber from "bignumber.js";
@@ -59,6 +60,34 @@ import {
 import { Wallet } from "@coral-xyz/anchor";
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
+
+const MAPPING_2022 = {
+  '123': '321',
+}
+
+type SupportType =  
+  'wrap' 
+  | 'unwrap' 
+  | 'refreshReserves' 
+  | 'refreshObligation' 
+  | 'createObligation' 
+  | 'cAta' 
+  | 'ata' 
+  | 'wrapUnwrapLiquidate'
+  | 'wsol';
+
+const ACTION_SUPPORT_REQUIREMENTS: {[Property in ActionType]: Array<SupportType>} = {
+  deposit: ['wsol', 'wrap', 'createObligation', 'cAta'],
+  borrow: ['wsol', 'ata', 'refreshReserves', 'refreshObligation', 'unwrap'],
+  withdraw: ['wsol', 'ata', 'cAta', 'refreshReserves', 'refreshObligation', 'unwrap'],
+  repay: ['wsol', 'wrap'],
+  mint: ['wsol', 'wrap', 'cAta'],
+  redeem: ['wsol', 'ata', 'refreshReserves', 'refreshObligation', 'unwrap'],
+  depositCollateral: ['createObligation'],
+  withdrawCollateral: ['cAta', 'refreshReserves', 'refreshObligation'],
+  forgive: [],
+  liquidate: ['wsol', 'ata', 'cAta', 'wrapUnwrapLiquidate', 'refreshReserves', 'refreshObligation'],
+}
 
 export const toHexString = (byteArray: number[]) => {
   return (
@@ -131,9 +160,11 @@ export class SolendActionCore {
 
   wallet: Wallet;
 
-  userWithdrawTokenAccountAddress?: PublicKey;
+  userRepayTokenAccountAddress?: PublicKey;
 
-  userWithdrawCollateralAccountAddress?: PublicKey;
+  userRepayCollateralAccountAddress?: PublicKey;
+  
+  is2022?: boolean;
 
   private constructor(
     programId: PublicKey,
@@ -153,8 +184,9 @@ export class SolendActionCore {
     hostAta?: PublicKey,
     lookupTableAccount?: AddressLookupTableAccount,
     tipAmount?: number,
-    userWithdrawTokenAccountAddress?: PublicKey,
-    userWithdrawCollateralAccountAddress?: PublicKey
+    userRepayTokenAccountAddress?: PublicKey,
+    userRepayCollateralAccountAddress?: PublicKey,
+    is2022?: boolean
   ) {
     this.programId = programId;
     this.connection = connection;
@@ -180,9 +212,10 @@ export class SolendActionCore {
     this.lookupTableAccount = lookupTableAccount;
     this.jitoTipAmount = tipAmount ?? 1000;
     this.wallet = wallet;
-    this.userWithdrawTokenAccountAddress = userWithdrawTokenAccountAddress;
-    this.userWithdrawCollateralAccountAddress =
-      userWithdrawCollateralAccountAddress;
+    this.userRepayTokenAccountAddress = userRepayTokenAccountAddress;
+    this.userRepayCollateralAccountAddress =
+      userRepayCollateralAccountAddress;
+    this.is2022 = is2022;
   }
 
   static async initialize(
@@ -198,7 +231,7 @@ export class SolendActionCore {
     customObligationSeed?: string,
     lookupTableAddress?: PublicKey,
     tipAmount?: number,
-    withdrawReserve?: ReserveType
+    repayReserve?: ReserveType
   ) {
     const seed = customObligationSeed ?? pool.address.slice(0, 32);
     const programId = getProgramId(environment);
@@ -231,6 +264,8 @@ export class SolendActionCore {
       });
     }
 
+    const supports = ACTION_SUPPORT_REQUIREMENTS[action];
+
     // Union of addresses
     const distinctReserveCount =
       Array.from(
@@ -252,6 +287,16 @@ export class SolendActionCore {
       );
     }
 
+    let is2022 = false;
+    if (supports.includes('wrap') || supports.includes('unwrap')) {
+      const mintAccount = await connection.getAccountInfo(
+        new PublicKey(reserve.mintAddress)
+      );
+      if (mintAccount?.owner.equals(TOKEN_2022_PROGRAM_ID)) {
+        is2022 = true;
+      }
+    }
+
     const userTokenAccountAddress = await getAssociatedTokenAddress(
       new PublicKey(reserve.mintAddress),
       wallet.publicKey,
@@ -267,16 +312,16 @@ export class SolendActionCore {
       ? (await connection.getAddressLookupTable(lookupTableAddress)).value
       : undefined;
 
-    const userWithdrawTokenAccountAddress = withdrawReserve
+    const userRepayTokenAccountAddress = repayReserve
       ? await getAssociatedTokenAddress(
-          new PublicKey(withdrawReserve.mintAddress),
+          new PublicKey(repayReserve.mintAddress),
           wallet.publicKey,
           true
         )
       : undefined;
 
-    const userWithdrawCollateralAccountAddress = withdrawReserve ? await getAssociatedTokenAddress(
-        new PublicKey(withdrawReserve.cTokenMint),
+    const userRepayCollateralAccountAddress = repayReserve ? await getAssociatedTokenAddress(
+        new PublicKey(repayReserve.cTokenMint),
         wallet.publicKey,
         true
       ) : undefined;
@@ -299,8 +344,9 @@ export class SolendActionCore {
       hostAta,
       lookupTableAccount ?? undefined,
       tipAmount,
-      userWithdrawTokenAccountAddress,
-      userWithdrawCollateralAccountAddress
+      userRepayTokenAccountAddress,
+      userRepayCollateralAccountAddress,
+      is2022
     );
   }
 
@@ -586,7 +632,7 @@ export class SolendActionCore {
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
-      repayReserve,
+      withdrawReserve,
       "liquidate",
       new BN(amount),
       wallet,
@@ -597,11 +643,11 @@ export class SolendActionCore {
       undefined,
       lookupTableAddress,
       tipAmount,
-      withdrawReserve,
+      repayReserve,
     );
 
     await axn.addSupportIxs("liquidate");
-    await axn.addLiquidateIx(withdrawReserve);
+    await axn.addLiquidateIx(repayReserve);
 
     return axn;
   }
@@ -950,26 +996,26 @@ export class SolendActionCore {
     );
   }
 
-  async addLiquidateIx(withdrawReserve: ReserveType) {
+  async addLiquidateIx(repayReserve: ReserveType) {
     if (
-      !this.userWithdrawCollateralAccountAddress ||
-      !this.userWithdrawTokenAccountAddress
+      !this.userRepayCollateralAccountAddress ||
+      !this.userRepayTokenAccountAddress
     ) {
       throw Error("Not correctly initialized with a withdraw reserve.");
     }
     this.lendingIxs.push(
       liquidateObligationAndRedeemReserveCollateral(
         this.amount,
+        this.userRepayTokenAccountAddress,
+        this.userCollateralAccountAddress,
         this.userTokenAccountAddress,
-        this.userWithdrawCollateralAccountAddress,
-        this.userWithdrawTokenAccountAddress,
+        new PublicKey(repayReserve.address),
+        new PublicKey(repayReserve.liquidityAddress),
         new PublicKey(this.reserve.address),
+        new PublicKey(this.reserve.cTokenMint),
+        new PublicKey(this.reserve.cTokenLiquidityAddress),
         new PublicKey(this.reserve.liquidityAddress),
-        new PublicKey(withdrawReserve.address),
-        new PublicKey(withdrawReserve.cTokenMint),
-        new PublicKey(withdrawReserve.cTokenLiquidityAddress),
-        new PublicKey(withdrawReserve.liquidityAddress),
-        new PublicKey(withdrawReserve.feeReceiverAddress),
+        new PublicKey(this.reserve.feeReceiverAddress),
         this.obligationAddress,
         new PublicKey(this.pool.address),
         new PublicKey(this.pool.authorityAddress),
@@ -979,25 +1025,110 @@ export class SolendActionCore {
     );
   }
 
+//   if (
+//     action === "liquidate" &&
+//     this.userWithdrawCollateralAccountAddress &&
+//     this.userWithdrawTokenAccountAddress
+//   ) {
+//     const userWithdrawTokenAccountInfo = await this.connection.getAccountInfo(
+//       this.userWithdrawTokenAccountAddress
+//     );
+//     if (!userWithdrawTokenAccountInfo) {
+//       const createUserWithdrawTokenAccountIx =
+//         createAssociatedTokenAccountInstruction(
+//           this.publicKey,
+//           this.userWithdrawTokenAccountAddress,
+//           this.publicKey,
+//           new PublicKey(this.reserve.mintAddress)
+//         );
+
+//       if (
+//         this.positions === POSITION_LIMIT &&
+//         this.hostAta &&
+//         !this.lookupTableAccount
+//       ) {
+//         this.preTxnIxs.push(createUserWithdrawTokenAccountIx);
+//       } else {
+//         this.setupIxs.push(createUserWithdrawTokenAccountIx);
+//       }
+//     }
+
+//     const userWithdrawCollateralAccountInfo =
+//       await this.connection.getAccountInfo(
+//         this.userWithdrawCollateralAccountAddress
+//       );
+//     if (!userWithdrawCollateralAccountInfo) {
+//       const createUserWithdrawCollateralAccountIx =
+//         createAssociatedTokenAccountInstruction(
+//           this.publicKey,
+//           this.userWithdrawCollateralAccountAddress,
+//           this.publicKey,
+//           new PublicKey(this.reserve.cTokenMint)
+//         );
+
+//       if (
+//         this.positions === POSITION_LIMIT &&
+//         this.hostAta &&
+//         !this.lookupTableAccount
+//       ) {
+//         this.preTxnIxs.push(createUserWithdrawCollateralAccountIx);
+//       } else {
+//         this.setupIxs.push(createUserWithdrawCollateralAccountIx);
+//       }
+//     }
+//   }
+// }
+
   async addSupportIxs(action: ActionType) {
-    if (
-      [
-        "withdraw",
-        "borrow",
-        "withdrawCollateral",
-        "forgive",
-        "redeem",
-        "liquidate",
-      ].includes(action)
-    ) {
-      await this.addRefreshIxs(action);
+    const supports = ACTION_SUPPORT_REQUIREMENTS[action];
+
+    for (const support of supports) {
+      switch(support) {
+        case 'createObligation':
+          await this.addObligationIxs();
+          break;
+        case 'wrap':
+          if (this.is2022) {
+            await this.addWrapIx();
+          }
+          break;
+        case 'unwrap':
+          if (this.is2022) {
+            await this.addUnwrapIx();
+          }
+          break;
+        case 'refreshReserves':
+          await this.addRefreshReservesIxs();
+          break;
+        case 'refreshObligation':
+          await this.addRefreshObligationIxs();
+          break;
+        case 'cAta':
+          await this.addCAtaIxs();
+          break;
+        case 'ata':
+          await this.addAtaIxs();
+          break;
+        case 'wrapUnwrapLiquidate':
+          await this.addWrapUnwrapLiquidateIxs();
+          break;
+        case 'wsol':
+          await this.updateWSOLAccount(action);
+          break;
+      } 
     }
-    if (!["mint", "redeem", "forgive", "liquidate"].includes(action)) {
-      await this.addObligationIxs();
-    }
-    if (action !== "forgive") {
-      await this.addAtaIxs(action);
-    }
+  }
+
+  private async addWrapIx() {
+
+  }
+
+  private async addUnwrapIx() {
+    
+  }
+
+  private async addWrapUnwrapLiquidateIxs() {
+
   }
 
   private async buildPullPriceTxns(oracleKeys: Array<string>) {
@@ -1051,13 +1182,9 @@ export class SolendActionCore {
         updateFeeds.map((feedAccount) =>
           feedAccount.fetchUpdateIx({
             crossbarClient: crossbar,
-            gateway:
-              "https://95.179.134.103.xip.switchboard-oracles.xyz/mainnet",
           })
         )
       );
-
-      console.log(responses);
 
       const oracles = responses.flatMap((x) => x[1].map((y) => y.oracle));
       const lookupTables = await loadLookupTables([...oracles, ...updateFeeds]);
@@ -1154,7 +1281,7 @@ export class SolendActionCore {
     }
   }
 
-  private async addRefreshIxs(action: ActionType) {
+  private async addRefreshReservesIxs() {
     // Union of addresses
     const reserveMap = this.pool.reserves.reduce((acc, reserve) => {
       acc[reserve.address] = reserve;
@@ -1198,16 +1325,16 @@ export class SolendActionCore {
       );
       this.setupIxs.push(refreshReserveIx);
     });
+  }
 
-    if (action !== "mint" && action !== "redeem") {
-      const refreshObligationIx = refreshObligationInstruction(
-        this.obligationAddress,
-        this.depositReserves,
-        this.borrowReserves,
-        this.programId
-      );
-      this.setupIxs.push(refreshObligationIx);
-    }
+  private async addRefreshObligationIxs() {
+    const refreshObligationIx = refreshObligationInstruction(
+      this.obligationAddress,
+      this.depositReserves,
+      this.borrowReserves,
+      this.programId
+    );
+    this.setupIxs.push(refreshObligationIx);
   }
 
   private async addObligationIxs() {
@@ -1238,15 +1365,8 @@ export class SolendActionCore {
     }
   }
 
-  private async addAtaIxs(action: ActionType) {
-    if (this.reserve.mintAddress === NATIVE_MINT.toBase58()) {
-      await this.updateWSOLAccount(action);
-    }
-
-    if (
-      (action === "withdraw" || action === "borrow" || action === "redeem") &&
-      this.reserve.mintAddress !== NATIVE_MINT.toBase58()
-    ) {
+  private async addAtaIxs() {
+    if (this.reserve.mintAddress !== NATIVE_MINT.toBase58()) {
       const userTokenAccountInfo = await this.connection.getAccountInfo(
         this.userTokenAccountAddress
       );
@@ -1270,8 +1390,9 @@ export class SolendActionCore {
         }
       }
     }
+  }
 
-    if (action === "withdraw" || action === "mint" || action === "deposit") {
+    private async addCAtaIxs() {
       const userCollateralAccountInfo = await this.connection.getAccountInfo(
         this.userCollateralAccountAddress
       );
@@ -1297,61 +1418,9 @@ export class SolendActionCore {
       }
     }
 
-    if (
-      action === "liquidate" &&
-      this.userWithdrawCollateralAccountAddress &&
-      this.userWithdrawTokenAccountAddress
-    ) {
-      const userWithdrawTokenAccountInfo = await this.connection.getAccountInfo(
-        this.userWithdrawTokenAccountAddress
-      );
-      if (!userWithdrawTokenAccountInfo) {
-        const createUserWithdrawTokenAccountIx =
-          createAssociatedTokenAccountInstruction(
-            this.publicKey,
-            this.userWithdrawTokenAccountAddress,
-            this.publicKey,
-            new PublicKey(this.reserve.mintAddress)
-          );
-
-        if (
-          this.positions === POSITION_LIMIT &&
-          this.hostAta &&
-          !this.lookupTableAccount
-        ) {
-          this.preTxnIxs.push(createUserWithdrawTokenAccountIx);
-        } else {
-          this.setupIxs.push(createUserWithdrawTokenAccountIx);
-        }
-      }
-
-      const userWithdrawCollateralAccountInfo =
-        await this.connection.getAccountInfo(
-          this.userWithdrawCollateralAccountAddress
-        );
-      if (!userWithdrawCollateralAccountInfo) {
-        const createUserWithdrawCollateralAccountIx =
-          createAssociatedTokenAccountInstruction(
-            this.publicKey,
-            this.userWithdrawCollateralAccountAddress,
-            this.publicKey,
-            new PublicKey(this.reserve.cTokenMint)
-          );
-
-        if (
-          this.positions === POSITION_LIMIT &&
-          this.hostAta &&
-          !this.lookupTableAccount
-        ) {
-          this.preTxnIxs.push(createUserWithdrawCollateralAccountIx);
-        } else {
-          this.setupIxs.push(createUserWithdrawCollateralAccountIx);
-        }
-      }
-    }
-  }
-
   private async updateWSOLAccount(action: ActionType) {
+    if (this.reserve.mintAddress !== NATIVE_MINT.toBase58()) return;
+
     const preIxs: Array<TransactionInstruction> = [];
     const postIxs: Array<TransactionInstruction> = [];
 
