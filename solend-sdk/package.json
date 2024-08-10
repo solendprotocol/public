@@ -1,6 +1,6 @@
 {
   "name": "@solendprotocol/solend-sdk",
-  "version": "0.12.9",
+  "version": "0.12.11",
   "private": true,
   "main": "src/index.ts",
   "module": "src/index.ts",
@@ -28,7 +28,7 @@
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "=1.92.3",
     "@solflare-wallet/utl-sdk": "^1.4.0",
-    "@switchboard-xyz/on-demand": "^1.2.16",
+    "@switchboard-xyz/on-demand": "^1.2.20",
     "@switchboard-xyz/sbv2-lite": "^0.2.4",
     "axios": "^0.24.0",
     "bignumber.js": "^9.0.2",
