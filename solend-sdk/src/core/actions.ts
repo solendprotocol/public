@@ -1178,7 +1178,7 @@ export class SolendActionCore {
       );
 
       const oracles = responses.flatMap((x) => x[1].map((y) => y.oracle));
-      const lookupTables = await loadLookupTables([...oracles, ...updateFeeds]);
+      const lookupTables = await loadLookupTables([...oracles, ...feedAccounts]);
 
       const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
         microLamports: 1_000_000,
