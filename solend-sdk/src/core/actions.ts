@@ -1159,17 +1159,8 @@ export class SolendActionCore {
       (oracleKey) => new PullFeed(sbod as any, oracleKey)
     );
 
-    const feedData = await Promise.all(
+    const updateFeeds = await Promise.all(
       feedAccounts.map((feedAccount) => feedAccount.loadData())
-    );
-
-    const feedsThatNeedUpdate = feedData.map(
-      (feed) =>
-        Date.now() / 1000 - Number(feed.lastUpdateTimestamp.toString()) > 70
-    );
-
-    const updateFeeds = feedAccounts.filter(
-      (_, index) => feedsThatNeedUpdate[index]
     );
 
     if (updateFeeds.length) {
@@ -1179,7 +1170,7 @@ export class SolendActionCore {
 
       // Responses is Array<[pullIx, responses, success]>
       const responses = await Promise.all(
-        updateFeeds.map((feedAccount) =>
+        feedAccounts.map((feedAccount) =>
           feedAccount.fetchUpdateIx({
             crossbarClient: crossbar,
           })
@@ -1232,17 +1223,10 @@ export class SolendActionCore {
               pythOracleData.data
             );
 
-          const needUpdate =
-            Date.now() / 1000 -
-              Number(priceUpdate.priceMessage.publishTime.toString()) >
-            70;
-
-          return needUpdate
-            ? {
+          return {
                 key: Math.random(),
                 priceFeedId: toHexString(priceUpdate.priceMessage.feedId),
-              }
-            : undefined;
+              };
         })
         .filter(Boolean) as Array<{
         key: number;
