@@ -1159,11 +1159,6 @@ export class SolendActionCore {
       (oracleKey) => new PullFeed(sbod as any, oracleKey)
     );
 
-    const updateFeeds = await Promise.all(
-      feedAccounts.map((feedAccount) => feedAccount.loadData())
-    );
-
-    if (updateFeeds.length) {
       const crossbar = new CrossbarClient(
         "https://crossbar.switchboard.xyz/"
       );
@@ -1204,7 +1199,6 @@ export class SolendActionCore {
       const vtx = new VersionedTransaction(message);
 
       this.pullPriceTxns.push(vtx);
-    }
 
     const pythPulledOracles = oracleAccounts.filter(
       (o) =>
@@ -1214,20 +1208,27 @@ export class SolendActionCore {
     const shuffledPriceIds = (
       pythPulledOracles
         .map((pythOracleData, index) => {
-          if (!pythOracleData) {
-            throw new Error(`Could not find oracle data at index ${index}`);
-          }
-          const priceUpdate =
-            pythSolanaReceiver.receiver.account.priceUpdateV2.coder.accounts.decode(
-              "priceUpdateV2",
-              pythOracleData.data
-            );
+        if (!pythOracleData) {
+          throw new Error(`Could not find oracle data at index ${index}`);
+        }
+        const priceUpdate =
+          pythSolanaReceiver.receiver.account.priceUpdateV2.coder.accounts.decode(
+            "priceUpdateV2",
+            pythOracleData.data
+          );
 
-          return {
-                key: Math.random(),
-                priceFeedId: toHexString(priceUpdate.priceMessage.feedId),
-              };
-        })
+        const needUpdate =
+          Date.now() / 1000 -
+            Number(priceUpdate.priceMessage.publishTime.toString()) >
+          30;
+
+        return needUpdate
+          ? {
+              key: Math.random(),
+              priceFeedId: toHexString(priceUpdate.priceMessage.feedId),
+            }
+          : undefined;
+      })
         .filter(Boolean) as Array<{
         key: number;
         priceFeedId: string;
