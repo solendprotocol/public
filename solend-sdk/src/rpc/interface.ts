@@ -30,7 +30,7 @@ import {
   VersionedTransactionResponse,
 } from "@solana/web3.js";
 
-// Connection and and all *Connection classes should implement
+// Connection and all *Connection classes should implement
 // SolendRPCConnection
 export interface SolendRPCConnection {
   rpcEndpoint: string;

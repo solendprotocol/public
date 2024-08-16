@@ -38,7 +38,7 @@ export const unstakeBasis = async (
     payer.publicKey,
   );
 
-  // get associated token account for Basis (or create if doens't exist)
+  // get associated token account for Basis (or create if doesn't exist)
   const BasisAccount = await Token.getAssociatedTokenAddress(
 
     ASSOCIATED_TOKEN_PROGRAM_ID,
