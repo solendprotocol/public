@@ -22,7 +22,7 @@ import {
 } from "@solana/spl-token";
 import BN from "bn.js";
 import BigNumber from "bignumber.js";
-import { InstructionWithEphemeralSigners, PythSolanaReceiver } from "@pythnetwork/pyth-solana-receiver";
+import { PythSolanaReceiver } from "@pythnetwork/pyth-solana-receiver";
 import {
   Obligation,
   OBLIGATION_SIZE,
@@ -57,7 +57,7 @@ import {
   CrossbarClient,
   loadLookupTables,
   PullFeed,
-  SB_ON_DEMAND_PID,
+  ON_DEMAND_MAINNET_PID,
 } from "@switchboard-xyz/on-demand";
 import { Wallet } from "@coral-xyz/anchor";
 import {
@@ -67,6 +67,10 @@ import {
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
 
+const MAPPING_2022 = {
+  "123": "321",
+};
+
 type SupportType =
   | "wrap"
   | "unwrap"
@@ -75,7 +79,7 @@ type SupportType =
   | "createObligation"
   | "cAta"
   | "ata"
-  | "wrapUnwrapLiquidate"
+  | "wrapRepay"
   | "wsol";
 
 const ACTION_SUPPORT_REQUIREMENTS: {
@@ -93,15 +97,16 @@ const ACTION_SUPPORT_REQUIREMENTS: {
   ],
   repay: ["wsol", "wrap"],
   mint: ["wsol", "wrap", "cAta"],
-  redeem: ["wsol", "ata", "refreshReserves", "refreshObligation", "unwrap"],
+  redeem: ["wsol", "ata", "refreshReserves", "unwrap"],
   depositCollateral: ["createObligation"],
   withdrawCollateral: ["cAta", "refreshReserves", "refreshObligation"],
-  forgive: [],
+  forgive: ['refreshReserves', 'refreshObligation'],
   liquidate: [
     "wsol",
     "ata",
     "cAta",
-    "wrapUnwrapLiquidate",
+    "wrapRepay",
+    "unwrap",
     "refreshReserves",
     "refreshObligation",
   ],
@@ -155,11 +160,18 @@ export class SolendActionCore {
 
   hostAta?: PublicKey;
 
-  lendingIxs: Array<InstructionWithEphemeralSigners>;
+  // TODO: potentially don't need to keep signers
+  pullPriceTxns: Array<VersionedTransaction>;
 
-  preIxs: Array<InstructionWithEphemeralSigners>;
+  setupIxs: Array<TransactionInstruction>;
 
-  postIxs: Array<InstructionWithEphemeralSigners>;
+  lendingIxs: Array<TransactionInstruction>;
+
+  cleanupIxs: Array<TransactionInstruction>;
+
+  preTxnIxs: Array<TransactionInstruction>;
+
+  postTxnIxs: Array<TransactionInstruction>;
 
   depositReserves: Array<PublicKey>;
 
@@ -171,9 +183,14 @@ export class SolendActionCore {
 
   wallet: Wallet;
 
-  userRepayTokenAccountAddress?: PublicKey;
-
-  userRepayCollateralAccountAddress?: PublicKey;
+  repayInfo?: {
+    userRepayTokenAccountAddress: PublicKey,
+    userRepayCollateralAccountAddress: PublicKey,
+    repayToken2022Mint?: PublicKey,
+    repayWrappedAta?: PublicKey,
+    repayMint: PublicKey,
+    reserveAddress: PublicKey,
+  }
 
   token2022Mint?: PublicKey;
 
@@ -197,8 +214,14 @@ export class SolendActionCore {
     hostAta?: PublicKey,
     lookupTableAccount?: AddressLookupTableAccount,
     tipAmount?: number,
-    userRepayTokenAccountAddress?: PublicKey,
-    userRepayCollateralAccountAddress?: PublicKey,
+    repayInfo?: {
+      userRepayTokenAccountAddress: PublicKey,
+      userRepayCollateralAccountAddress: PublicKey,
+      repayToken2022Mint?: PublicKey,
+      repayWrappedAta?: PublicKey,
+      repayMint: PublicKey,
+      reserveAddress: PublicKey,
+    },
     token2022Mint?: PublicKey,
     wrappedAta?: PublicKey
   ) {
@@ -215,16 +238,18 @@ export class SolendActionCore {
     this.obligationAddress = obligationAddress;
     this.userTokenAccountAddress = userTokenAccountAddress;
     this.userCollateralAccountAddress = userCollateralAccountAddress;
-    this.preIxs = [];
-    this.postIxs = [];
+    this.pullPriceTxns = [] as Array<VersionedTransaction>;
+    this.setupIxs = [];
     this.lendingIxs = [];
+    this.cleanupIxs = [];
+    this.preTxnIxs = [];
+    this.postTxnIxs = [];
     this.depositReserves = depositReserves;
     this.borrowReserves = borrowReserves;
     this.lookupTableAccount = lookupTableAccount;
     this.jitoTipAmount = tipAmount ?? 1000;
     this.wallet = wallet;
-    this.userRepayTokenAccountAddress = userRepayTokenAccountAddress;
-    this.userRepayCollateralAccountAddress = userRepayCollateralAccountAddress;
+    this.repayInfo = repayInfo;
     this.token2022Mint = token2022Mint;
     this.wrappedAta = wrappedAta;
   }
@@ -243,7 +268,8 @@ export class SolendActionCore {
     lookupTableAddress?: PublicKey,
     tipAmount?: number,
     repayReserve?: ReserveType,
-    token2022Mint?: string
+    token2022Mint?: string,
+    repayToken2022Mint?: string,
   ) {
     const seed = customObligationSeed ?? pool.address.slice(0, 32);
     const programId = getProgramId(environment);
@@ -346,8 +372,21 @@ export class SolendActionCore {
       hostAta,
       lookupTableAccount ?? undefined,
       tipAmount,
-      userRepayTokenAccountAddress,
-      userRepayCollateralAccountAddress,
+      repayReserve ? {
+        userRepayTokenAccountAddress: userRepayTokenAccountAddress!,
+        userRepayCollateralAccountAddress: userRepayCollateralAccountAddress!,
+        repayToken2022Mint: repayToken2022Mint ? new PublicKey(repayToken2022Mint) : undefined,
+        repayWrappedAta: repayToken2022Mint
+        ? getAssociatedTokenAddressSync(
+            new PublicKey(repayToken2022Mint),
+            wallet.publicKey,
+            true,
+            TOKEN_2022_PROGRAM_ID
+          )
+        : undefined,
+        repayMint: new PublicKey(repayReserve.mintAddress),
+        reserveAddress: new PublicKey(repayReserve.address),
+      } : undefined,
       token2022Mint ? new PublicKey(token2022Mint) : undefined,
       token2022Mint
         ? getAssociatedTokenAddressSync(
@@ -661,7 +700,8 @@ export class SolendActionCore {
     customObligationAddress?: PublicKey,
     lookupTableAddress?: PublicKey,
     tipAmount?: number,
-    token2022Mint?: string
+    token2022Mint?: string,
+    repayToken2022Mint?: string
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -677,7 +717,8 @@ export class SolendActionCore {
       lookupTableAddress,
       tipAmount,
       repayReserve,
-      token2022Mint
+      token2022Mint,
+      repayToken2022Mint,
     );
 
     await axn.addSupportIxs("liquidate");
@@ -686,33 +727,164 @@ export class SolendActionCore {
     return axn;
   }
 
-  async getInstructions() {
-    
+  // Could fail for obligations with 6 positions and no lookup table
+  async getVersionedTransaction() {
+    return new VersionedTransaction(
+      new TransactionMessage({
+        payerKey: this.publicKey,
+        recentBlockhash: (await this.connection.getRecentBlockhash()).blockhash,
+        instructions: [
+          ...this.preTxnIxs,
+          ...this.setupIxs,
+          ...this.lendingIxs,
+          ...this.cleanupIxs,
+          ...this.postTxnIxs,
+        ],
+      }).compileToV0Message(
+        this.lookupTableAccount ? [this.lookupTableAccount] : []
+      )
+    );
   }
 
+  async getLegacyTransactions() {
+    const txns: {
+      preLendingTxn: Transaction | null;
+      lendingTxn: Transaction | null;
+      postLendingTxn: Transaction | null;
+    } = {
+      preLendingTxn: null,
+      lendingTxn: null,
+      postLendingTxn: null,
+    };
+    if (this.preTxnIxs.length) {
+      txns.preLendingTxn = new Transaction({
+        feePayer: this.publicKey,
+        recentBlockhash: (await this.connection.getRecentBlockhash()).blockhash,
+      }).add(...this.preTxnIxs);
+    }
+    txns.lendingTxn = new Transaction({
+      feePayer: this.publicKey,
+      recentBlockhash: (await this.connection.getRecentBlockhash()).blockhash,
+    }).add(...this.setupIxs, ...this.lendingIxs, ...this.cleanupIxs);
+    if (this.postTxnIxs.length) {
+      txns.postLendingTxn = new Transaction({
+        feePayer: this.publicKey,
+        recentBlockhash: (await this.connection.getRecentBlockhash()).blockhash,
+      }).add(...this.postTxnIxs);
+    }
+    return txns;
+  }
+
+  private getTipIx() {
+    const tipAccounts = [
+      "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+      "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
+      "Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY",
+      "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
+      "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh",
+      "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
+      "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL",
+      "3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT",
+    ];
+
+    const tipAccount = new PublicKey(
+      tipAccounts[Math.floor(Math.random() * tipAccounts.length)]
+    );
+
+    return SystemProgram.transfer({
+      fromPubkey: this.publicKey,
+      toPubkey: tipAccount,
+      lamports: this.jitoTipAmount,
+    });
+  }
+
+  async getTransactions(blockhash: BlockhashWithExpiryBlockHeight) {
+    const txns: {
+      preLendingTxn: VersionedTransaction | null;
+      lendingTxn: VersionedTransaction | null;
+      postLendingTxn: VersionedTransaction | null;
+      pullPriceTxns: VersionedTransaction[] | null;
+    } = {
+      preLendingTxn: null,
+      lendingTxn: null,
+      postLendingTxn: null,
+      pullPriceTxns: null,
+    };
+
+    if (this.pullPriceTxns.length) {
+      txns.pullPriceTxns = this.pullPriceTxns;
+    }
+
+    if (this.preTxnIxs.length) {
+      txns.preLendingTxn = new VersionedTransaction(
+        new TransactionMessage({
+          payerKey: this.publicKey,
+          recentBlockhash: blockhash.blockhash,
+          instructions: this.preTxnIxs,
+        }).compileToV0Message()
+      );
+    }
+
+    const instructions = [
+      ...this.setupIxs,
+      ...this.lendingIxs,
+      ...this.cleanupIxs,
+    ];
+
+    const tip = this.getTipIx();
+    if (tip && this.pullPriceTxns.length > 5) {
+      instructions.push(tip);
+    }
+
+    const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+      microLamports: 1_000_000,
+    });
+    const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_000_000,
+    });
+
+    txns.lendingTxn = new VersionedTransaction(
+      new TransactionMessage({
+        payerKey: this.publicKey,
+        recentBlockhash: blockhash.blockhash,
+        instructions: [priorityFeeIx, modifyComputeUnits, ...instructions],
+      }).compileToV0Message(
+        this.lookupTableAccount ? [this.lookupTableAccount] : []
+      )
+    );
+
+    if (this.postTxnIxs.length) {
+      txns.postLendingTxn = new VersionedTransaction(
+        new TransactionMessage({
+          payerKey: this.publicKey,
+          recentBlockhash: blockhash.blockhash,
+          instructions: this.postTxnIxs,
+        }).compileToV0Message()
+      );
+    }
+
+    return txns;
+  }
 
   configureTip(jitoTipAmount: number) {
     this.jitoTipAmount = jitoTipAmount;
   }
 
   addForgiveIx() {
-    this.lendingIxs.push({
-      signers: [],
-      instruction: forgiveDebtInstruction(
+    this.lendingIxs.push(
+      forgiveDebtInstruction(
         this.obligationAddress,
         new PublicKey(this.reserve.address),
         new PublicKey(this.pool.address),
         new PublicKey(this.pool.owner),
         this.amount,
         this.programId
-      ),
-  });
+      )
+    );
   }
 
   addDepositIx() {
-    this.lendingIxs.push({
-      signers: [],
-      instruction: 
+    this.lendingIxs.push(
       this.amount.toString() === U64_MAX
         ? depositMaxReserveLiquidityAndObligationCollateralInstruction(
             this.userTokenAccountAddress,
@@ -747,13 +919,11 @@ export class SolendActionCore {
             this.publicKey, // transferAuthority
             this.programId
           )
-      });
+    );
   }
 
   addDepositReserveLiquidityIx() {
-    this.lendingIxs.push({
-      signers: [],
-      instruction: 
+    this.lendingIxs.push(
       depositReserveLiquidityInstruction(
         this.amount,
         this.userTokenAccountAddress,
@@ -766,13 +936,11 @@ export class SolendActionCore {
         this.publicKey, // transferAuthority
         this.programId
       )
-    });
+    );
   }
 
   addRedeemReserveCollateralIx() {
-    this.lendingIxs.push({
-      signers: [],
-      instruction: 
+    this.lendingIxs.push(
       redeemReserveCollateralInstruction(
         this.amount,
         this.userCollateralAccountAddress,
@@ -785,13 +953,11 @@ export class SolendActionCore {
         this.publicKey, // transferAuthority
         this.programId
       )
-    });
+    );
   }
 
   async addWithdrawObligationCollateralIx() {
-    this.lendingIxs.push({
-      signers: [],
-      instruction: 
+    this.lendingIxs.push(
       withdrawObligationCollateralInstruction(
         this.amount,
         new PublicKey(this.reserve.cTokenLiquidityAddress),
@@ -804,13 +970,11 @@ export class SolendActionCore {
         this.programId,
         this.depositReserves.map((reserve) => new PublicKey(reserve))
       )
-    });
+    );
   }
 
   addDepositObligationCollateralIx() {
-    this.lendingIxs.push({
-      signers: [],
-      instruction: 
+    this.lendingIxs.push(
       depositObligationCollateralInstruction(
         this.amount,
         this.userCollateralAccountAddress,
@@ -822,13 +986,11 @@ export class SolendActionCore {
         this.publicKey, // transferAuthority
         this.programId
       )
-    });
+    );
   }
 
   addBorrowIx() {
-    this.lendingIxs.push({
-      signers: [],
-      instruction: 
+    this.lendingIxs.push(
       borrowObligationLiquidityInstruction(
         this.amount,
         new PublicKey(this.reserve.liquidityAddress),
@@ -843,13 +1005,11 @@ export class SolendActionCore {
         this.depositReserves.map((reserve) => new PublicKey(reserve)),
         this.hostAta
       )
-    });
+    );
   }
 
   async addWithdrawIx() {
-    this.lendingIxs.push({
-      signers: [],
-      instruction: 
+    this.lendingIxs.push(
       this.amount.eq(new BN(U64_MAX))
         ? withdrawObligationCollateralAndRedeemReserveLiquidity(
             new BN(U64_MAX),
@@ -883,13 +1043,11 @@ export class SolendActionCore {
             this.programId,
             this.depositReserves.map((reserve) => new PublicKey(reserve))
           )
-        });
+    );
   }
 
   async addRepayIx() {
-    this.lendingIxs.push({
-      signers: [],
-      instruction: 
+    this.lendingIxs.push(
       this.amount.toString() === U64_MAX
         ? repayMaxObligationLiquidityInstruction(
             this.userTokenAccountAddress,
@@ -910,23 +1068,20 @@ export class SolendActionCore {
             this.publicKey,
             this.programId
           )
-      }
     );
   }
 
   async addLiquidateIx(repayReserve: ReserveType) {
     if (
-      !this.userRepayCollateralAccountAddress ||
-      !this.userRepayTokenAccountAddress
+      !this.repayInfo?.userRepayCollateralAccountAddress ||
+      !this.repayInfo?.userRepayTokenAccountAddress
     ) {
       throw Error("Not correctly initialized with a withdraw reserve.");
     }
-    this.lendingIxs.push({
-      signers: [],
-      instruction: 
+    this.lendingIxs.push(
       liquidateObligationAndRedeemReserveCollateral(
         this.amount,
-        this.userRepayTokenAccountAddress,
+        this.repayInfo.userRepayTokenAccountAddress,
         this.userCollateralAccountAddress,
         this.userTokenAccountAddress,
         new PublicKey(repayReserve.address),
@@ -942,7 +1097,7 @@ export class SolendActionCore {
         this.publicKey,
         this.programId
       )
-    });
+    );
   }
 
   async addSupportIxs(action: ActionType) {
@@ -975,9 +1130,9 @@ export class SolendActionCore {
         case "ata":
           await this.addAtaIxs();
           break;
-        case "wrapUnwrapLiquidate":
-          if (this.wrappedAta) {
-            await this.addWrapUnwrapLiquidateIxs();
+        case "wrapRepay":
+          if (this.repayInfo?.repayWrappedAta) {
+            await this.addWrapRepayIx();
           }
           break;
         case "wsol":
@@ -990,58 +1145,70 @@ export class SolendActionCore {
   private async addWrapIx() {
     if (!this.wrappedAta || !this.token2022Mint)
       throw new Error("Wrapped ATA not initialized");
-    this.preIxs.push({
-
-      signers: [],
-      instruction: 
+    this.preTxnIxs.push(
       createAssociatedTokenAccountIdempotentInstruction(
         this.publicKey,
         this.userTokenAccountAddress,
         this.publicKey,
         new PublicKey(this.reserve.mintAddress)
-      )}
+      )
     );
 
-    this.preIxs.push({
-
-      signers: [],
-      instruction: 
+    this.preTxnIxs.push(
       await createDepositAndMintWrapperTokensInstruction(
         this.publicKey,
         this.wrappedAta,
         this.token2022Mint,
         this.amount
-      )}
+      )
     );
   }
 
   private async addUnwrapIx() {
     if (!this.wrappedAta || !this.token2022Mint)
       throw new Error("Wrapped ATA not initialized");
-    this.preIxs.push({
-      signers: [],
-      instruction: 
+    this.preTxnIxs.push(
       createAssociatedTokenAccountIdempotentInstruction(
         this.publicKey,
         this.wrappedAta,
         this.publicKey,
         this.token2022Mint,
         TOKEN_2022_PROGRAM_ID
-      )}
+      )
     );
 
-    this.postIxs.push(
-      {signers: [],
-      instruction: await createWithdrawAndBurnWrapperTokensInstruction(
+    this.postTxnIxs.push(
+      await createWithdrawAndBurnWrapperTokensInstruction(
         this.publicKey,
         this.wrappedAta,
         this.token2022Mint,
-        this.amount
-      )}
+        new BN(U64_MAX),
+      )
     );
   }
 
-  private async addWrapUnwrapLiquidateIxs() {}
+  private async addWrapRepayIx() {
+    if (!this.repayInfo?.repayWrappedAta || !this.repayInfo?.repayToken2022Mint)
+      throw new Error("Wrapped ATA not initialized");
+    this.preTxnIxs.push(
+      createAssociatedTokenAccountIdempotentInstruction(
+        this.publicKey,
+        this.repayInfo.userRepayTokenAccountAddress,
+        this.publicKey,
+        new PublicKey(this.repayInfo.repayMint)
+      )
+    );
+
+    this.preTxnIxs.push(
+      await createDepositAndMintWrapperTokensInstruction(
+        this.publicKey,
+        this.repayInfo.repayWrappedAta,
+        this.repayInfo.repayToken2022Mint,
+        this.amount
+      )
+    );
+
+  }
 
   private async buildPullPriceTxns(oracleKeys: Array<string>) {
     const oracleAccounts = await this.connection.getMultipleAccountsInfo(
@@ -1060,7 +1227,7 @@ export class SolendActionCore {
     });
 
     const provider = new AnchorProvider(this.connection, this.wallet, {});
-    const idl = (await Program.fetchIdl(SB_ON_DEMAND_PID, provider))!;
+    const idl = (await Program.fetchIdl(ON_DEMAND_MAINNET_PID, provider))!;
     const sbod = new Program(idl, provider);
 
     const sbPulledOracles = oracleKeys.filter(
@@ -1083,7 +1250,7 @@ export class SolendActionCore {
       1
     );
 
-    const crossbar = new CrossbarClient("https://crossbar.save.finance/");
+    const crossbar = new CrossbarClient("https://crossbar.switchboard.xyz/");
 
     const [ix, accountLookups] = await PullFeed.fetchUpdateManyIx(sbod, {
       feeds: sbPulledOracles.map((p) => new PublicKey(p)),
@@ -1104,6 +1271,8 @@ export class SolendActionCore {
 
     const instructions = [priorityFeeIx, modifyComputeUnits, ix];
 
+    instructions.push(this.getTipIx());
+
     // Get the latest context
     const {
       value: { blockhash },
@@ -1116,7 +1285,10 @@ export class SolendActionCore {
       instructions,
     }).compileToV0Message(lookupTables);
 
-    this.preIxs.push(...instructions.map(i => ({ signers: [], instruction: i })));
+    // Get Versioned Transaction
+    const vtx = new VersionedTransaction(message);
+
+    this.pullPriceTxns.push(vtx);
     }
     const pythPulledOracles = oracleAccounts.filter(
       (o) =>
@@ -1287,7 +1459,7 @@ export class SolendActionCore {
           this.hostAta &&
           !this.lookupTableAccount
         ) {
-          this.preIxs.push(createUserTokenAccountIx);
+          this.preTxnIxs.push(createUserTokenAccountIx);
         } else {
           this.setupIxs.push(createUserTokenAccountIx);
         }
@@ -1314,7 +1486,7 @@ export class SolendActionCore {
         this.hostAta &&
         !this.lookupTableAccount
       ) {
-        this.preIxs.push(createUserCollateralAccountIx);
+        this.preTxnIxs.push(createUserCollateralAccountIx);
       } else {
         this.setupIxs.push(createUserCollateralAccountIx);
       }
@@ -1322,38 +1494,42 @@ export class SolendActionCore {
   }
 
   private async updateWSOLAccount(action: ActionType) {
-    if (this.reserve.mintAddress !== NATIVE_MINT.toBase58()) return;
+    if (![this.reserve.mintAddress, this.repayInfo?.repayMint.toString()].includes(NATIVE_MINT.toBase58())) return;
 
     const preIxs: Array<TransactionInstruction> = [];
     const postIxs: Array<TransactionInstruction> = [];
 
     let safeRepay = new BN(this.amount);
+    const liquidateWithSol = (action === "liquidate" && this.repayInfo?.repayMint.toString() === NATIVE_MINT.toBase58());
+    
+    const solAccountAddress = liquidateWithSol ? this.repayInfo!.userRepayTokenAccountAddress : this.userTokenAccountAddress;
+    const borrowReserveAddress = liquidateWithSol ? this.repayInfo!.reserveAddress.toBase58() : this.reserve.address;
 
     if (
       this.obligationAccountInfo &&
-      action === "repay" &&
+      (action === "repay" || liquidateWithSol) &&
       this.amount.eq(new BN(U64_MAX))
     ) {
       const buffer = await this.connection.getAccountInfo(
-        new PublicKey(this.reserve.address),
+        new PublicKey(borrowReserveAddress),
         "processed"
       );
 
       if (!buffer) {
-        throw Error(`Unable to fetch reserve data for ${this.reserve.address}`);
+        throw Error(`Unable to fetch reserve data for ${borrowReserveAddress}`);
       }
 
       const parsedData = parseReserve(
-        new PublicKey(this.reserve.address),
+        new PublicKey(borrowReserveAddress),
         buffer
       )?.info;
 
       if (!parsedData) {
-        throw Error(`Unable to parse data of reserve ${this.reserve.address}`);
+        throw Error(`Unable to parse data of reserve ${borrowReserveAddress}`);
       }
 
       const borrow = this.obligationAccountInfo.borrows.find(
-        (borrow) => borrow.borrowReserve.toBase58() === this.reserve.address
+        (borrow) => borrow.borrowReserve.toBase58() === borrowReserveAddress
       );
 
       if (!borrow) {
@@ -1377,7 +1553,7 @@ export class SolendActionCore {
     }
 
     const userWSOLAccountInfo = await this.connection.getAccountInfo(
-      this.userTokenAccountAddress
+      solAccountAddress
     );
 
     const rentExempt = await getMinimumBalanceForRentExemptAccount(
@@ -1385,10 +1561,10 @@ export class SolendActionCore {
     );
 
     const sendAction =
-      action === "deposit" || action === "repay" || action === "mint";
+      action === "deposit" || action === "repay" || action === "mint" || liquidateWithSol;
     const transferLamportsIx = SystemProgram.transfer({
       fromPubkey: this.publicKey,
-      toPubkey: this.userTokenAccountAddress,
+      toPubkey: solAccountAddress,
       lamports:
         (userWSOLAccountInfo ? 0 : rentExempt) +
         (sendAction ? parseInt(safeRepay.toString(), 10) : 0),
@@ -1396,14 +1572,14 @@ export class SolendActionCore {
     preIxs.push(transferLamportsIx);
 
     const closeWSOLAccountIx = createCloseAccountInstruction(
-      this.userTokenAccountAddress,
+      solAccountAddress,
       this.publicKey,
       this.publicKey,
       []
     );
 
     if (userWSOLAccountInfo) {
-      const syncIx = syncNative(this.userTokenAccountAddress);
+      const syncIx = syncNative(solAccountAddress);
       if (sendAction) {
         preIxs.push(syncIx);
       } else {
@@ -1412,7 +1588,7 @@ export class SolendActionCore {
     } else {
       const createUserWSOLAccountIx = createAssociatedTokenAccountInstruction(
         this.publicKey,
-        this.userTokenAccountAddress,
+        solAccountAddress,
         this.publicKey,
         NATIVE_MINT
       );
@@ -1425,7 +1601,7 @@ export class SolendActionCore {
       this.hostAta &&
       !this.lookupTableAccount
     ) {
-      this.preIxs.push(...preIxs);
+      this.preTxnIxs.push(...preIxs);
       this.postTxnIxs.push(...postIxs);
     } else {
       this.setupIxs.push(...preIxs);

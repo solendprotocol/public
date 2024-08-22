@@ -28,6 +28,7 @@ export const withdrawObligationCollateralAndRedeemReserveLiquidity = (
     Layout.uint64("collateralAmount"),
   ]);
 
+  console.log(new BN(collateralAmount).toString())
   const data = Buffer.alloc(dataLayout.span);
   dataLayout.encode(
     {

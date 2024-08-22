@@ -46,28 +46,3 @@ export function getProgramId(environment?: Cluster | "beta" | "production") {
 }
 
 export const BigZero = new BigNumber(0);
-
-export const EmptyObligation: ObligationType = {
-  address: "empty",
-  positions: 0,
-  deposits: [],
-  borrows: [],
-  poolAddress: "",
-  totalSupplyValue: BigZero,
-  totalBorrowValue: BigZero,
-  borrowLimit: BigZero,
-  liquidationThreshold: BigZero,
-  netAccountValue: BigZero,
-  liquidationThresholdFactor: BigZero,
-  borrowLimitFactor: BigZero,
-  borrowUtilization: BigZero,
-  weightedConservativeBorrowUtilization: BigZero,
-  weightedBorrowUtilization: BigZero,
-  isBorrowLimitReached: false,
-  borrowOverSupply: BigZero,
-  weightedTotalBorrowValue: BigZero,
-  minPriceUserTotalSupply: BigZero,
-  minPriceBorrowLimit: BigZero,
-  maxPriceUserTotalWeightedBorrow: BigZero,
-  netApy: BigZero,
-};

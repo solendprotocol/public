@@ -1,6 +1,7 @@
 import {
   getAssociatedTokenAddress,
   NATIVE_MINT,
+  TOKEN_2022_PROGRAM_ID,
   unpackAccount,
 } from "@solana/spl-token";
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
@@ -54,12 +55,22 @@ export async function fetchWalletAssets(
   debug?: boolean
 ) {
   if (debug) console.log("fetchWalletAssets", uniqueAssets.length);
+
+  const uniqueAssetAccounts = await getBatchMultipleAccountsInfo(
+    uniqueAssets.map((asset) => new PublicKey(asset)),
+    connection
+  );
+
   const userTokenAssociatedAddresses = await Promise.all(
-    uniqueAssets.map(async (asset) => {
+    uniqueAssetAccounts.map(async (asset, index) => {
       const userTokenAccount = await getAssociatedTokenAddress(
-        new PublicKey(asset),
+        new PublicKey(uniqueAssets[index]),
         new PublicKey(publicKey),
-        true
+        true,
+        asset?.owner.toBase58() === TOKEN_2022_PROGRAM_ID.toBase58()
+      ? TOKEN_2022_PROGRAM_ID
+      : undefined
+
       );
       return userTokenAccount;
     })
@@ -82,8 +93,13 @@ export async function fetchWalletAssets(
     userAssociatedTokenAccounts: userAssociatedTokenAccounts.map(
       (account, index) =>
         account
-          ? unpackAccount(userTokenAssociatedAddresses[index], account)
-          : null
+          ?  unpackAccount(
+            userTokenAssociatedAddresses[index],
+            account,
+            account?.owner.toBase58() === TOKEN_2022_PROGRAM_ID.toBase58()
+              ? TOKEN_2022_PROGRAM_ID
+              : undefined
+          ) : null
     ),
     nativeSolBalance: new BigNumber(nativeSolBalance).dividedBy(
       LAMPORTS_PER_SOL
