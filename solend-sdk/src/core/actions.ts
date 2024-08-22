@@ -67,10 +67,6 @@ import {
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
 
-const MAPPING_2022 = {
-  "123": "321",
-};
-
 type SupportType =
   | "wrap"
   | "unwrap"
@@ -247,7 +243,7 @@ export class SolendActionCore {
     this.depositReserves = depositReserves;
     this.borrowReserves = borrowReserves;
     this.lookupTableAccount = lookupTableAccount;
-    this.jitoTipAmount = tipAmount ?? 1000;
+    this.jitoTipAmount = tipAmount ?? 9000;
     this.wallet = wallet;
     this.repayInfo = repayInfo;
     this.token2022Mint = token2022Mint;
@@ -407,7 +403,8 @@ export class SolendActionCore {
     wallet: Wallet,
     obligationAddress: PublicKey,
     environment: EnvironmentType = "production",
-    lookupTableAddress?: PublicKey
+    lookupTableAddress?: PublicKey,
+    tipAmount?: number,
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -420,7 +417,8 @@ export class SolendActionCore {
       obligationAddress,
       undefined,
       undefined,
-      lookupTableAddress
+      lookupTableAddress,
+      tipAmount
     );
 
     await axn.addSupportIxs("forgive");
@@ -439,6 +437,7 @@ export class SolendActionCore {
     obligationAddress?: PublicKey,
     obligationSeed?: string,
     lookupTableAddress?: PublicKey,
+    tipAmount?: number,
     token2022Mint?: string
   ) {
     const axn = await SolendActionCore.initialize(
@@ -453,7 +452,7 @@ export class SolendActionCore {
       undefined,
       obligationSeed,
       lookupTableAddress,
-      undefined,
+      tipAmount,
       undefined,
       token2022Mint
     );
@@ -597,7 +596,7 @@ export class SolendActionCore {
     wallet: Wallet,
     environment: EnvironmentType = "production",
     lookupTableAddress?: PublicKey,
-    customObligationAddress?: PublicKey
+    customObligationAddress?: PublicKey,
   ) {
     const axn = await SolendActionCore.initialize(
       pool,
@@ -664,6 +663,7 @@ export class SolendActionCore {
     environment: EnvironmentType = "production",
     customObligationAddress?: PublicKey,
     lookupTableAddress?: PublicKey,
+    tipAmount?: number,
     token2022Mint?: string
   ) {
     const axn = await SolendActionCore.initialize(
@@ -678,7 +678,7 @@ export class SolendActionCore {
       undefined,
       undefined,
       lookupTableAddress,
-      undefined,
+      tipAmount,
       undefined,
       token2022Mint
     );
