@@ -118,7 +118,7 @@ Due to transaction size limits of Solana, a user with a high amount of positions
 Partner rewards and liquidity mining are not present on devnet.
 
 ## Publishing
-`package.json` is configured for monorepo development alongside other packages. To publish the sdk, use `yarn release` to run scripts optimizing for release. Package has been marked private to prevent accidently publish with `yarn publish`.
+`package.json` is configured for monorepo development alongside other packages. To publish the sdk, use `yarn release` to run scripts optimizing for release. Package has been marked private to prevent accidentally publish with `yarn publish`.
 
 ```
 yarn login
