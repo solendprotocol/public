@@ -20,8 +20,10 @@ export interface Obligation {
   borrowedValueUpperBound: BN; // decimals
   allowedBorrowValue: BN; // decimals
   unhealthyBorrowValue: BN; // decimals
-  superUnhealthyBorrowValue: BN; // decimals
   borrowingIsolatedAsset: boolean;
+  unweightedBorrowValue: BN; // decimals
+  superUnhealthyBorrowValue: BN; // decimals
+  closeable: boolean;
   pubkey: PublicKey; // add on
 }
 
@@ -79,7 +81,9 @@ export const ObligationLayout: typeof BufferLayout.Structure =
     Layout.uint128("borrowedValueUpperBound"),
     BufferLayout.u8("borrowingIsolatedAsset"),
     Layout.uint128("superUnhealthyBorrowValue"),
-    BufferLayout.blob(31, "_padding"),
+    Layout.uint128("unweightedBorrowValue"),
+    BufferLayout.u8("closeable"),
+    BufferLayout.blob(14, "_padding"),
 
     BufferLayout.u8("depositsLen"),
     BufferLayout.u8("borrowsLen"),
@@ -118,6 +122,10 @@ export interface ProtoObligation {
   allowedBorrowValue: BN; // decimals
   unhealthyBorrowValue: BN; // decimals
   borrowedValueUpperBound: BN; // decimals
+  borrowingIsolatedAsset: boolean;
+  unweightedBorrowValue: BN; // decimals
+  superUnhealthyBorrowValue: BN; // decimals
+  closeable: boolean;
   depositsLen: number;
   borrowsLen: number;
   dataFlat: Buffer;
@@ -143,6 +151,10 @@ export const parseObligation = (
     allowedBorrowValue,
     unhealthyBorrowValue,
     borrowedValueUpperBound,
+    borrowingIsolatedAsset,
+    unweightedBorrowValue,
+    superUnhealthyBorrowValue,
+    closeable,
     depositsLen,
     borrowsLen,
     dataFlat,
@@ -181,6 +193,10 @@ export const parseObligation = (
     allowedBorrowValue,
     unhealthyBorrowValue,
     borrowedValueUpperBound,
+    borrowingIsolatedAsset,
+    unweightedBorrowValue,
+    superUnhealthyBorrowValue,
+    closeable,
     deposits,
     borrows,
     pubkey,

@@ -1,7 +1,7 @@
-import { Cluster } from "@solana/web3.js";
+import { Cluster, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
-import { formatReserve } from "./utils/pools";
-import { formatObligation } from "./utils";
+import { ReserveType } from "./utils";
+import BN from "bn.js";
 
 export type PoolMetadataCoreType = {
   name: string | null;
@@ -21,7 +21,7 @@ export type EnvironmentType = Cluster | "production" | "beta";
 export type TokenMetadata = {
   [mintAddress: string]: {
     symbol: string;
-    logoUri: string | null;
+    logoUri: string | undefined;
     decimals: number;
   };
 };
@@ -34,15 +34,6 @@ export type PoolType = {
   reserves: Array<ReserveType>;
 };
 
-export type ReserveType = Omit<
-  Awaited<ReturnType<typeof formatReserve>>,
-  "symbol"
-> & {
-  symbol: string | undefined;
-};
-
-export type ObligationType = Awaited<ReturnType<typeof formatObligation>>;
-
 export type WalletAssetType = {
   amount: BigNumber;
   mintAddress: string;
@@ -53,3 +44,33 @@ export type WalletAssetType = {
 };
 
 export type WalletType = Array<WalletAssetType>;
+
+export type InputReserveConfigParams = {
+  optimalUtilizationRate: number;
+  maxUtilizationRate: number;
+  loanToValueRatio: number;
+  liquidationBonus: number;
+  liquidationThreshold: number;
+  minBorrowRate: number;
+  optimalBorrowRate: number;
+  maxBorrowRate: number;
+  superMaxBorrowRate: BN;
+  fees: {
+    borrowFeeWad: BN;
+    flashLoanFeeWad: BN;
+    hostFeePercentage: number;
+  };
+  depositLimit: BN;
+  borrowLimit: BN;
+  feeReceiver: PublicKey;
+  protocolLiquidationFee: number;
+  protocolTakeRate: number;
+  addedBorrowWeightBPS: BN;
+  reserveType: number;
+  maxLiquidationBonus: number;
+  maxLiquidationThreshold: number;
+  scaledPriceOffsetBPS: BN;
+  extraOracle?: PublicKey;
+  attributedBorrowLimitOpen: BN;
+  attributedBorrowLimitClose: BN;
+}

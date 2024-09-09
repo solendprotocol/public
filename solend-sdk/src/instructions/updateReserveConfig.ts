@@ -1,8 +1,8 @@
 import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { RateLimiterConfig } from "../state/rateLimiter";
-import { ReserveConfig } from "../state/reserve";
 import * as Layout from "../layout";
 import { LendingInstruction } from "./instruction";
+import { NULL_ORACLE, InputReserveConfigParams } from "../core";
 
 const BufferLayout = require("buffer-layout");
 
@@ -22,10 +22,9 @@ export const updateReserveConfig = (
   lendingMarket: PublicKey,
   lendingMarketAuthority: PublicKey,
   lendingMarketOwner: PublicKey,
-  pythProduct: PublicKey,
   pythPrice: PublicKey,
   switchboardOracle: PublicKey,
-  reserveConfig: ReserveConfig,
+  reserveConfig: InputReserveConfigParams,
   rateLimiterConfig: RateLimiterConfig,
   solendProgramAddress: PublicKey
 ): TransactionInstruction => {
@@ -107,7 +106,7 @@ export const updateReserveConfig = (
     { pubkey: lendingMarket, isSigner: false, isWritable: false },
     { pubkey: lendingMarketAuthority, isSigner: false, isWritable: false },
     { pubkey: lendingMarketOwner, isSigner: true, isWritable: false },
-    { pubkey: pythProduct, isSigner: false, isWritable: false },
+    { pubkey: NULL_ORACLE, isSigner: false, isWritable: false },
     { pubkey: pythPrice, isSigner: false, isWritable: false },
     { pubkey: switchboardOracle, isSigner: false, isWritable: false },
   ];

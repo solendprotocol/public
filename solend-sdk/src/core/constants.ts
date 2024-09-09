@@ -1,6 +1,5 @@
 import { Cluster, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
-import { ObligationType } from "./types";
 export const WAD = "1".concat(Array(18 + 1).join("0"));
 export const POSITION_LIMIT = 6;
 export const SOL_PADDING_FOR_INTEREST = "1000000";
@@ -46,28 +45,3 @@ export function getProgramId(environment?: Cluster | "beta" | "production") {
 }
 
 export const BigZero = new BigNumber(0);
-
-export const EmptyObligation: ObligationType = {
-  address: "empty",
-  positions: 0,
-  deposits: [],
-  borrows: [],
-  poolAddress: "",
-  totalSupplyValue: BigZero,
-  totalBorrowValue: BigZero,
-  borrowLimit: BigZero,
-  liquidationThreshold: BigZero,
-  netAccountValue: BigZero,
-  liquidationThresholdFactor: BigZero,
-  borrowLimitFactor: BigZero,
-  borrowUtilization: BigZero,
-  weightedConservativeBorrowUtilization: BigZero,
-  weightedBorrowUtilization: BigZero,
-  isBorrowLimitReached: false,
-  borrowOverSupply: BigZero,
-  weightedTotalBorrowValue: BigZero,
-  minPriceUserTotalSupply: BigZero,
-  minPriceBorrowLimit: BigZero,
-  maxPriceUserTotalWeightedBorrow: BigZero,
-  netApy: BigZero,
-};

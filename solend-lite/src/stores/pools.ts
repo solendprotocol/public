@@ -26,12 +26,12 @@ import { atomWithRefresh } from './shared';
 
 export type ReserveWithMetadataType = ReserveType & {
   symbol: string;
-  logo: string | null;
+  logo: string | undefined;
 };
 
 export type SelectedReserveType = ReserveType & {
   symbol: string;
-  logo: string | null;
+  logo: string | undefined;
 };
 
 export type SelectedPoolType = {

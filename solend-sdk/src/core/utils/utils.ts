@@ -8,7 +8,7 @@ export const OUTFLOW_BUFFER = 0.985;
 
 export const parseRateLimiter = (
   rateLimiter: RateLimiter,
-  currentSlot: number
+  currentSlot?: number
 ) => {
   const convertedRateLimiter = {
     config: {
@@ -27,7 +27,9 @@ export const parseRateLimiter = (
   };
   return {
     ...convertedRateLimiter,
-    remainingOutflow: remainingOutflow(currentSlot, convertedRateLimiter),
+    remainingOutflow: currentSlot
+      ? remainingOutflow(currentSlot, convertedRateLimiter)
+      : null,
   };
 };
 

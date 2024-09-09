@@ -3,7 +3,7 @@ import BigNumber from "bignumber.js";
 import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
 import { fetchPrices } from "./prices";
 import { calculateBorrowInterest, calculateSupplyInterest } from "./rates";
-import { PoolType, ReserveType } from "../types";
+import { PoolType } from "../types";
 import { parseReserve, Reserve } from "../../state";
 import { parseRateLimiter } from "./utils";
 
@@ -49,18 +49,22 @@ export async function fetchPools(
   return pools;
 }
 
+export type ReserveType = ReturnType<typeof formatReserve>;
+
 export function formatReserve(
   reserve: {
     pubkey: PublicKey;
     info: Reserve;
   },
-  price:
-    | {
-        spotPrice: number;
-        emaPrice: number;
-      }
-    | undefined,
-  currentSlot: number
+  price?: {
+    spotPrice: number;
+    emaPrice: number;
+  },
+  currentSlot?: number,
+  metadata?: {
+    symbol: string;
+    logo: string;
+  }
 ) {
   const decimals = reserve.info.liquidity.mintDecimals;
   const availableAmount = new BigNumber(
@@ -147,7 +151,8 @@ export function formatReserve(
     address,
     mintAddress: reserve.info.liquidity.mintPubkey.toBase58(),
     decimals,
-    symbol: undefined,
+    symbol: metadata?.symbol,
+    logo: metadata?.logo,
     price: priceResolved,
     poolAddress: reserve.info.lendingMarket.toBase58(),
     pythOracle: reserve.info.liquidity.pythOracle.toBase58(),

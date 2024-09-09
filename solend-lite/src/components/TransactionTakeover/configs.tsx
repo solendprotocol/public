@@ -14,6 +14,7 @@ import { getAssociatedTokenAddress, NATIVE_MINT } from '@solana/spl-token';
 import { ENVIRONMENT, HOST_ATA } from 'common/config';
 import { sendAndConfirmStrategy } from 'components/TransactionTakeover/util';
 import { WalletContextState } from '@solana/wallet-adapter-react';
+import { Wallet } from '@coral-xyz/anchor';
 
 const SOL_PADDING_FOR_RENT_AND_FEE = 0.02;
 
@@ -28,7 +29,7 @@ export function sufficientSOLForTransaction(wallet: WalletType) {
 export const supplyConfigs = {
   action: async (
     value: string,
-    publicKey: string,
+    wallet: Wallet,
     pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
@@ -45,8 +46,10 @@ export const supplyConfigs = {
       selectedReserve,
       connection,
       value,
-      new PublicKey(publicKey),
-      ENVIRONMENT,
+      wallet,
+      {
+        environment: ENVIRONMENT,
+      }
     );
 
     return sendAndConfirmStrategy(
@@ -158,7 +161,7 @@ export const supplyConfigs = {
 export const borrowConfigs = {
   action: async (
     value: string,
-    publicKey: string,
+    wallet: Wallet,
     pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
@@ -191,10 +194,11 @@ export const borrowConfigs = {
       selectedReserve,
       connection,
       value,
-      new PublicKey(publicKey),
-      ENVIRONMENT,
-      undefined,
-      hostAta,
+      wallet,
+      {
+        environment: ENVIRONMENT,
+        hostAta,
+      }
     );
 
     return sendAndConfirmStrategy(
@@ -359,7 +363,7 @@ export const borrowConfigs = {
 export const withdrawConfigs = {
   action: async (
     value: string,
-    publicKey: string,
+    wallet: Wallet,
     pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
@@ -376,8 +380,10 @@ export const withdrawConfigs = {
       selectedReserve,
       connection,
       value,
-      new PublicKey(publicKey),
-      ENVIRONMENT,
+      wallet,
+      {
+        environment: ENVIRONMENT,
+      }
     );
 
     return sendAndConfirmStrategy(
@@ -552,7 +558,7 @@ export const withdrawConfigs = {
 export const repayConfigs = {
   action: async (
     value: string,
-    publicKey: string,
+    wallet: Wallet,
     pool: PoolType,
     selectedReserve: SelectedReserveType,
     connection: Connection,
@@ -569,8 +575,10 @@ export const repayConfigs = {
       selectedReserve,
       connection,
       value,
-      new PublicKey(publicKey),
-      ENVIRONMENT,
+      wallet,
+      {
+        environment: ENVIRONMENT,
+      },
     );
 
     return sendAndConfirmStrategy(

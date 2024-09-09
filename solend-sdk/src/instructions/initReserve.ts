@@ -6,14 +6,14 @@ import {
 } from "@solana/web3.js";
 import BN from "bn.js";
 import * as Layout from "../layout";
-import { ReserveConfig } from "../state";
 import { LendingInstruction } from "./instruction";
+import { InputReserveConfigParams, NULL_ORACLE } from "../core";
 
 const BufferLayout = require("buffer-layout");
 
 export const initReserveInstruction = (
   liquidityAmount: number | BN,
-  config: ReserveConfig,
+  config: InputReserveConfigParams,
   sourceLiquidity: PublicKey,
   destinationCollateral: PublicKey,
   reserve: PublicKey,
@@ -22,7 +22,6 @@ export const initReserveInstruction = (
   liquidityFeeReceiver: PublicKey,
   collateralMint: PublicKey,
   collateralSupply: PublicKey,
-  pythProduct: PublicKey,
   pythPrice: PublicKey,
   switchboardFeed: PublicKey,
   lendingMarket: PublicKey,
@@ -72,7 +71,7 @@ export const initReserveInstruction = (
       instruction: LendingInstruction.InitReserve,
       liquidityAmount: new BN(liquidityAmount),
       optimalUtilizationRate: config.optimalUtilizationRate,
-      maxUtilizationRate: config.maxUtilizationRate,
+    maxUtilizationRate: config.maxUtilizationRate,
       loanToValueRatio: config.loanToValueRatio,
       liquidationBonus: config.liquidationBonus,
       liquidationThreshold: config.liquidationThreshold,
@@ -110,7 +109,8 @@ export const initReserveInstruction = (
     { pubkey: liquidityFeeReceiver, isSigner: false, isWritable: true },
     { pubkey: collateralMint, isSigner: false, isWritable: true },
     { pubkey: collateralSupply, isSigner: false, isWritable: true },
-    { pubkey: pythProduct, isSigner: false, isWritable: false },
+    // Doesn't matter what we pass in as long as it's not null
+    { pubkey: pythPrice, isSigner: false, isWritable: false },
     { pubkey: pythPrice, isSigner: false, isWritable: false },
     { pubkey: switchboardFeed, isSigner: false, isWritable: false },
     { pubkey: lendingMarket, isSigner: false, isWritable: true },

@@ -24,27 +24,21 @@ function AccountMetrics(): ReactElement {
         <Metric
           label='Net value'
           value={
-            obligation
-              ? formatUsd(obligation.netAccountValue.toString())
-              : '-'
+            obligation ? formatUsd(obligation.netAccountValue.toString()) : '-'
           }
           tooltip='The value of your account calculated as (supply balance - borrow balance).'
         />
         <Metric
           label='Supply balance'
           value={
-            obligation
-              ? formatUsd(obligation.totalSupplyValue.toString())
-              : '-'
+            obligation ? formatUsd(obligation.totalSupplyValue.toString()) : '-'
           }
           tooltip='Supply balance is the sum of all assets supplied. Increasing this value increases your borrow limit and liquidation threshold.'
         />
         <Metric
           label='Borrow balance'
           value={
-            obligation
-              ? formatUsd(obligation.totalBorrowValue.toString())
-              : '-'
+            obligation ? formatUsd(obligation.totalBorrowValue.toString()) : '-'
           }
           tooltip='Borrow balance is the sum of all assets borrowed.'
         />

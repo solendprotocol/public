@@ -28,13 +28,15 @@ import Result, { ResultConfigType } from 'components/Result/Result';
 import BigNumber from 'bignumber.js';
 import { connectionAtom, refreshPageAtom } from 'stores/settings';
 import { rateLimiterAtom, selectedPoolAtom } from 'stores/pools';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useAnchorWallet, useWallet } from '@solana/wallet-adapter-react';
 import { U64_MAX } from '@solendprotocol/solend-sdk';
 import { SKIP_PREFLIGHT } from 'common/config';
 import { selectedModalTabAtom, selectedReserveAtom } from 'stores/modal';
+import { Wallet } from '@coral-xyz/anchor';
 
 export default function TransactionTakeover() {
   const { sendTransaction, signAllTransactions } = useWallet();
+  const anchorWallet = useAnchorWallet();
   const [publicKey] = useAtom(publicKeyAtom);
   const [connection] = useAtom(connectionAtom);
   const [rateLimiter] = useAtom(rateLimiterAtom);
@@ -143,7 +145,7 @@ export default function TransactionTakeover() {
                   new BigNumber(value)
                     .shiftedBy(selectedReserve.decimals)
                     .toFixed(0),
-                  publicKey,
+                  anchorWallet as Wallet,
                   selectedPool,
                   selectedReserve,
                   connection,
@@ -185,7 +187,7 @@ export default function TransactionTakeover() {
                     : new BigNumber(value)
                         .shiftedBy(selectedReserve.decimals)
                         .toFixed(0),
-                  publicKey,
+                  anchorWallet as Wallet,
                   selectedPool,
                   selectedReserve,
                   connection,
@@ -229,7 +231,7 @@ export default function TransactionTakeover() {
                     : new BigNumber(value)
                         .shiftedBy(selectedReserve.decimals)
                         .toFixed(0),
-                  publicKey,
+                  anchorWallet as Wallet,
                   selectedPool,
                   selectedReserve,
                   connection,
@@ -273,7 +275,7 @@ export default function TransactionTakeover() {
                     : new BigNumber(value)
                         .shiftedBy(selectedReserve.decimals)
                         .toFixed(0),
-                  publicKey,
+                  anchorWallet as Wallet,
                   selectedPool,
                   selectedReserve,
                   connection,

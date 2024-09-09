@@ -411,10 +411,12 @@ export class Margin {
         this.connection,
         depositCollateralConfig.amount,
         this.wallet,
-        "production",
-        this.obligationAddress,
-        this.obligationSeed,
-        lookupTableAccount?.key
+        {
+          environment: "production",
+          customObligationAddress: this.obligationAddress,
+          customObligationSeed: this.obligationSeed,
+          lookupTableAddress: lookupTableAccount?.key
+        }
       );
       const { preLendingTxn, lendingTxn } =
         await solendAction.getLegacyTransactions();

@@ -1,12 +1,12 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import { Obligation, OBLIGATION_SIZE, parseObligation } from "../../state";
-import { ReserveType } from "../types";
 import { sha256 as sha256$1 } from "js-sha256";
 import { getBatchMultipleAccountsInfo } from "./utils";
 import { U64_MAX } from "../constants";
+import { ReserveType } from "./pools";
 
-export type FormattedObligation = ReturnType<typeof formatObligation>;
+export type ObligationType = ReturnType<typeof formatObligation>;
 
 export function formatObligation(
   obligation: { pubkey: PublicKey; info: Obligation },
@@ -39,6 +39,7 @@ export function formatObligation(
 
     return {
       liquidationThreshold: reserve.liquidationThreshold,
+      maxLiquidationThreshold: reserve.maxLiquidationThreshold,
       loanToValueRatio: reserve.loanToValueRatio,
       symbol: reserve.symbol,
       price: reserve.price,
@@ -112,6 +113,10 @@ export function formatObligation(
     (acc, d) => d.amountUsd.times(d.liquidationThreshold).plus(acc),
     BigNumber(0)
   );
+  const superUnhealthyBorrowValue = deposits.reduce(
+    (acc, d) => d.amountUsd.times(d.maxLiquidationThreshold).plus(acc),
+    BigNumber(0)
+  );
   const netAccountValue = totalSupplyValue.minus(totalBorrowValue);
   const liquidationThresholdFactor = totalSupplyValue.isZero()
     ? new BigNumber(0)
@@ -154,6 +159,8 @@ export function formatObligation(
     .div(netAccountValue.toString());
   return {
     address: obligation.pubkey.toBase58(),
+    owner: obligation.info.owner.toBase58(),
+    closeable: obligation.info.closeable,
     positions,
     deposits,
     borrows,
@@ -164,6 +171,7 @@ export function formatObligation(
     liquidationThreshold,
     netAccountValue,
     liquidationThresholdFactor,
+    superUnhealthyBorrowValue,
     borrowLimitFactor,
     borrowUtilization,
     weightedConservativeBorrowUtilization,

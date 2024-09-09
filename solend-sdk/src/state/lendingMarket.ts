@@ -18,6 +18,8 @@ export interface LendingMarket {
   riskAuthority: PublicKey;
 }
 
+export type ParsedLendingMarket = ReturnType<typeof parseLendingMarket>;
+
 export const LendingMarketLayout: typeof BufferLayout.Structure =
   BufferLayout.struct([
     BufferLayout.u8("version"),

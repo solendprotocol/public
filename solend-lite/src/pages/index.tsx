@@ -25,10 +25,7 @@ export default function Index() {
           property='og:title'
           content='Solend | Lend and borrow on Solana'
         />
-        <meta
-          property='og:image'
-          content='https://solend-image-assets.s3.us-east-2.amazonaws.com/og.jpg'
-        />
+        <meta property='og:image' content='/og_image.png' />
         <meta name='twitter:card' content='summary' />
         <meta name='twitter:site' content='@solendprotocol' />
         <meta name='viewport' content='width=device-width, initial-scale=1' />
