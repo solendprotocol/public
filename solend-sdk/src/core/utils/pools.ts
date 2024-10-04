@@ -166,7 +166,7 @@ export function formatReserve(
     address,
     mintAddress: reserve.info.liquidity.mintPubkey.toBase58(),
     decimals,
-    symbol: metadata?.symbol,
+    symbol: metadata?.symbol ?? reserve.info.liquidity.mintPubkey.toBase58(),
     logo: metadata?.logo,
     price: priceResolved,
     poolAddress: reserve.info.lendingMarket.toBase58(),
