@@ -16,7 +16,7 @@ export type PoolMetadataCoreType = {
   }>;
 };
 
-export type EnvironmentType = Cluster | "production" | "beta";
+export type EnvironmentType = Cluster | "production" | "beta" | "eclipse";
 
 export type TokenMetadata = {
   [mintAddress: string]: {

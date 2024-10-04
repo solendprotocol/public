@@ -49,7 +49,7 @@ import {
   liquidateObligationAndRedeemReserveCollateral,
 } from "../instructions";
 import { NULL_ORACLE, POSITION_LIMIT } from "./constants";
-import { EnvironmentType, PoolType } from "./types";
+import { EnvironmentType } from "./types";
 import { getProgramId, U64_MAX, WAD } from "./constants";
 import { PriceServiceConnection } from "@pythnetwork/price-service-client";
 import { AnchorProvider, Program } from "@coral-xyz/anchor-30";
@@ -65,6 +65,7 @@ import {
   createWithdrawAndBurnWrapperTokensInstruction,
 } from "@solendprotocol/token2022-wrapper-sdk";
 import { ReserveType } from "./utils";
+import { getSizeOfTransaction } from "../transaction";
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
 
@@ -143,6 +144,14 @@ export type ActionType =
   | "forgive"
   | "liquidate";
 
+type InputPoolType = {
+  address: string;
+  owner: string;
+  name: string | null;
+  authorityAddress: string;
+  reserves: Array<ReserveType>;
+};
+
 export class SolendActionCore {
   programId: PublicKey;
 
@@ -150,7 +159,7 @@ export class SolendActionCore {
 
   reserve: ReserveType;
 
-  pool: PoolType;
+  pool: InputPoolType;
 
   publicKey: PublicKey;
 
@@ -207,12 +216,14 @@ export class SolendActionCore {
   token2022Mint?: PublicKey;
 
   wrappedAta?: PublicKey;
+  
+  environment: EnvironmentType;
 
   private constructor(
     programId: PublicKey,
     connection: Connection,
     reserve: ReserveType,
-    pool: PoolType,
+    pool: InputPoolType,
     wallet: Wallet,
     obligationAddress: PublicKey,
     obligationAccountInfo: Obligation | null,
@@ -224,6 +235,7 @@ export class SolendActionCore {
     depositReserves: Array<PublicKey>,
     borrowReserves: Array<PublicKey>,
     config?: {
+      environment?: EnvironmentType,
       hostAta?: PublicKey,
       lookupTableAccount?: AddressLookupTableAccount,
       tipAmount?: number,
@@ -269,10 +281,11 @@ export class SolendActionCore {
     this.wrappedAta = config?.wrappedAta;
     // temporarily default to true
     this.debug = config?.debug ?? true;
+    this.environment = config?.environment ?? 'production';
   }
 
   static async initialize(
-    pool: PoolType,
+    pool: InputPoolType,
     reserve: ReserveType,
     action: ActionType,
     amount: BN,
@@ -342,7 +355,6 @@ export class SolendActionCore {
       wallet.publicKey,
       true
     );
-
     const lookupTableAccount = config.lookupTableAddress
       ? (await connection.getAddressLookupTable(config.lookupTableAddress)).value
       : undefined;
@@ -380,6 +392,7 @@ export class SolendActionCore {
       borrowReserves,
 
 {
+  environment: config.environment,
   hostAta: config.hostAta,
   lookupTableAccount: lookupTableAccount ?? undefined,
   tipAmount: config.tipAmount,
@@ -416,7 +429,7 @@ export class SolendActionCore {
   }
 
   static async buildForgiveTxns(
-    pool: PoolType,
+    pool: InputPoolType,
     reserve: ReserveType,
     connection: Connection,
     amount: string,
@@ -444,7 +457,7 @@ export class SolendActionCore {
   }
 
   static async buildDepositTxns(
-    pool: PoolType,
+    pool: InputPoolType,
     reserve: ReserveType,
     connection: Connection,
     amount: string,
@@ -468,7 +481,7 @@ export class SolendActionCore {
   }
 
   static async buildBorrowTxns(
-    pool: PoolType,
+    pool: InputPoolType,
     reserve: ReserveType,
     connection: Connection,
     amount: string,
@@ -491,7 +504,7 @@ export class SolendActionCore {
     return axn;
   }
   static async buildDepositReserveLiquidityTxns(
-    pool: PoolType,
+    pool: InputPoolType,
     reserve: ReserveType,
     connection: Connection,
     amount: string,
@@ -513,7 +526,7 @@ export class SolendActionCore {
   }
 
   static async buildRedeemReserveCollateralTxns(
-    pool: PoolType,
+    pool: InputPoolType,
     reserve: ReserveType,
     connection: Connection,
     amount: string,
@@ -535,7 +548,7 @@ export class SolendActionCore {
   }
 
   static async buildDepositObligationCollateralTxns(
-    pool: PoolType,
+    pool: InputPoolType,
     reserve: ReserveType,
     connection: Connection,
     amount: string,
@@ -557,7 +570,7 @@ export class SolendActionCore {
   }
 
   static async buildWithdrawCollateralTxns(
-    pool: PoolType,
+    pool: InputPoolType,
     reserve: ReserveType,
     connection: Connection,
     amount: string,
@@ -581,7 +594,7 @@ export class SolendActionCore {
   }
 
   static async buildWithdrawTxns(
-    pool: PoolType,
+    pool: InputPoolType,
     reserve: ReserveType,
     connection: Connection,
     amount: string,
@@ -605,7 +618,7 @@ export class SolendActionCore {
   }
 
   static async buildRepayTxns(
-    pool: PoolType,
+    pool: InputPoolType,
     reserve: ReserveType,
     connection: Connection,
     amount: string,
@@ -629,8 +642,7 @@ export class SolendActionCore {
   }
 
   static async buildLiquidateTxns(
-    pool: PoolType,
-    repayReserve: ReserveType,
+    pool: InputPoolType,
     withdrawReserve: ReserveType,
     connection: Connection,
     amount: string,
@@ -648,7 +660,8 @@ export class SolendActionCore {
     );
 
     await axn.addSupportIxs("liquidate");
-    await axn.addLiquidateIx(repayReserve);
+    if (!config.repayReserve) throw new Error("Repay reserve is required");
+    await axn.addLiquidateIx(config.repayReserve);
 
     return axn;
   }
@@ -1154,6 +1167,92 @@ export class SolendActionCore {
       oracleKeys.map((o) => new PublicKey(o)),
       "processed"
     );
+
+    const provider = new AnchorProvider(this.connection, this.wallet, {});
+    const idl = (await Program.fetchIdl(ON_DEMAND_MAINNET_PID, provider))!;
+
+    if (this.environment === "production" || this.environment === "beta") {
+      const sbod = new Program(idl, provider);
+
+      const sbPulledOracles = oracleKeys.filter(
+        (_o, index) =>
+          oracleAccounts[index]?.owner.toBase58() === sbod.programId.toBase58()
+      );
+
+      if (sbPulledOracles.length) {
+        const feedAccounts = await Promise.all(
+          sbPulledOracles.map((oracleKey) => new PullFeed(sbod as any, oracleKey))
+        );
+        if (this.debug) console.log("Feed accounts", sbPulledOracles);
+        const loadedFeedAccounts = await Promise.all(
+          feedAccounts.map((acc) => acc.loadData())
+        );
+
+        const numSignatures = Math.max(
+          ...loadedFeedAccounts.map(
+            (f) => f.minSampleSize + Math.ceil(f.minSampleSize / 3)
+          ),
+          1
+        );
+
+        const crossbar = new CrossbarClient("https://crossbar.switchboard.xyz/");
+
+        const res = sbPulledOracles.reduce((acc, _curr, i) => {
+          if (!(i % 3)) {
+            // if index is 0 or can be divided by the `size`...
+            acc.push(sbPulledOracles.slice(i, i + 3)); // ..push a chunk of the original array to the accumulator
+          }
+          return acc;
+        }, [] as string[][]);
+
+          await Promise.all(
+            res.map(async (oracleGroup) => {
+              const [ix, accountLookups] = await PullFeed.fetchUpdateManyIx(sbod, {
+                feeds: oracleGroup.map((p) => new PublicKey(p)),
+                numSignatures,
+                crossbarClient: crossbar,
+              })
+            
+        const lookupTables = (await loadLookupTables(feedAccounts)).concat(
+          accountLookups
+        );
+
+        const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: 1_000_000,
+        });
+        const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1_000_000,
+        });
+
+        const instructions = [priorityFeeIx, modifyComputeUnits, ix];
+
+        if (this.debug) console.log('adding tip ix to pullPriceTxns for sbod');
+        instructions.push(this.getTipIx());
+
+        // Get the latest context
+        const {
+          value: { blockhash },
+        } = await this.connection.getLatestBlockhashAndContext();
+
+        // Get Transaction Message
+        const message = new TransactionMessage({
+          payerKey: this.publicKey,
+          recentBlockhash: blockhash,
+          instructions,
+        }).compileToV0Message(lookupTables);
+
+        // Get Versioned Transaction
+        const vtx = new VersionedTransaction(message);
+
+        if (this.debug) console.log('adding sbod ix to pullPriceTxns');
+        this.pullPriceTxns.push(vtx);
+            }
+              
+            ),
+          )
+      }
+    }
+
     const priceServiceConnection = new PriceServiceConnection(
       "https://hermes.pyth.network"
     );
@@ -1165,73 +1264,6 @@ export class SolendActionCore {
       closeUpdateAccounts: true,
     });
 
-    const provider = new AnchorProvider(this.connection, this.wallet, {});
-    const idl = (await Program.fetchIdl(ON_DEMAND_MAINNET_PID, provider))!;
-    const sbod = new Program(idl, provider);
-
-    const sbPulledOracles = oracleKeys.filter(
-      (_o, index) =>
-        oracleAccounts[index]?.owner.toBase58() === sbod.programId.toBase58()
-    );
-
-    if (sbPulledOracles.length) {
-      const feedAccounts = await Promise.all(
-        sbPulledOracles.map((oracleKey) => new PullFeed(sbod as any, oracleKey))
-      );
-      if (this.debug) console.log("Feed accounts", sbPulledOracles);
-      const loadedFeedAccounts = await Promise.all(
-        feedAccounts.map((acc) => acc.loadData())
-      );
-
-      const numSignatures = Math.max(
-        ...loadedFeedAccounts.map(
-          (f) => f.minSampleSize + Math.ceil(f.minSampleSize / 3)
-        ),
-        1
-      );
-
-      const crossbar = new CrossbarClient("https://crossbar.switchboard.xyz/");
-
-      const [ix, accountLookups] = await PullFeed.fetchUpdateManyIx(sbod, {
-        feeds: sbPulledOracles.map((p) => new PublicKey(p)),
-        numSignatures,
-        crossbarClient: crossbar,
-      });
-
-      const lookupTables = (await loadLookupTables(feedAccounts)).concat(
-        accountLookups
-      );
-
-      const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: 1_000_000,
-      });
-      const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1_000_000,
-      });
-
-      const instructions = [priorityFeeIx, modifyComputeUnits, ix];
-
-      if (this.debug) console.log('adding tip ix to pullPriceTxns for sbod');
-      instructions.push(this.getTipIx());
-
-      // Get the latest context
-      const {
-        value: { blockhash },
-      } = await this.connection.getLatestBlockhashAndContext();
-
-      // Get Transaction Message
-      const message = new TransactionMessage({
-        payerKey: this.publicKey,
-        recentBlockhash: blockhash,
-        instructions,
-      }).compileToV0Message(lookupTables);
-
-      // Get Versioned Transaction
-      const vtx = new VersionedTransaction(message);
-
-      if (this.debug) console.log('adding sbod ix to pullPriceTxns');
-      this.pullPriceTxns.push(vtx);
-    }
     const pythPulledOracles = oracleAccounts.filter(
       (o) =>
         o?.owner.toBase58() === pythSolanaReceiver.receiver.programId.toBase58()
@@ -1283,7 +1315,7 @@ export class SolendActionCore {
       const transactionsWithSigners =
         await transactionBuilder.buildVersionedTransactions({
           tightComputeBudget: true,
-          jitoTipLamports: sbPulledOracles.length
+          jitoTipLamports: this.pullPriceTxns.length
             ? undefined
             : this.jitoTipAmount,
         });
@@ -1334,7 +1366,7 @@ export class SolendActionCore {
       if (!reserveInfo) {
         throw new Error(`Could not find asset ${reserveAddress} in reserves`);
       }
-
+      if (this.debug) console.log(`adding refresh ${reserveAddress} ix to setup txn`);
       const refreshReserveIx = refreshReserveInstruction(
         new PublicKey(reserveAddress),
         this.programId,
@@ -1355,6 +1387,7 @@ export class SolendActionCore {
       this.borrowReserves,
       this.programId
     );
+    if (this.debug) console.log('adding refresh obligation ix to setup txn');
     this.setupIxs.push(refreshObligationIx);
   }
 

@@ -21,6 +21,7 @@ export interface Reserve {
   pubkey: PublicKey;
 }
 
+export type RawReserveType = ReturnType<typeof parseReserve>;
 export interface ReserveLiquidity {
   mintPubkey: PublicKey;
   mintDecimals: number;
@@ -239,10 +240,6 @@ export const parseReserve = (
   const { data } = info;
   const buffer = Buffer.from(data);
   const reserve = decodeReserve(buffer, pubkey);
-
-  if (reserve.lastUpdate.slot.isZero()) {
-    return null;
-  }
 
   const details = {
     pubkey,

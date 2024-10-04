@@ -4,7 +4,7 @@ import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
 import { fetchPrices } from "./prices";
 import { calculateBorrowInterest, calculateSupplyInterest } from "./rates";
 import { PoolType } from "../types";
-import { parseReserve, Reserve } from "../../state";
+import { parseReserve, Reserve, RawReserveType } from "../../state";
 import { parseRateLimiter } from "./utils";
 
 export async function fetchPools(
@@ -52,18 +52,22 @@ export async function fetchPools(
 export type ReserveType = ReturnType<typeof formatReserve>;
 
 export function formatReserve(
-  reserve: {
-    pubkey: PublicKey;
-    info: Reserve;
-  },
-  price?: {
+  reserve: RawReserveType,
+  priceData?: {
     spotPrice: number;
     emaPrice: number;
+    lstAdjustmentRatio?: BigNumber;
+    priceSource?: string;
   },
   currentSlot?: number,
   metadata?: {
     symbol: string;
     logo: string;
+    name?: string;
+  },
+  config?: {
+    showApy: boolean,
+    avgSlotTime: number,
   }
 ) {
   const decimals = reserve.info.liquidity.mintDecimals;
@@ -80,8 +84,8 @@ export function formatReserve(
     .plus(availableAmount)
     .minus(accumulatedProtocolFees);
   const address = reserve.pubkey.toBase58();
-  const priceResolved = price
-    ? BigNumber(price.spotPrice)
+  const priceResolved = priceData
+    ? BigNumber(priceData.spotPrice)
     : new BigNumber(reserve.info.liquidity.marketPrice.toString()).shiftedBy(
         -18
       );
@@ -95,12 +99,29 @@ export function formatReserve(
     reserve.info.liquidity.cumulativeBorrowRateWads.toString()
   ).shiftedBy(-18);
 
+  const lstPatch = priceData?.lstAdjustmentRatio
+    ? {
+        loanToValueRatio: Number(
+          new BigNumber(reserve.info.config.loanToValueRatio)
+            .div(priceData.lstAdjustmentRatio)
+            .toString(),
+        ) / 100,
+        liquidationThreshold: Number(
+          new BigNumber(reserve.info.config.liquidationThreshold)
+            .div(priceData.lstAdjustmentRatio)
+            .toString(),
+        ) / 100,
+      }
+    : {};
+
   return {
     disabled:
       reserve.info.config.depositLimit.toString() === "0" &&
       reserve.info.config.borrowLimit.toString() === "0",
     cumulativeBorrowRate,
     cTokenExchangeRate,
+    name: metadata?.name,
+    accumulatedProtocolFees,
     reserveUtilization: totalBorrow.dividedBy(totalSupply),
     cTokenMint: reserve.info.collateral.mintPubkey.toBase58(),
     feeReceiverAddress: reserve.info.config.feeReceiver?.toBase58(),
@@ -116,23 +137,17 @@ export function formatReserve(
     flashLoanFee: new BigNumber(
       reserve.info.config.fees.flashLoanFeeWad.toString()
     ).shiftedBy(-18),
-    protocolLiquidationFee: reserve.info.config.protocolLiquidationFee / 100,
+    protocolLiquidationFee: reserve.info.config.protocolLiquidationFee / 1000,
     hostFee: reserve.info.config.fees.hostFeePercentage / 100,
     interestRateSpread: reserve.info.config.protocolTakeRate / 100,
-    reserveSupplyCap: new BigNumber(
-      reserve.info.config.depositLimit.toString()
-    ).shiftedBy(-decimals),
-    reserveBorrowCap: new BigNumber(
-      reserve.info.config.borrowLimit.toString()
-    ).shiftedBy(-decimals),
     targetBorrowApr: reserve.info.config.optimalBorrowRate / 100,
     targetUtilization: reserve.info.config.optimalUtilizationRate / 100,
     maxUtilizationRate: reserve.info.config.maxUtilizationRate / 100,
     minBorrowApr: reserve.info.config.minBorrowRate / 100,
     maxBorrowApr: reserve.info.config.maxBorrowRate / 100,
     superMaxBorrowRate: reserve.info.config.superMaxBorrowRate.toNumber() / 100,
-    supplyInterest: calculateSupplyInterest(reserve.info, false),
-    borrowInterest: calculateBorrowInterest(reserve.info, false),
+    supplyInterest: calculateSupplyInterest(reserve.info, Boolean(config?.showApy)).times((0.5 / (config?.avgSlotTime ?? 0.5))),
+    borrowInterest: calculateBorrowInterest(reserve.info, Boolean(config?.showApy)).times((0.5 / (config?.avgSlotTime ?? 0.5))),
     totalSupply,
     totalBorrow,
     availableAmount,
@@ -159,15 +174,16 @@ export function formatReserve(
     switchboardOracle: reserve.info.liquidity.switchboardOracle.toBase58(),
     addedBorrowWeightBPS: reserve.info.config.addedBorrowWeightBPS,
     borrowWeight: reserve.info.config.borrowWeight,
-    emaPrice: price?.emaPrice,
+    priceData,
+    emaPrice: priceData?.emaPrice,
     minPrice:
-      price?.emaPrice && price?.spotPrice
-        ? BigNumber.min(price.emaPrice, price.spotPrice)
-        : new BigNumber(price?.spotPrice ?? priceResolved),
+      priceData?.emaPrice && priceData?.spotPrice
+        ? BigNumber.min(priceData.emaPrice, priceData.spotPrice)
+        : new BigNumber(priceData?.spotPrice ?? priceResolved),
     maxPrice:
-      price?.emaPrice && price?.spotPrice
-        ? BigNumber.max(price.emaPrice, price.spotPrice)
-        : new BigNumber(price?.spotPrice ?? priceResolved),
+      priceData?.emaPrice && priceData?.spotPrice
+        ? BigNumber.max(priceData.emaPrice, priceData.spotPrice)
+        : new BigNumber(priceData?.spotPrice ?? priceResolved),
     reserveType: reserve.info.config.reserveType,
     scaledPriceOffsetBPS: reserve.info.config.scaledPriceOffsetBPS,
     extraOracle: reserve.info.config.extraOracle?.toBase58(),
@@ -177,6 +193,7 @@ export function formatReserve(
     attributedBorrowValue: reserve.info.config.attributedBorrowValue,
     attributedBorrowLimitOpen: reserve.info.config.attributedBorrowLimitOpen,
     attributedBorrowLimitClose: reserve.info.config.attributedBorrowLimitClose,
+    ...lstPatch
   };
 }
 
@@ -210,7 +227,7 @@ export const getReservesOfPool = async (
     .map((reserve, index) =>
       reserve ? parseReserve(rawReserves[index].pubkey, reserve.account) : null
     )
-    .filter(Boolean) as Array<{ info: Reserve; pubkey: PublicKey }>;
+    .filter(Boolean) as Array<RawReserveType>;
 
   const prices = await fetchPrices(parsedReserves, connection, sb, debug);
 
@@ -243,7 +260,7 @@ export const getReservesFromChain = async (
     .map((reserve, index) =>
       reserve ? parseReserve(rawReserves[index].pubkey, reserve.account) : null
     )
-    .filter(Boolean) as Array<{ info: Reserve; pubkey: PublicKey }>;
+    .filter(Boolean) as Array<RawReserveType>;
 
   const prices = await fetchPrices(
     parsedReserves,

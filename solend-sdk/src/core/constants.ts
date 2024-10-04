@@ -1,5 +1,6 @@
 import { Cluster, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
+import { EnvironmentType } from "./types";
 export const WAD = "1".concat(Array(18 + 1).join("0"));
 export const POSITION_LIMIT = 6;
 export const SOL_PADDING_FOR_INTEREST = "1000000";
@@ -27,10 +28,11 @@ export const SOLEND_BETA_PROGRAM_ID = new PublicKey(
   "BLendhFh4HGnycEDDFhbeFEUYLP4fXB5tTHMoTX8Dch5"
 );
 
-export function getProgramId(environment?: Cluster | "beta" | "production") {
+export function getProgramId(environment?: EnvironmentType) {
   switch (environment) {
     case "mainnet-beta":
     case "production":
+    case "eclipse":
       return SOLEND_PRODUCTION_PROGRAM_ID;
       break;
     case "devnet":

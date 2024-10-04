@@ -160,10 +160,6 @@ export const parseObligation = (
     dataFlat,
   } = ObligationLayout.decode(buffer) as ProtoObligation;
 
-  if (lastUpdate.slot.isZero()) {
-    return null;
-  }
-
   const depositsBuffer = dataFlat.slice(
     0,
     depositsLen * ObligationCollateralLayout.span

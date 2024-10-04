@@ -71,7 +71,7 @@ export const initReserveInstruction = (
       instruction: LendingInstruction.InitReserve,
       liquidityAmount: new BN(liquidityAmount),
       optimalUtilizationRate: config.optimalUtilizationRate,
-    maxUtilizationRate: config.maxUtilizationRate,
+      maxUtilizationRate: config.maxUtilizationRate,
       loanToValueRatio: config.loanToValueRatio,
       liquidationBonus: config.liquidationBonus,
       liquidationThreshold: config.liquidationThreshold,

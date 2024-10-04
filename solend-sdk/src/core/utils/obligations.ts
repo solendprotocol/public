@@ -10,7 +10,7 @@ export type ObligationType = ReturnType<typeof formatObligation>;
 
 export function formatObligation(
   obligation: { pubkey: PublicKey; info: Obligation },
-  pool: { reserves: Array<ReserveType> }
+  reserveMap: {[key: string]: ReserveType}
 ) {
   const poolAddress = obligation.info.lendingMarket.toBase58();
   let minPriceUserTotalSupply = new BigNumber(0);
@@ -19,7 +19,7 @@ export function formatObligation(
 
   const deposits = obligation.info.deposits.map((d) => {
     const reserveAddress = d.depositReserve.toBase58();
-    const reserve = pool.reserves.find((r) => r.address === reserveAddress);
+    const reserve = reserveMap[reserveAddress];
 
     if (!reserve)
       throw Error("Deposit in obligation does not exist in the pool");
@@ -53,7 +53,7 @@ export function formatObligation(
 
   const borrows = obligation.info.borrows.map((b) => {
     const reserveAddress = b.borrowReserve.toBase58();
-    const reserve = pool.reserves.find((r) => r.address === reserveAddress);
+    const reserve = reserveMap[reserveAddress];
     if (!reserve)
       throw Error("Borrow in obligation does not exist in the pool");
 

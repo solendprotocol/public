@@ -213,7 +213,7 @@ export class Margin {
     if (
       this.shortReserve.addedBorrowWeightBPS.toString() === U64_MAX ||
       new BigNumber(this.shortReserve.totalBorrow).isGreaterThanOrEqualTo(
-        new BigNumber(this.shortReserve.reserveBorrowCap)
+        new BigNumber(this.shortReserve.reserveBorrowLimit)
       )
     ) {
       // convert to base and round up to match calculation logic in margin.tsx
