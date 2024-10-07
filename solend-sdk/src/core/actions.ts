@@ -1207,12 +1207,16 @@ export class SolendActionCore {
 
           await Promise.all(
             res.map(async (oracleGroup) => {
-              const [ix, accountLookups] = await PullFeed.fetchUpdateManyIx(sbod, {
+              const [ix, accountLookups, responses] = await PullFeed.fetchUpdateManyIx(sbod, {
                 feeds: oracleGroup.map((p) => new PublicKey(p)),
                 numSignatures,
                 crossbarClient: crossbar,
               })
             
+        if (responses.errors.length) {
+          console.error(responses.errors);
+        }
+
         const lookupTables = (await loadLookupTables(feedAccounts)).concat(
           accountLookups
         );
