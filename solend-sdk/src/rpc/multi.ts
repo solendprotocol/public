@@ -21,11 +21,15 @@ import {
   RpcResponseAndContext,
   SendOptions,
   SignatureResult,
+  SignaturesForAddressOptions,
+  SignatureStatus,
+  SignatureStatusConfig,
   SimulatedTransactionResponse,
   SimulateTransactionConfig,
   TokenAmount,
   TransactionResponse,
   TransactionSignature,
+  VersionedMessage,
   VersionedTransaction,
   VersionedTransactionResponse,
 } from "@solana/web3.js";
@@ -234,6 +238,78 @@ export class MultiConnection implements SolendRPCConnection {
         delayed(
           index === 0 ? 0 : this.delay,
           c.confirmTransaction(strategy, commitment)
+        )
+      )
+    );
+  }
+
+  getSignatureStatus(
+    signature: TransactionSignature,
+    config?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<SignatureStatus | null>> {
+    return Promise.race(
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getSignatureStatus(signature, config)
+        )
+      )
+    );
+  }
+
+  getSignatureStatuses(
+    signatures: Array<TransactionSignature>,
+    config?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<Array<SignatureStatus | null>>> {
+    return Promise.race(
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getSignatureStatuses(signatures, config)
+        )
+      )
+    );
+  }
+
+  getSignaturesForAddress(
+    address: PublicKey,
+    options?: SignaturesForAddressOptions,
+    commitment?: Finality
+  ): Promise<Array<ConfirmedSignatureInfo>> {
+    return Promise.race(
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getSignaturesForAddress(address, options, commitment)
+        )
+      )
+    );
+  }
+
+  getBlocks(
+    startSlot: number,
+    endSlot?: number,
+    commitment?: Finality
+  ): Promise<Array<number>> {
+    return Promise.race(
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getBlocks(startSlot, endSlot, commitment)
+        )
+      )
+    );
+  }
+
+  getFeeForMessage(
+    message: VersionedMessage,
+    commitment?: Commitment
+  ): Promise<RpcResponseAndContext<number | null>> {
+    return Promise.race(
+      this.connections.map((c, index) =>
+        delayed(
+          index === 0 ? 0 : this.delay,
+          c.getFeeForMessage(message, commitment)
         )
       )
     );

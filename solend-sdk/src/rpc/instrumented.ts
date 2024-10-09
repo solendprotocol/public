@@ -21,11 +21,15 @@ import {
   RpcResponseAndContext,
   SendOptions,
   SignatureResult,
+  SignaturesForAddressOptions,
+  SignatureStatus,
+  SignatureStatusConfig,
   SimulatedTransactionResponse,
   SimulateTransactionConfig,
   TokenAmount,
   TransactionResponse,
   TransactionSignature,
+  VersionedMessage,
   VersionedTransaction,
   VersionedTransactionResponse,
 } from "@solana/web3.js";
@@ -193,6 +197,58 @@ export class InstrumentedConnection implements SolendRPCConnection {
     return this.withStats(
       this.connection.confirmTransaction(strategy, commitment),
       "confirmTransaction"
+    );
+  }
+
+  async getSignatureStatus(
+    signature: TransactionSignature,
+    config?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<SignatureStatus | null>> {
+    return this.withStats(
+      this.connection.getSignatureStatus(signature, config),
+      "getSignatureStatus"
+    );
+  }
+
+  async getSignatureStatuses(
+    signatures: Array<TransactionSignature>,
+    config?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<Array<SignatureStatus | null>>> {
+    return this.withStats(
+      this.connection.getSignatureStatuses(signatures, config),
+      "getSignatureStatuses"
+    );
+  }
+
+  async getSignaturesForAddress(
+    address: PublicKey,
+    options?: SignaturesForAddressOptions,
+    commitment?: Finality
+  ): Promise<Array<ConfirmedSignatureInfo>> {
+    return this.withStats(
+      this.connection.getSignaturesForAddress(address, options, commitment),
+      "getSignaturesForAddress"
+    );
+  }
+
+  async getBlocks(
+    startSlot: number,
+    endSlot?: number,
+    commitment?: Finality
+  ): Promise<Array<number>> {
+    return this.withStats(
+      this.connection.getBlocks(startSlot, endSlot, commitment),
+      "getBlocks"
+    );
+  }
+
+  async getFeeForMessage(
+    message: VersionedMessage,
+    commitment?: Commitment
+  ): Promise<RpcResponseAndContext<number | null>> {
+    return this.withStats(
+      this.connection.getFeeForMessage(message, commitment),
+      "getFeeForMessage"
     );
   }
 

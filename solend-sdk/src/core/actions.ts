@@ -70,17 +70,17 @@ import { getSizeOfTransaction } from "../transaction";
 const SOL_PADDING_FOR_INTEREST = "1000000";
 
 type ActionConfigType = {
-  environment?: EnvironmentType,
-  customObligationAddress?: PublicKey,
-  hostAta?: PublicKey,
-  customObligationSeed?: string,
-  lookupTableAddress?: PublicKey,
-  tipAmount?: number,
-  repayReserve?: ReserveType,
-  token2022Mint?: string,
-  repayToken2022Mint?: string
-  debug?: boolean
-}
+  environment?: EnvironmentType;
+  customObligationAddress?: PublicKey;
+  hostAta?: PublicKey;
+  customObligationSeed?: string;
+  lookupTableAddress?: PublicKey;
+  tipAmount?: number;
+  repayReserve?: ReserveType;
+  token2022Mint?: string;
+  repayToken2022Mint?: string;
+  debug?: boolean;
+};
 
 type SupportType =
   | "wrap"
@@ -216,7 +216,7 @@ export class SolendActionCore {
   token2022Mint?: PublicKey;
 
   wrappedAta?: PublicKey;
-  
+
   environment: EnvironmentType;
 
   private constructor(
@@ -235,10 +235,10 @@ export class SolendActionCore {
     depositReserves: Array<PublicKey>,
     borrowReserves: Array<PublicKey>,
     config?: {
-      environment?: EnvironmentType,
-      hostAta?: PublicKey,
-      lookupTableAccount?: AddressLookupTableAccount,
-      tipAmount?: number,
+      environment?: EnvironmentType;
+      hostAta?: PublicKey;
+      lookupTableAccount?: AddressLookupTableAccount;
+      tipAmount?: number;
       repayInfo?: {
         userRepayTokenAccountAddress: PublicKey;
         userRepayCollateralAccountAddress: PublicKey;
@@ -246,9 +246,9 @@ export class SolendActionCore {
         repayWrappedAta?: PublicKey;
         repayMint: PublicKey;
         reserveAddress: PublicKey;
-      },
-      token2022Mint?: PublicKey,
-      wrappedAta?: PublicKey,
+      };
+      token2022Mint?: PublicKey;
+      wrappedAta?: PublicKey;
       debug?: boolean;
     }
   ) {
@@ -281,7 +281,7 @@ export class SolendActionCore {
     this.wrappedAta = config?.wrappedAta;
     // temporarily default to true
     this.debug = config?.debug ?? true;
-    this.environment = config?.environment ?? 'production';
+    this.environment = config?.environment ?? "production";
   }
 
   static async initialize(
@@ -294,7 +294,7 @@ export class SolendActionCore {
     config: ActionConfigType
   ) {
     const seed = config.customObligationSeed ?? pool.address.slice(0, 32);
-    const programId = getProgramId(config.environment ?? 'production');
+    const programId = getProgramId(config.environment ?? "production");
 
     const obligationAddress =
       config.customObligationAddress ??
@@ -356,7 +356,8 @@ export class SolendActionCore {
       true
     );
     const lookupTableAccount = config.lookupTableAddress
-      ? (await connection.getAddressLookupTable(config.lookupTableAddress)).value
+      ? (await connection.getAddressLookupTable(config.lookupTableAddress))
+          .value
       : undefined;
 
     const userRepayTokenAccountAddress = config.repayReserve
@@ -391,41 +392,44 @@ export class SolendActionCore {
       depositReserves,
       borrowReserves,
 
-{
-  environment: config.environment,
-  hostAta: config.hostAta,
-  lookupTableAccount: lookupTableAccount ?? undefined,
-  tipAmount: config.tipAmount,
-  repayInfo: config.repayReserve
-    ? {
-        userRepayTokenAccountAddress: userRepayTokenAccountAddress!,
-        userRepayCollateralAccountAddress:
-          userRepayCollateralAccountAddress!,
-        repayToken2022Mint: config.repayToken2022Mint
-          ? new PublicKey(config.repayToken2022Mint)
+      {
+        environment: config.environment,
+        hostAta: config.hostAta,
+        lookupTableAccount: lookupTableAccount ?? undefined,
+        tipAmount: config.tipAmount,
+        repayInfo: config.repayReserve
+          ? {
+              userRepayTokenAccountAddress: userRepayTokenAccountAddress!,
+              userRepayCollateralAccountAddress:
+                userRepayCollateralAccountAddress!,
+              repayToken2022Mint: config.repayToken2022Mint
+                ? new PublicKey(config.repayToken2022Mint)
+                : undefined,
+              repayWrappedAta: config.repayToken2022Mint
+                ? getAssociatedTokenAddressSync(
+                    new PublicKey(config.repayToken2022Mint),
+                    wallet.publicKey,
+                    true,
+                    TOKEN_2022_PROGRAM_ID
+                  )
+                : undefined,
+              repayMint: new PublicKey(config.repayReserve.mintAddress),
+              reserveAddress: new PublicKey(config.repayReserve.address),
+            }
           : undefined,
-        repayWrappedAta: config.repayToken2022Mint
+        token2022Mint: config.token2022Mint
+          ? new PublicKey(config.token2022Mint)
+          : undefined,
+        wrappedAta: config.token2022Mint
           ? getAssociatedTokenAddressSync(
-              new PublicKey(config.repayToken2022Mint),
+              new PublicKey(config.token2022Mint),
               wallet.publicKey,
               true,
               TOKEN_2022_PROGRAM_ID
             )
           : undefined,
-        repayMint: new PublicKey(config.repayReserve.mintAddress),
-        reserveAddress: new PublicKey(config.repayReserve.address),
       }
-    : undefined,
-    token2022Mint: config.token2022Mint ? new PublicKey(config.token2022Mint) : undefined,
-  wrappedAta: config.token2022Mint
-      ? getAssociatedTokenAddressSync(
-          new PublicKey(config.token2022Mint),
-          wallet.publicKey,
-          true,
-          TOKEN_2022_PROGRAM_ID
-        )
-      : undefined
-  })
+    );
   }
 
   static async buildForgiveTxns(
@@ -446,7 +450,7 @@ export class SolendActionCore {
       connection,
       {
         ...config,
-        customObligationAddress: obligationAddress
+        customObligationAddress: obligationAddress,
       }
     );
 
@@ -772,7 +776,7 @@ export class SolendActionCore {
 
     const tip = this.getTipIx();
     if (tip && this.pullPriceTxns.length >= 5) {
-      if (this.debug) console.log('adding tip ix to lending txn');
+      if (this.debug) console.log("adding tip ix to lending txn");
       instructions.push(tip);
     }
 
@@ -811,7 +815,7 @@ export class SolendActionCore {
   }
 
   addForgiveIx() {
-    if (this.debug) console.log('adding forgive ix to lending txn');
+    if (this.debug) console.log("adding forgive ix to lending txn");
     this.lendingIxs.push(
       forgiveDebtInstruction(
         this.obligationAddress,
@@ -825,7 +829,7 @@ export class SolendActionCore {
   }
 
   addDepositIx() {
-    if (this.debug) console.log('adding deposit ix to lending txn');
+    if (this.debug) console.log("adding deposit ix to lending txn");
     this.lendingIxs.push(
       this.amount.toString() === U64_MAX
         ? depositMaxReserveLiquidityAndObligationCollateralInstruction(
@@ -865,7 +869,7 @@ export class SolendActionCore {
   }
 
   addDepositReserveLiquidityIx() {
-    if (this.debug) console.log('adding mint ix to lending txn');
+    if (this.debug) console.log("adding mint ix to lending txn");
     this.lendingIxs.push(
       depositReserveLiquidityInstruction(
         this.amount,
@@ -883,7 +887,7 @@ export class SolendActionCore {
   }
 
   addRedeemReserveCollateralIx() {
-    if (this.debug) console.log('adding redeem ix to lending txn');
+    if (this.debug) console.log("adding redeem ix to lending txn");
     this.lendingIxs.push(
       redeemReserveCollateralInstruction(
         this.amount,
@@ -901,7 +905,7 @@ export class SolendActionCore {
   }
 
   async addWithdrawObligationCollateralIx() {
-    if (this.debug) console.log('adding withdrawCollateral ix to lending txn');
+    if (this.debug) console.log("adding withdrawCollateral ix to lending txn");
     this.lendingIxs.push(
       withdrawObligationCollateralInstruction(
         this.amount,
@@ -919,7 +923,7 @@ export class SolendActionCore {
   }
 
   addDepositObligationCollateralIx() {
-    if (this.debug) console.log('adding depositCollateral ix to lending txn');
+    if (this.debug) console.log("adding depositCollateral ix to lending txn");
     this.lendingIxs.push(
       depositObligationCollateralInstruction(
         this.amount,
@@ -936,7 +940,7 @@ export class SolendActionCore {
   }
 
   addBorrowIx() {
-    if (this.debug) console.log('adding borrow ix to lending txn');
+    if (this.debug) console.log("adding borrow ix to lending txn");
     this.lendingIxs.push(
       borrowObligationLiquidityInstruction(
         this.amount,
@@ -956,7 +960,7 @@ export class SolendActionCore {
   }
 
   async addWithdrawIx() {
-    if (this.debug) console.log('adding withdraw ix to lending txn');
+    if (this.debug) console.log("adding withdraw ix to lending txn");
     this.lendingIxs.push(
       this.amount.eq(new BN(U64_MAX))
         ? withdrawObligationCollateralAndRedeemReserveLiquidity(
@@ -995,7 +999,7 @@ export class SolendActionCore {
   }
 
   async addRepayIx() {
-    if (this.debug) console.log('adding repay ix to lending txn');
+    if (this.debug) console.log("adding repay ix to lending txn");
     this.lendingIxs.push(
       this.amount.toString() === U64_MAX
         ? repayMaxObligationLiquidityInstruction(
@@ -1021,7 +1025,7 @@ export class SolendActionCore {
   }
 
   async addLiquidateIx(repayReserve: ReserveType) {
-    if (this.debug) console.log('adding liquidate ix to lending txn');
+    if (this.debug) console.log("adding liquidate ix to lending txn");
     if (
       !this.repayInfo?.userRepayCollateralAccountAddress ||
       !this.repayInfo?.userRepayTokenAccountAddress
@@ -1095,7 +1099,7 @@ export class SolendActionCore {
   private async addWrapIx() {
     if (!this.wrappedAta || !this.token2022Mint)
       throw new Error("Wrapped ATA not initialized");
-  if (this.debug) console.log('adding wrap ix to preTxnIxs');
+    if (this.debug) console.log("adding wrap ix to preTxnIxs");
     this.preTxnIxs.push(
       createAssociatedTokenAccountIdempotentInstruction(
         this.publicKey,
@@ -1118,7 +1122,7 @@ export class SolendActionCore {
   private async addUnwrapIx() {
     if (!this.wrappedAta || !this.token2022Mint)
       throw new Error("Wrapped ATA not initialized");
-    if (this.debug) console.log('adding wrap ix to preTxnIxs');
+    if (this.debug) console.log("adding wrap ix to preTxnIxs");
     this.preTxnIxs.push(
       createAssociatedTokenAccountIdempotentInstruction(
         this.publicKey,
@@ -1129,7 +1133,7 @@ export class SolendActionCore {
       )
     );
 
-    if (this.debug) console.log('adding wrap ix to postTxnIxs');
+    if (this.debug) console.log("adding wrap ix to postTxnIxs");
     this.postTxnIxs.push(
       await createWithdrawAndBurnWrapperTokensInstruction(
         this.publicKey,
@@ -1181,7 +1185,9 @@ export class SolendActionCore {
 
       if (sbPulledOracles.length) {
         const feedAccounts = await Promise.all(
-          sbPulledOracles.map((oracleKey) => new PullFeed(sbod as any, oracleKey))
+          sbPulledOracles.map(
+            (oracleKey) => new PullFeed(sbod as any, oracleKey)
+          )
         );
         if (this.debug) console.log("Feed accounts", sbPulledOracles);
         const loadedFeedAccounts = await Promise.all(
@@ -1195,7 +1201,9 @@ export class SolendActionCore {
           1
         );
 
-        const crossbar = new CrossbarClient("https://crossbar.switchboard.xyz/");
+        const crossbar = new CrossbarClient(
+          "https://crossbar.switchboard.xyz/"
+        );
 
         const res = sbPulledOracles.reduce((acc, _curr, i) => {
           if (!(i % 3)) {
@@ -1205,55 +1213,57 @@ export class SolendActionCore {
           return acc;
         }, [] as string[][]);
 
-          await Promise.all(
-            res.map(async (oracleGroup) => {
-              const [ix, accountLookups, responses] = await PullFeed.fetchUpdateManyIx(sbod, {
+        await Promise.all(
+          res.map(async (oracleGroup) => {
+            const [ix, accountLookups, responses] =
+              await PullFeed.fetchUpdateManyIx(sbod, {
                 feeds: oracleGroup.map((p) => new PublicKey(p)),
                 numSignatures,
                 crossbarClient: crossbar,
-              })
-            
-        if (responses.errors.length) {
-          console.error(responses.errors);
-        }
+              });
 
-        const lookupTables = (await loadLookupTables(feedAccounts)).concat(
-          accountLookups
-        );
-
-        const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports: 1_000_000,
-        });
-        const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_000_000,
-        });
-
-        const instructions = [priorityFeeIx, modifyComputeUnits, ix];
-
-        if (this.debug) console.log('adding tip ix to pullPriceTxns for sbod');
-        instructions.push(this.getTipIx());
-
-        // Get the latest context
-        const {
-          value: { blockhash },
-        } = await this.connection.getLatestBlockhashAndContext();
-
-        // Get Transaction Message
-        const message = new TransactionMessage({
-          payerKey: this.publicKey,
-          recentBlockhash: blockhash,
-          instructions,
-        }).compileToV0Message(lookupTables);
-
-        // Get Versioned Transaction
-        const vtx = new VersionedTransaction(message);
-
-        if (this.debug) console.log('adding sbod ix to pullPriceTxns');
-        this.pullPriceTxns.push(vtx);
+            if (responses.errors.length) {
+              console.error(responses.errors);
             }
-              
-            ),
-          )
+
+            const lookupTables = (await loadLookupTables(feedAccounts)).concat(
+              accountLookups
+            );
+
+            const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+              microLamports: 1_000_000,
+            });
+            const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit(
+              {
+                units: 1_000_000,
+              }
+            );
+
+            const instructions = [priorityFeeIx, modifyComputeUnits, ix];
+
+            if (this.debug)
+              console.log("adding tip ix to pullPriceTxns for sbod");
+            instructions.push(this.getTipIx());
+
+            // Get the latest context
+            const {
+              value: { blockhash },
+            } = await this.connection.getLatestBlockhashAndContext();
+
+            // Get Transaction Message
+            const message = new TransactionMessage({
+              payerKey: this.publicKey,
+              recentBlockhash: blockhash,
+              instructions,
+            }).compileToV0Message(lookupTables);
+
+            // Get Versioned Transaction
+            const vtx = new VersionedTransaction(message);
+
+            if (this.debug) console.log("adding sbod ix to pullPriceTxns");
+            this.pullPriceTxns.push(vtx);
+          })
+        );
       }
     }
 
@@ -1332,7 +1342,9 @@ export class SolendActionCore {
         }
         this.pullPriceTxns.push(tx);
       }
-      console.log(`adding ${transactionsWithSigners.length} txns to pullPriceTxns`);
+      console.log(
+        `adding ${transactionsWithSigners.length} txns to pullPriceTxns`
+      );
     }
   }
 
@@ -1370,7 +1382,8 @@ export class SolendActionCore {
       if (!reserveInfo) {
         throw new Error(`Could not find asset ${reserveAddress} in reserves`);
       }
-      if (this.debug) console.log(`adding refresh ${reserveAddress} ix to setup txn`);
+      if (this.debug)
+        console.log(`adding refresh ${reserveAddress} ix to setup txn`);
       const refreshReserveIx = refreshReserveInstruction(
         new PublicKey(reserveAddress),
         this.programId,
@@ -1391,19 +1404,20 @@ export class SolendActionCore {
       this.borrowReserves,
       this.programId
     );
-    if (this.debug) console.log('adding refresh obligation ix to setup txn');
+    if (this.debug) console.log("adding refresh obligation ix to setup txn");
     this.setupIxs.push(refreshObligationIx);
   }
 
   private async addObligationIxs() {
-    if (this.debug) console.log('addObligationIxs');
+    if (this.debug) console.log("addObligationIxs");
     if (!this.obligationAccountInfo) {
       const obligationAccountInfoRentExempt =
         await this.connection.getMinimumBalanceForRentExemption(
           OBLIGATION_SIZE
         );
 
-      if (this.debug) console.log('adding createAccount and initObligation ix to setup txn');
+      if (this.debug)
+        console.log("adding createAccount and initObligation ix to setup txn");
       this.setupIxs.push(
         SystemProgram.createAccountWithSeed({
           fromPubkey: this.publicKey,
@@ -1444,10 +1458,10 @@ export class SolendActionCore {
           this.hostAta &&
           !this.lookupTableAccount
         ) {
-          if (this.debug) console.log('adding createAta ix to pre txn');
+          if (this.debug) console.log("adding createAta ix to pre txn");
           this.preTxnIxs.push(createUserTokenAccountIx);
         } else {
-          if (this.debug) console.log('adding createAta ix to setup txn');
+          if (this.debug) console.log("adding createAta ix to setup txn");
           this.setupIxs.push(createUserTokenAccountIx);
         }
       }
@@ -1473,10 +1487,10 @@ export class SolendActionCore {
         this.hostAta &&
         !this.lookupTableAccount
       ) {
-        if (this.debug) console.log('adding createCAta ix to pre txn');
+        if (this.debug) console.log("adding createCAta ix to pre txn");
         this.preTxnIxs.push(createUserCollateralAccountIx);
       } else {
-        if (this.debug) console.log('adding createCAta ix to setup txn');
+        if (this.debug) console.log("adding createCAta ix to setup txn");
         this.setupIxs.push(createUserCollateralAccountIx);
       }
     }
@@ -1573,7 +1587,7 @@ export class SolendActionCore {
         (userWSOLAccountInfo ? 0 : rentExempt) +
         (sendAction ? parseInt(safeRepay.toString(), 10) : 0),
     });
-    if (this.debug) console.log('adding transferLamports ix');
+    if (this.debug) console.log("adding transferLamports ix");
     preIxs.push(transferLamportsIx);
 
     const closeWSOLAccountIx = createCloseAccountInstruction(
@@ -1586,10 +1600,10 @@ export class SolendActionCore {
     if (userWSOLAccountInfo) {
       const syncIx = syncNative(solAccountAddress);
       if (sendAction) {
-        if (this.debug) console.log('adding syncIx ix');
+        if (this.debug) console.log("adding syncIx ix");
         preIxs.push(syncIx);
       } else {
-        if (this.debug) console.log('adding closeWSOLAccountIx ix');
+        if (this.debug) console.log("adding closeWSOLAccountIx ix");
         postIxs.push(closeWSOLAccountIx);
       }
     } else {
@@ -1599,9 +1613,9 @@ export class SolendActionCore {
         this.publicKey,
         NATIVE_MINT
       );
-      if (this.debug) console.log('adding createUserWSOLAccountIx ix');
+      if (this.debug) console.log("adding createUserWSOLAccountIx ix");
       preIxs.push(createUserWSOLAccountIx);
-      if (this.debug) console.log('adding closeWSOLAccountIx ix');
+      if (this.debug) console.log("adding closeWSOLAccountIx ix");
       postIxs.push(closeWSOLAccountIx);
     }
 
@@ -1610,11 +1624,11 @@ export class SolendActionCore {
       this.hostAta &&
       !this.lookupTableAccount
     ) {
-      if (this.debug) console.log('adding above ixs to pre and post txn');
+      if (this.debug) console.log("adding above ixs to pre and post txn");
       this.preTxnIxs.push(...preIxs);
       this.postTxnIxs.push(...postIxs);
     } else {
-      if (this.debug) console.log('adding above ixs to lending txn');
+      if (this.debug) console.log("adding above ixs to lending txn");
       this.setupIxs.push(...preIxs);
       this.cleanupIxs.push(...postIxs);
     }

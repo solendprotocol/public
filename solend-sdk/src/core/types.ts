@@ -73,4 +73,4 @@ export type InputReserveConfigParams = {
   extraOracle?: PublicKey;
   attributedBorrowLimitOpen: BN;
   attributedBorrowLimitClose: BN;
-}
+};

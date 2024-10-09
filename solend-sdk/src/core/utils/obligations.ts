@@ -10,7 +10,7 @@ export type ObligationType = ReturnType<typeof formatObligation>;
 
 export function formatObligation(
   obligation: { pubkey: PublicKey; info: Obligation },
-  reserveMap: {[key: string]: ReserveType}
+  reserveMap: { [key: string]: ReserveType }
 ) {
   const poolAddress = obligation.info.lendingMarket.toBase58();
   let minPriceUserTotalSupply = new BigNumber(0);

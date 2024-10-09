@@ -66,8 +66,8 @@ export function formatReserve(
     name?: string;
   },
   config?: {
-    showApy: boolean,
-    avgSlotTime: number,
+    showApy: boolean;
+    avgSlotTime: number;
   }
 ) {
   const decimals = reserve.info.liquidity.mintDecimals;
@@ -101,16 +101,18 @@ export function formatReserve(
 
   const lstPatch = priceData?.lstAdjustmentRatio
     ? {
-        loanToValueRatio: Number(
-          new BigNumber(reserve.info.config.loanToValueRatio)
-            .div(priceData.lstAdjustmentRatio)
-            .toString(),
-        ) / 100,
-        liquidationThreshold: Number(
-          new BigNumber(reserve.info.config.liquidationThreshold)
-            .div(priceData.lstAdjustmentRatio)
-            .toString(),
-        ) / 100,
+        loanToValueRatio:
+          Number(
+            new BigNumber(reserve.info.config.loanToValueRatio)
+              .div(priceData.lstAdjustmentRatio)
+              .toString()
+          ) / 100,
+        liquidationThreshold:
+          Number(
+            new BigNumber(reserve.info.config.liquidationThreshold)
+              .div(priceData.lstAdjustmentRatio)
+              .toString()
+          ) / 100,
       }
     : {};
 
@@ -146,8 +148,14 @@ export function formatReserve(
     minBorrowApr: reserve.info.config.minBorrowRate / 100,
     maxBorrowApr: reserve.info.config.maxBorrowRate / 100,
     superMaxBorrowRate: reserve.info.config.superMaxBorrowRate.toNumber() / 100,
-    supplyInterest: calculateSupplyInterest(reserve.info, Boolean(config?.showApy)).times((0.5 / (config?.avgSlotTime ?? 0.5))),
-    borrowInterest: calculateBorrowInterest(reserve.info, Boolean(config?.showApy)).times((0.5 / (config?.avgSlotTime ?? 0.5))),
+    supplyInterest: calculateSupplyInterest(
+      reserve.info,
+      Boolean(config?.showApy)
+    ).times(0.5 / (config?.avgSlotTime ?? 0.5)),
+    borrowInterest: calculateBorrowInterest(
+      reserve.info,
+      Boolean(config?.showApy)
+    ).times(0.5 / (config?.avgSlotTime ?? 0.5)),
     totalSupply,
     totalBorrow,
     availableAmount,
@@ -193,7 +201,7 @@ export function formatReserve(
     attributedBorrowValue: reserve.info.config.attributedBorrowValue,
     attributedBorrowLimitOpen: reserve.info.config.attributedBorrowLimitOpen,
     attributedBorrowLimitClose: reserve.info.config.attributedBorrowLimitClose,
-    ...lstPatch
+    ...lstPatch,
   };
 }
 

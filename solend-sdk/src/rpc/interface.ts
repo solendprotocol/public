@@ -21,11 +21,15 @@ import {
   RpcResponseAndContext,
   SendOptions,
   SignatureResult,
+  SignaturesForAddressOptions,
+  SignatureStatus,
+  SignatureStatusConfig,
   SimulatedTransactionResponse,
   SimulateTransactionConfig,
   TokenAmount,
   TransactionResponse,
   TransactionSignature,
+  VersionedMessage,
   VersionedTransaction,
   VersionedTransactionResponse,
 } from "@solana/web3.js";
@@ -92,4 +96,26 @@ export interface SolendRPCConnection {
     strategy: BlockheightBasedTransactionConfirmationStrategy,
     commitment?: Commitment
   ): Promise<RpcResponseAndContext<SignatureResult>>;
+  getSignatureStatus(
+    signature: TransactionSignature,
+    config?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<SignatureStatus | null>>;
+  getSignatureStatuses(
+    signatures: Array<TransactionSignature>,
+    config?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<Array<SignatureStatus | null>>>;
+  getSignaturesForAddress(
+    address: PublicKey,
+    options?: SignaturesForAddressOptions,
+    commitment?: Finality
+  ): Promise<Array<ConfirmedSignatureInfo>>;
+  getBlocks(
+    startSlot: number,
+    endSlot?: number,
+    commitment?: Finality
+  ): Promise<Array<number>>;
+  getFeeForMessage(
+    message: VersionedMessage,
+    commitment?: Commitment
+  ): Promise<RpcResponseAndContext<number | null>>;
 }

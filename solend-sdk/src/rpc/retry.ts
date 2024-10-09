@@ -21,11 +21,15 @@ import {
   RpcResponseAndContext,
   SendOptions,
   SignatureResult,
+  SignaturesForAddressOptions,
+  SignatureStatus,
+  SignatureStatusConfig,
   SimulatedTransactionResponse,
   SimulateTransactionConfig,
   TokenAmount,
   TransactionResponse,
   TransactionSignature,
+  VersionedMessage,
   VersionedTransaction,
   VersionedTransactionResponse,
 } from "@solana/web3.js";
@@ -166,6 +170,53 @@ export class RetryConnection implements SolendRPCConnection {
   ): Promise<RpcResponseAndContext<SignatureResult>> {
     return this.withRetries(
       this.connection.confirmTransaction(strategy, commitment)
+    );
+  }
+
+  getSignatureStatus(
+    signature: TransactionSignature,
+    config?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<SignatureStatus | null>> {
+    return this.withRetries(
+      this.connection.getSignatureStatus(signature, config)
+    );
+  }
+
+  getSignatureStatuses(
+    signatures: Array<TransactionSignature>,
+    config?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<Array<SignatureStatus | null>>> {
+    return this.withRetries(
+      this.connection.getSignatureStatuses(signatures, config)
+    );
+  }
+
+  getSignaturesForAddress(
+    address: PublicKey,
+    options?: SignaturesForAddressOptions,
+    commitment?: Finality
+  ): Promise<Array<ConfirmedSignatureInfo>> {
+    return this.withRetries(
+      this.connection.getSignaturesForAddress(address, options, commitment)
+    );
+  }
+
+  getBlocks(
+    startSlot: number,
+    endSlot?: number,
+    commitment?: Finality
+  ): Promise<Array<number>> {
+    return this.withRetries(
+      this.connection.getBlocks(startSlot, endSlot, commitment)
+    );
+  }
+
+  getFeeForMessage(
+    message: VersionedMessage,
+    commitment?: Commitment
+  ): Promise<RpcResponseAndContext<number | null>> {
+    return this.withRetries(
+      this.connection.getFeeForMessage(message, commitment)
     );
   }
 

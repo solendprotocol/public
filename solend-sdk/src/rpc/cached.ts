@@ -21,11 +21,15 @@ import {
   RpcResponseAndContext,
   SendOptions,
   SignatureResult,
+  SignaturesForAddressOptions,
+  SignatureStatus,
+  SignatureStatusConfig,
   SimulatedTransactionResponse,
   SimulateTransactionConfig,
   TokenAmount,
   TransactionResponse,
   TransactionSignature,
+  VersionedMessage,
   VersionedTransaction,
   VersionedTransactionResponse,
 } from "@solana/web3.js";
@@ -297,6 +301,81 @@ export class CachedConnection implements SolendRPCConnection {
       (await this.cache.set(
         key,
         this.connection.confirmTransaction(strategy, commitment)
+      ))
+    );
+  }
+  async getSignatureStatus(
+    signature: TransactionSignature,
+    config?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<SignatureStatus | null>> {
+    const key = `getSignatureStatus_${signature}_${JSON.stringify(config)}`;
+    return (
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
+        key,
+        this.connection.getSignatureStatus(signature, config)
+      ))
+    );
+  }
+
+  async getSignatureStatuses(
+    signatures: Array<TransactionSignature>,
+    config?: SignatureStatusConfig
+  ): Promise<RpcResponseAndContext<Array<SignatureStatus | null>>> {
+    const key = `getSignatureStatuses_${signatures
+      .map((sig) => sig)
+      .join("_")}_${JSON.stringify(config)}`;
+    return (
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
+        key,
+        this.connection.getSignatureStatuses(signatures, config)
+      ))
+    );
+  }
+
+  async getSignaturesForAddress(
+    address: PublicKey,
+    options?: SignaturesForAddressOptions,
+    commitment?: Finality
+  ): Promise<Array<ConfirmedSignatureInfo>> {
+    const key = `getSignaturesForAddress_${address.toBase58()}_${JSON.stringify(
+      options
+    )}_${commitment}`;
+    return (
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
+        key,
+        this.connection.getSignaturesForAddress(address, options, commitment)
+      ))
+    );
+  }
+
+  async getBlocks(
+    startSlot: number,
+    endSlot?: number,
+    commitment?: Finality
+  ): Promise<Array<number>> {
+    const key = `getBlocks_${startSlot}_${endSlot}_${commitment}`;
+    return (
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
+        key,
+        this.connection.getBlocks(startSlot, endSlot, commitment)
+      ))
+    );
+  }
+
+  async getFeeForMessage(
+    message: VersionedMessage,
+    commitment?: Commitment
+  ): Promise<RpcResponseAndContext<number | null>> {
+    const key = `getFeeForMessage_${JSON.stringify(message)}_${commitment}`;
+    return (
+      (await this.cache.get(key)) ||
+      (await this.cache.set(
+        key,
+        this.connection.getFeeForMessage(message, commitment)
       ))
     );
   }

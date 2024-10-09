@@ -415,7 +415,7 @@ export class Margin {
           environment: "production",
           customObligationAddress: this.obligationAddress,
           customObligationSeed: this.obligationSeed,
-          lookupTableAddress: lookupTableAccount?.key
+          lookupTableAddress: lookupTableAccount?.key,
         }
       );
       const { preLendingTxn, lendingTxn } =
