@@ -129,7 +129,7 @@ export function formatObligation(
     : totalBorrowValue.dividedBy(borrowLimit);
   const weightedBorrowUtilization = minPriceBorrowLimit.isZero()
     ? new BigNumber(0)
-    : weightedTotalBorrowValue.dividedBy(borrowLimit);
+    : weightedTotalBorrowValue.dividedBy(minPriceBorrowLimit);
   const isBorrowLimitReached = borrowUtilization.isGreaterThanOrEqualTo(
     new BigNumber("1")
   );

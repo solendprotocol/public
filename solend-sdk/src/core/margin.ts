@@ -139,6 +139,192 @@ export class Margin {
         : [];
   }
 
+  static calculateMaxUserBorrowPower = (
+    shortReserve: ReserveType,
+    longReserve: ReserveType,
+    exchangeRate?: string,
+    closeMode?: "keepLong" | "keepShort",
+    obligation?: ObligationType
+  ) => {
+    const shortTokenPrice = shortReserve.price;
+    const longTokenPrice = longReserve.price;
+    const conversion = exchangeRate
+      ? new BigNumber(exchangeRate)
+      : longTokenPrice.dividedBy(shortTokenPrice);
+
+    let curShortSupplyAmount =
+      obligation?.deposits.find(
+        (d) => d.reserveAddress === shortReserve.address
+      )?.amount ?? new BigNumber(0);
+    let curShortBorrowAmount =
+      obligation?.borrows.find((d) => d.reserveAddress === shortReserve.address)
+        ?.amount ?? new BigNumber(0);
+    let curLongSupplyAmount =
+      obligation?.deposits.find((d) => d.reserveAddress === longReserve.address)
+        ?.amount ?? new BigNumber(0);
+    let curLongBorrowAmount =
+      obligation?.borrows.find((d) => d.reserveAddress === longReserve.address)
+        ?.amount ?? new BigNumber(0);
+
+    if (closeMode) {
+      const shortTokenToRepayAll =
+        closeMode === "keepLong"
+          ? conversion.multipliedBy(curLongBorrowAmount)
+          : curShortSupplyAmount;
+
+      // convert to base and round up to match calculation logic in margin.tsx
+      const flashLoanFeeBase = shortTokenToRepayAll
+        .multipliedBy(shortReserve.flashLoanFee)
+        .multipliedBy(new BigNumber(10 ** shortReserve.decimals))
+        .integerValue(BigNumber.ROUND_CEIL);
+      const flashLoanFee = new BigNumber(
+        flashLoanFeeBase
+          .dividedBy(new BigNumber(10 ** shortReserve.decimals))
+          .toString()
+      );
+
+      let maxPossibleSwap =
+        closeMode === "keepLong"
+          ? shortTokenToRepayAll.plus(flashLoanFee)
+          : shortTokenToRepayAll.minus(flashLoanFee);
+
+      // If user doesn't have enough short token supplied, we re-calculate given their max short token supplied
+      if (
+        curShortSupplyAmount.isLessThan(maxPossibleSwap) &&
+        closeMode === "keepLong"
+      ) {
+        // convert to base and round up to match calculation logic in margin.tsx
+        const flashLoanFeeBase = curShortSupplyAmount
+          .multipliedBy(shortReserve.flashLoanFee)
+          .multipliedBy(new BigNumber(10 ** shortReserve.decimals))
+          .integerValue(BigNumber.ROUND_CEIL);
+        const flashLoanFee = new BigNumber(
+          flashLoanFeeBase
+            .dividedBy(new BigNumber(10 ** shortReserve.decimals))
+            .toString()
+        );
+        maxPossibleSwap = curShortSupplyAmount.minus(flashLoanFee);
+      }
+
+      return maxPossibleSwap.toNumber();
+    }
+
+    // handle the case where short token has non-zero ltv / infitie borrow weight e.g mSOL/stSOL
+    if (
+      shortReserve.addedBorrowWeightBPS.toString() === U64_MAX ||
+      new BigNumber(shortReserve.totalBorrow).isGreaterThanOrEqualTo(
+        new BigNumber(shortReserve.reserveBorrowLimit)
+      )
+    ) {
+      // convert to base and round up to match calculation logic in margin.tsx
+      const flashLoanFeeBase = curShortSupplyAmount
+        .multipliedBy(new BigNumber(shortReserve.flashLoanFee))
+        .multipliedBy(new BigNumber(10 ** shortReserve.decimals))
+        .integerValue(BigNumber.ROUND_CEIL);
+      const flashLoanFee = new BigNumber(
+        flashLoanFeeBase
+          .dividedBy(new BigNumber(10 ** shortReserve.decimals))
+          .toString()
+      );
+      const maxPossibleSwap = curShortSupplyAmount.minus(flashLoanFee);
+
+      return maxPossibleSwap.toNumber();
+    }
+
+    const shortTokenBorrowWeight = new BigNumber(
+      shortReserve.addedBorrowWeightBPS.toString()
+    )
+      .plus(new BigNumber(10000))
+      .dividedBy(new BigNumber(10000));
+    const longTokenBorrowWeight = new BigNumber(
+      longReserve.addedBorrowWeightBPS.toString()
+    )
+      .plus(new BigNumber(10000))
+      .dividedBy(new BigNumber(10000));
+    let totalShortSwapable = new BigNumber(0);
+    let curMinPriceBorrowLimit =
+      obligation?.minPriceBorrowLimit ?? BigNumber(0);
+    let curMaxPriceUserTotalWeightedBorrow =
+      obligation?.maxPriceUserTotalWeightedBorrow ?? BigNumber(0);
+
+    for (let i = 0; i < 20; i += 1) {
+      if (
+        curMaxPriceUserTotalWeightedBorrow.isGreaterThanOrEqualTo(
+          curMinPriceBorrowLimit
+        )
+      ) {
+        break;
+      }
+      let swapable = new BigNumber(0);
+      const marginAvailible = curMinPriceBorrowLimit.minus(
+        curMaxPriceUserTotalWeightedBorrow
+      );
+      if (curShortSupplyAmount > new BigNumber(0)) {
+        // case you still have longs of your short token to sell
+        if (shortReserve.loanToValueRatio.toString() === "0") {
+          swapable = curShortSupplyAmount;
+        } else {
+          swapable = BigNumber.min(
+            marginAvailible
+              .dividedBy(shortTokenPrice)
+              .dividedBy(new BigNumber(shortReserve.loanToValueRatio)),
+            curShortSupplyAmount
+          );
+        }
+
+        curShortSupplyAmount = curShortSupplyAmount.minus(swapable);
+        curMinPriceBorrowLimit = curMinPriceBorrowLimit.minus(
+          swapable
+            .times(shortTokenPrice)
+            .times(new BigNumber(shortReserve.loanToValueRatio))
+        );
+      } else {
+        // you are already short your short token
+        swapable = marginAvailible
+          .dividedBy(shortTokenBorrowWeight)
+          .dividedBy(shortTokenPrice);
+        curShortBorrowAmount = curShortBorrowAmount.plus(swapable);
+
+        curMaxPriceUserTotalWeightedBorrow =
+          curMaxPriceUserTotalWeightedBorrow.plus(
+            swapable.times(shortTokenPrice).times(shortTokenBorrowWeight)
+          );
+      }
+
+      totalShortSwapable = totalShortSwapable.plus(swapable);
+      const longRecievedInSwap = swapable.dividedBy(conversion);
+
+      if (curLongBorrowAmount > longRecievedInSwap) {
+        curLongBorrowAmount = curLongBorrowAmount.minus(longRecievedInSwap);
+        curMaxPriceUserTotalWeightedBorrow =
+          curMaxPriceUserTotalWeightedBorrow.minus(
+            longRecievedInSwap
+              .times(longReserve.maxPrice)
+              .times(longTokenBorrowWeight)
+          );
+      } else {
+        curLongSupplyAmount = curLongSupplyAmount
+          .plus(longRecievedInSwap)
+          .minus(curLongBorrowAmount);
+        curMaxPriceUserTotalWeightedBorrow =
+          curMaxPriceUserTotalWeightedBorrow.minus(
+            curLongBorrowAmount
+              .times(longReserve.maxPrice)
+              .times(longTokenBorrowWeight)
+          );
+        curMinPriceBorrowLimit = curMinPriceBorrowLimit.plus(
+          longRecievedInSwap
+            .minus(curLongBorrowAmount)
+            .times(longReserve.minPrice)
+            .times(new BigNumber(longReserve.loanToValueRatio))
+        );
+        curLongBorrowAmount = new BigNumber(0);
+      }
+    }
+
+    return totalShortSwapable.times(new BigNumber(".975")).toNumber();
+  };
+
   calculateMaxUserBorrowPower = (
     closeMode?: "keepLong" | "keepShort",
     exchangeRate?: string

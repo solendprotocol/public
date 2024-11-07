@@ -11,7 +11,8 @@ import { TokenMetadata, WalletType } from "../types";
 
 export function formatWalletAssets(
   rawWalletData: Awaited<ReturnType<typeof fetchWalletAssets>>,
-  metadata: TokenMetadata
+  metadata: TokenMetadata,
+  nativeTokenSymbol: string = "SOL"
 ) {
   const { userAssociatedTokenAccounts, wSolAddress, nativeSolBalance } =
     rawWalletData;
@@ -25,25 +26,33 @@ export function formatWalletAssets(
       return {
         decimals,
         symbol:
-          tokenMetadata?.symbol === "SOL" ? "wSOL" : tokenMetadata?.symbol,
+          tokenMetadata?.symbol === nativeTokenSymbol
+            ? `w${nativeTokenSymbol}`
+            : tokenMetadata?.symbol,
         address: parsedAccount.address.toBase58(),
         amount: new BigNumber(parsedAccount.amount.toString()).shiftedBy(
           -decimals
         ),
-        mintAddress: tokenMetadata?.symbol === "SOL" ? "wSOL" : mintAddress,
+        mintAddress:
+          tokenMetadata?.symbol === nativeTokenSymbol
+            ? `w${nativeTokenSymbol}`
+            : mintAddress,
         logoUri: tokenMetadata?.logoUri,
       };
     })
     .filter(Boolean) as WalletType;
 
+  const nativeMetadata = metadata[NATIVE_MINT.toBase58()];
   return assets.concat([
     {
       decimals: Math.log10(LAMPORTS_PER_SOL),
-      symbol: "SOL",
+      symbol: nativeTokenSymbol,
       address: wSolAddress,
       amount: nativeSolBalance,
       mintAddress: NATIVE_MINT.toBase58(),
-      logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+      logo:
+        nativeMetadata?.logoUri ??
+        "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
     },
   ]);
 }

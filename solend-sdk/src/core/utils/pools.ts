@@ -4,7 +4,7 @@ import SwitchboardProgram from "@switchboard-xyz/sbv2-lite";
 import { fetchPrices } from "./prices";
 import { calculateBorrowInterest, calculateSupplyInterest } from "./rates";
 import { PoolType } from "../types";
-import { parseReserve, Reserve, RawReserveType } from "../../state";
+import { parseReserve, RawReserveType } from "../../state";
 import { parseRateLimiter } from "./utils";
 
 export async function fetchPools(
@@ -113,6 +113,26 @@ export function formatReserve(
               .div(priceData.lstAdjustmentRatio)
               .toString()
           ) / 100,
+        maxLiquidationThreshold:
+          Number(
+            new BigNumber(reserve.info.config.maxLiquidationThreshold)
+              .div(priceData.lstAdjustmentRatio)
+              .toString()
+          ) / 100,
+        liquidationBonus: Number(
+          new BigNumber(reserve.info.config.liquidationBonus)
+            .plus(new BigNumber(1))
+            .times(priceData.lstAdjustmentRatio)
+            .minus(new BigNumber(1))
+            .toString()
+        ),
+        maxLiquidationBonus: Number(
+          new BigNumber(reserve.info.config.maxLiquidationBonus)
+            .plus(new BigNumber(1))
+            .times(priceData.lstAdjustmentRatio)
+            .minus(new BigNumber(1))
+            .toString()
+        ),
       }
     : {};
 
@@ -163,11 +183,19 @@ export function formatReserve(
     totalSupplyUsd: totalSupply.times(priceResolved),
     totalBorrowUsd: totalBorrow.times(priceResolved),
     availableAmountUsd: availableAmount.times(priceResolved),
-    loanToValueRatio: reserve.info.config.loanToValueRatio / 100,
-    liquidationThreshold: reserve.info.config.liquidationThreshold / 100,
-    maxLiquidationThreshold: reserve.info.config.maxLiquidationThreshold / 100,
-    liquidationPenalty: reserve.info.config.liquidationBonus / 100,
-    maxLiquidationPenalty: reserve.info.config.maxLiquidationBonus / 100,
+    loanToValueRatio:
+      lstPatch.loanToValueRatio ?? reserve.info.config.loanToValueRatio / 100,
+    liquidationThreshold:
+      lstPatch.liquidationThreshold ??
+      reserve.info.config.liquidationThreshold / 100,
+    maxLiquidationThreshold:
+      lstPatch.maxLiquidationThreshold ??
+      reserve.info.config.maxLiquidationThreshold / 100,
+    liquidationBonus:
+      lstPatch.liquidationBonus ?? reserve.info.config.liquidationBonus / 100,
+    maxLiquidationBonus:
+      lstPatch.maxLiquidationBonus ??
+      reserve.info.config.maxLiquidationBonus / 100,
     liquidityAddress: reserve.info.liquidity.supplyPubkey.toBase58(),
     cTokenLiquidityAddress: reserve.info.collateral.supplyPubkey.toBase58(),
     liquidityFeeReceiverAddress: reserve.info.config.feeReceiver.toBase58(),
@@ -201,7 +229,6 @@ export function formatReserve(
     attributedBorrowValue: reserve.info.config.attributedBorrowValue,
     attributedBorrowLimitOpen: reserve.info.config.attributedBorrowLimitOpen,
     attributedBorrowLimitClose: reserve.info.config.attributedBorrowLimitClose,
-    ...lstPatch,
   };
 }
 

@@ -1,3 +1,4 @@
+scripts.ts
 __tests__/scripts.test.ts
 dist/
 node_modules/
