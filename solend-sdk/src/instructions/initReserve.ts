@@ -7,7 +7,7 @@ import {
 import BN from "bn.js";
 import * as Layout from "../layout";
 import { LendingInstruction } from "./instruction";
-import { InputReserveConfigParams, NULL_ORACLE } from "../core";
+import { InputReserveConfigParams } from "../core";
 
 const BufferLayout = require("buffer-layout");
 

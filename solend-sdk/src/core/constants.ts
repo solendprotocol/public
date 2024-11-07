@@ -1,13 +1,14 @@
-import { Cluster, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import { EnvironmentType } from "./types";
 export const WAD = "1".concat(Array(18 + 1).join("0"));
 export const POSITION_LIMIT = 6;
 export const SOL_PADDING_FOR_INTEREST = "1000000";
 export const SLOTS_PER_YEAR = 63072000;
-export const WRAPPER_PROGRAM_ID = new PublicKey(
-  "3JmCcXAjmBpFzHHuUpgJFfTQEQnAR7K1erNLtWV1g7d9"
-);
+export const WRAPPER_PROGRAM_ID =
+  process.env.NEXT_PUBLIC_BRANCH === "eclipse"
+    ? new PublicKey("55ttmJsE9v5PtScfnA2q6S9VXgSPopV6WziiwH94SYws")
+    : new PublicKey("3JmCcXAjmBpFzHHuUpgJFfTQEQnAR7K1erNLtWV1g7d9");
 export const SOLEND_ADDRESSES = [
   "5pHk2TmnqQzRF9L6egy5FfiyBgS7G9cMZ5RFaJAvghzw",
   "yaDPAockQPna7Srx5LB2TugJSKHUduHghyZdQcn7zYz",

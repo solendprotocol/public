@@ -65,7 +65,6 @@ import {
   createWithdrawAndBurnWrapperTokensInstruction,
 } from "@solendprotocol/token2022-wrapper-sdk";
 import { ReserveType } from "./utils";
-import { getSizeOfTransaction } from "../transaction";
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
 
@@ -80,6 +79,8 @@ type ActionConfigType = {
   token2022Mint?: string;
   repayToken2022Mint?: string;
   debug?: boolean;
+  computeUnitPriceMicroLamports?: number;
+  computeUnitLimit?: number;
 };
 
 type SupportType =
@@ -219,6 +220,10 @@ export class SolendActionCore {
 
   environment: EnvironmentType;
 
+  computeUnitPriceMicroLamports?: number;
+
+  computeUnitLimit?: number;
+
   private constructor(
     programId: PublicKey,
     connection: Connection,
@@ -250,6 +255,8 @@ export class SolendActionCore {
       token2022Mint?: PublicKey;
       wrappedAta?: PublicKey;
       debug?: boolean;
+      computeUnitPriceMicroLamports?: number;
+      computeUnitLimit?: number;
     }
   ) {
     this.programId = programId;
@@ -282,6 +289,8 @@ export class SolendActionCore {
     // temporarily default to true
     this.debug = config?.debug ?? true;
     this.environment = config?.environment ?? "production";
+    this.computeUnitPriceMicroLamports = config?.computeUnitPriceMicroLamports;
+    this.computeUnitLimit = config?.computeUnitLimit;
   }
 
   static async initialize(
@@ -391,7 +400,6 @@ export class SolendActionCore {
       amount,
       depositReserves,
       borrowReserves,
-
       {
         environment: config.environment,
         hostAta: config.hostAta,
@@ -428,6 +436,9 @@ export class SolendActionCore {
               TOKEN_2022_PROGRAM_ID
             )
           : undefined,
+        debug: config.debug,
+        computeUnitPriceMicroLamports: config.computeUnitPriceMicroLamports,
+        computeUnitLimit: config.computeUnitLimit,
       }
     );
   }
@@ -675,7 +686,7 @@ export class SolendActionCore {
     return new VersionedTransaction(
       new TransactionMessage({
         payerKey: this.publicKey,
-        recentBlockhash: (await this.connection.getRecentBlockhash()).blockhash,
+        recentBlockhash: (await this.connection.getLatestBlockhash()).blockhash,
         instructions: [
           ...this.preTxnIxs,
           ...this.setupIxs,
@@ -702,17 +713,17 @@ export class SolendActionCore {
     if (this.preTxnIxs.length) {
       txns.preLendingTxn = new Transaction({
         feePayer: this.publicKey,
-        recentBlockhash: (await this.connection.getRecentBlockhash()).blockhash,
+        recentBlockhash: (await this.connection.getLatestBlockhash()).blockhash,
       }).add(...this.preTxnIxs);
     }
     txns.lendingTxn = new Transaction({
       feePayer: this.publicKey,
-      recentBlockhash: (await this.connection.getRecentBlockhash()).blockhash,
+      recentBlockhash: (await this.connection.getLatestBlockhash()).blockhash,
     }).add(...this.setupIxs, ...this.lendingIxs, ...this.cleanupIxs);
     if (this.postTxnIxs.length) {
       txns.postLendingTxn = new Transaction({
         feePayer: this.publicKey,
-        recentBlockhash: (await this.connection.getRecentBlockhash()).blockhash,
+        recentBlockhash: (await this.connection.getLatestBlockhash()).blockhash,
       }).add(...this.postTxnIxs);
     }
     return txns;
@@ -754,6 +765,14 @@ export class SolendActionCore {
       pullPriceTxns: null,
     };
 
+    const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+      microLamports: this.computeUnitPriceMicroLamports ?? 500_000,
+    });
+
+    const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+      units: this.computeUnitLimit ?? 1_000_000,
+    });
+
     if (this.pullPriceTxns.length) {
       txns.pullPriceTxns = this.pullPriceTxns;
     }
@@ -763,7 +782,7 @@ export class SolendActionCore {
         new TransactionMessage({
           payerKey: this.publicKey,
           recentBlockhash: blockhash.blockhash,
-          instructions: this.preTxnIxs,
+          instructions: [priorityFeeIx, modifyComputeUnits, ...this.preTxnIxs],
         }).compileToV0Message()
       );
     }
@@ -780,13 +799,6 @@ export class SolendActionCore {
       instructions.push(tip);
     }
 
-    const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
-      microLamports: 1_000_000,
-    });
-    const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
-      units: 1_000_000,
-    });
-
     txns.lendingTxn = new VersionedTransaction(
       new TransactionMessage({
         payerKey: this.publicKey,
@@ -802,7 +814,7 @@ export class SolendActionCore {
         new TransactionMessage({
           payerKey: this.publicKey,
           recentBlockhash: blockhash.blockhash,
-          instructions: this.postTxnIxs,
+          instructions: [priorityFeeIx, modifyComputeUnits, ...this.postTxnIxs],
         }).compileToV0Message()
       );
     }
@@ -1167,6 +1179,13 @@ export class SolendActionCore {
   }
 
   private async buildPullPriceTxns(oracleKeys: Array<string>) {
+    const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+      microLamports: this.computeUnitPriceMicroLamports ?? 1_000_000,
+    });
+    const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
+      units: 1_000_000,
+    });
+
     const oracleAccounts = await this.connection.getMultipleAccountsInfo(
       oracleKeys.map((o) => new PublicKey(o)),
       "processed"
@@ -1228,15 +1247,6 @@ export class SolendActionCore {
 
             const lookupTables = (await loadLookupTables(feedAccounts)).concat(
               accountLookups
-            );
-
-            const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
-              microLamports: 1_000_000,
-            });
-            const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit(
-              {
-                units: 1_000_000,
-              }
             );
 
             const instructions = [priorityFeeIx, modifyComputeUnits, ix];
@@ -1326,9 +1336,13 @@ export class SolendActionCore {
         0 // shardId of 0
       );
 
+      transactionBuilder.addInstructions([
+        { instruction: priorityFeeIx, signers: [] },
+        { instruction: modifyComputeUnits, signers: [] },
+      ]);
+
       const transactionsWithSigners =
         await transactionBuilder.buildVersionedTransactions({
-          tightComputeBudget: true,
           jitoTipLamports: this.pullPriceTxns.length
             ? undefined
             : this.jitoTipAmount,
@@ -1337,6 +1351,7 @@ export class SolendActionCore {
       for (const transaction of transactionsWithSigners) {
         const signers = transaction.signers;
         const tx = transaction.tx;
+
         if (signers) {
           tx.sign(signers);
         }
@@ -1362,8 +1377,6 @@ export class SolendActionCore {
         this.reserve.address,
       ])
     );
-
-    console.log(allReserveAddresses);
 
     await this.buildPullPriceTxns([
       ...allReserveAddresses.map((address) => reserveMap[address].pythOracle),

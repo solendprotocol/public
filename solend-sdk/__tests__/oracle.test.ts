@@ -12,7 +12,7 @@ import {
   import { PythSolanaReceiver, pythSolanaReceiverIdl } from "@pythnetwork/pyth-solana-receiver";
   import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
   import { AnchorProvider, Program } from "@coral-xyz/anchor-30";
-  import { CrossbarClient, loadLookupTables, PullFeed, SB_ON_DEMAND_PID } from "@switchboard-xyz/on-demand";
+  import { CrossbarClient, loadLookupTables, PullFeed, ON_DEMAND_MAINNET_PID } from "@switchboard-xyz/on-demand";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
   
   jest.setTimeout(50_000);
@@ -29,7 +29,7 @@ import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
       const provider = new AnchorProvider(connection, new NodeWallet(Keypair.fromSecretKey(new Uint8Array(
         testKey
       ))), {});
-      const idl = (await Program.fetchIdl(SB_ON_DEMAND_PID, provider))!;
+      const idl = (await Program.fetchIdl(ON_DEMAND_MAINNET_PID, provider))!;
       const sbod = new Program(idl, provider);
   
       const sbPulledOracles = [
