@@ -59,12 +59,23 @@ import {
   PullFeed,
   ON_DEMAND_MAINNET_PID,
 } from "@switchboard-xyz/on-demand";
-import { Wallet } from "@coral-xyz/anchor";
 import {
   createDepositAndMintWrapperTokensInstruction,
   createWithdrawAndBurnWrapperTokensInstruction,
 } from "@solendprotocol/token2022-wrapper-sdk";
 import { ReserveType } from "./utils";
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
+
+export type SaveWallet = {
+  publicKey: PublicKey;
+  name: string;
+  signTransaction<T extends Transaction | VersionedTransaction>(
+    tx: T
+  ): Promise<T>;
+  signAllTransactions<T extends Transaction | VersionedTransaction>(
+    txs: T[]
+  ): Promise<T[]>;
+};
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
 
@@ -153,6 +164,9 @@ type InputPoolType = {
   reserves: Array<ReserveType>;
 };
 
+export const CROSSBAR_URL1 = "https://crossbar.save.finance";
+export const CROSSBAR_URL2 = "https://crossbar.switchboard.xyz";
+
 export class SolendActionCore {
   programId: PublicKey;
 
@@ -201,7 +215,7 @@ export class SolendActionCore {
 
   jitoTipAmount: number;
 
-  wallet: Wallet;
+  wallet: SaveWallet;
 
   debug: boolean;
 
@@ -224,12 +238,14 @@ export class SolendActionCore {
 
   computeUnitLimit?: number;
 
+  errors: Array<any> = [];
+
   private constructor(
     programId: PublicKey,
     connection: Connection,
     reserve: ReserveType,
     pool: InputPoolType,
-    wallet: Wallet,
+    wallet: SaveWallet,
     obligationAddress: PublicKey,
     obligationAccountInfo: Obligation | null,
     userTokenAccountAddress: PublicKey,
@@ -298,7 +314,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     action: ActionType,
     amount: BN,
-    wallet: Wallet,
+    wallet: SaveWallet,
     connection: Connection,
     config: ActionConfigType
   ) {
@@ -348,7 +364,10 @@ export class SolendActionCore {
         ])
       ).length;
 
-    if (distinctReserveCount > POSITION_LIMIT) {
+    if (
+      distinctReserveCount > POSITION_LIMIT &&
+      ["deposit", "borrow"].includes(action)
+    ) {
       throw Error(
         `Obligation already has max number of positions: ${POSITION_LIMIT}`
       );
@@ -448,7 +467,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    wallet: Wallet,
+    wallet: SaveWallet,
     obligationAddress: PublicKey,
     config: ActionConfigType
   ) {
@@ -476,7 +495,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    wallet: Wallet,
+    wallet: SaveWallet,
     config: ActionConfigType
   ) {
     const axn = await SolendActionCore.initialize(
@@ -500,7 +519,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    wallet: Wallet,
+    wallet: SaveWallet,
     config: ActionConfigType
   ) {
     const axn = await SolendActionCore.initialize(
@@ -523,7 +542,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    wallet: Wallet,
+    wallet: SaveWallet,
     config: ActionConfigType
   ) {
     const axn = await SolendActionCore.initialize(
@@ -545,7 +564,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    wallet: Wallet,
+    wallet: SaveWallet,
     config: ActionConfigType
   ) {
     const axn = await SolendActionCore.initialize(
@@ -567,7 +586,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    wallet: Wallet,
+    wallet: SaveWallet,
     config: ActionConfigType
   ) {
     const axn = await SolendActionCore.initialize(
@@ -589,7 +608,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    wallet: Wallet,
+    wallet: SaveWallet,
     config: ActionConfigType
   ) {
     const axn = await SolendActionCore.initialize(
@@ -613,7 +632,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    wallet: Wallet,
+    wallet: SaveWallet,
     config: ActionConfigType
   ) {
     const axn = await SolendActionCore.initialize(
@@ -637,7 +656,7 @@ export class SolendActionCore {
     reserve: ReserveType,
     connection: Connection,
     amount: string,
-    wallet: Wallet,
+    wallet: SaveWallet,
     config: ActionConfigType
   ) {
     const axn = await SolendActionCore.initialize(
@@ -661,7 +680,7 @@ export class SolendActionCore {
     withdrawReserve: ReserveType,
     connection: Connection,
     amount: string,
-    wallet: Wallet,
+    wallet: SaveWallet,
     config: ActionConfigType
   ) {
     const axn = await SolendActionCore.initialize(
@@ -1220,9 +1239,7 @@ export class SolendActionCore {
           1
         );
 
-        const crossbar = new CrossbarClient(
-          "https://crossbar.switchboard.xyz/"
-        );
+        const crossbar = new CrossbarClient("https://crossbar.save.finance");
 
         const res = sbPulledOracles.reduce((acc, _curr, i) => {
           if (!(i % 3)) {
@@ -1282,7 +1299,7 @@ export class SolendActionCore {
     );
     const pythSolanaReceiver = new PythSolanaReceiver({
       connection: this.connection,
-      wallet: this.wallet,
+      wallet: this.wallet as any as NodeWallet,
     });
     const transactionBuilder = pythSolanaReceiver.newTransactionBuilder({
       closeUpdateAccounts: true,

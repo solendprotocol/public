@@ -121,6 +121,14 @@ export const initReserveInstruction = (
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
   ];
 
+  if (config.extraOracle) {
+    keys.push({
+      pubkey: config.extraOracle,
+      isSigner: false,
+      isWritable: false,
+    });
+  }
+
   return new TransactionInstruction({
     keys,
     programId: lendingProgramId,

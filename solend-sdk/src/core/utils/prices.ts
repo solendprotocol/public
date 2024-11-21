@@ -43,10 +43,6 @@ export async function fetchPrices(
         pythOracleData.owner.toBase58() ===
         pythSolanaReceiver.receiver.programId.toBase58()
       ) {
-        // pythData = pythSolanaReceiver.receiver.coder.accounts.decode(
-        //   'priceUpdateV2',
-        //   pythOracleData.data,
-        // );
         const priceUpdate =
           pythSolanaReceiver.receiver.account.priceUpdateV2.coder.accounts.decode(
             "priceUpdateV2",

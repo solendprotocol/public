@@ -37,8 +37,7 @@ import {
 import BigNumber from "bignumber.js";
 import BN from "bn.js";
 import JSBI from "jsbi";
-import { Wallet } from "@coral-xyz/anchor";
-import { SolendActionCore } from "./actions";
+import { SaveWallet, SolendActionCore } from "./actions";
 import { repayMaxObligationLiquidityInstruction } from "../instructions/repayMaxObligationLiquidity";
 import { depositMaxReserveLiquidityAndObligationCollateralInstruction } from "../instructions/depositMaxReserveLiquidityAndObligationCollateral";
 
@@ -54,7 +53,7 @@ export class Margin {
 
   obligation?: ObligationType;
 
-  wallet: Wallet;
+  wallet: SaveWallet;
 
   obligationAddress: PublicKey;
 
@@ -84,7 +83,7 @@ export class Margin {
 
   constructor(
     connection: Connection,
-    wallet: Wallet,
+    wallet: SaveWallet,
     longReserve: ReserveType,
     shortReserve: ReserveType,
     pool: PoolType,
