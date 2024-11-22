@@ -86,7 +86,6 @@ type ActionConfigType = {
   hostPublicKey?: PublicKey;
   customObligationSeed?: string;
   lookupTableAddress?: PublicKey;
-  tipAmount?: number;
   repayReserve?: ReserveType;
   token2022Mint?: string;
   repayToken2022Mint?: string;
@@ -216,8 +215,6 @@ export class SolendActionCore {
 
   lookupTableAccount?: AddressLookupTableAccount;
 
-  jitoTipAmount: number;
-
   wallet: SaveWallet;
 
   debug: boolean;
@@ -263,7 +260,6 @@ export class SolendActionCore {
       hostAta?: PublicKey;
       hostPublicKey?: PublicKey;
       lookupTableAccount?: AddressLookupTableAccount;
-      tipAmount?: number;
       repayInfo?: {
         userRepayTokenAccountAddress: PublicKey;
         userRepayCollateralAccountAddress: PublicKey;
@@ -302,7 +298,6 @@ export class SolendActionCore {
     this.depositReserves = depositReserves;
     this.borrowReserves = borrowReserves;
     this.lookupTableAccount = config?.lookupTableAccount;
-    this.jitoTipAmount = config?.tipAmount ?? 9000;
     this.wallet = wallet;
     this.repayInfo = config?.repayInfo;
     this.token2022Mint = config?.token2022Mint;
@@ -429,7 +424,6 @@ export class SolendActionCore {
         hostAta: config.hostAta,
         hostPublicKey: config.hostPublicKey,
         lookupTableAccount: lookupTableAccount ?? undefined,
-        tipAmount: config.tipAmount,
         repayInfo: config.repayReserve
           ? {
               userRepayTokenAccountAddress: userRepayTokenAccountAddress!,
@@ -754,29 +748,6 @@ export class SolendActionCore {
     return txns;
   }
 
-  private getTipIx() {
-    const tipAccounts = [
-      "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
-      "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
-      "Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY",
-      "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
-      "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh",
-      "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
-      "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL",
-      "3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT",
-    ];
-
-    const tipAccount = new PublicKey(
-      tipAccounts[Math.floor(Math.random() * tipAccounts.length)]
-    );
-
-    return SystemProgram.transfer({
-      fromPubkey: this.publicKey,
-      toPubkey: tipAccount,
-      lamports: this.jitoTipAmount,
-    });
-  }
-
   async getTransactions(blockhash: BlockhashWithExpiryBlockHeight) {
     const txns: {
       preLendingTxn: VersionedTransaction | null;
@@ -818,12 +789,6 @@ export class SolendActionCore {
       ...this.cleanupIxs,
     ];
 
-    const tip = this.getTipIx();
-    if (tip && this.pullPriceTxns.length >= 5) {
-      if (this.debug) console.log("adding tip ix to lending txn");
-      instructions.push(tip);
-    }
-
     txns.lendingTxn = new VersionedTransaction(
       new TransactionMessage({
         payerKey: this.publicKey,
@@ -845,10 +810,6 @@ export class SolendActionCore {
     }
 
     return txns;
-  }
-
-  configureTip(jitoTipAmount: number) {
-    this.jitoTipAmount = jitoTipAmount;
   }
 
   addForgiveIx() {
@@ -1255,7 +1216,7 @@ export class SolendActionCore {
           1
         );
 
-        const crossbar = new CrossbarClient("https://crossbar.save.finance");
+        const crossbar = new CrossbarClient(CROSSBAR_URL2);
 
         const res = sbPulledOracles.reduce((acc, _curr, i) => {
           if (!(i % 3)) {
@@ -1283,10 +1244,6 @@ export class SolendActionCore {
             );
 
             const instructions = [priorityFeeIx, modifyComputeUnits, ix];
-
-            if (this.debug)
-              console.log("adding tip ix to pullPriceTxns for sbod");
-            instructions.push(this.getTipIx());
 
             // Get the latest context
             const {
@@ -1375,11 +1332,7 @@ export class SolendActionCore {
       ]);
 
       const transactionsWithSigners =
-        await transactionBuilder.buildVersionedTransactions({
-          jitoTipLamports: this.pullPriceTxns.length
-            ? undefined
-            : this.jitoTipAmount,
-        });
+        await transactionBuilder.buildVersionedTransactions({});
 
       for (const transaction of transactionsWithSigners) {
         const signers = transaction.signers;
