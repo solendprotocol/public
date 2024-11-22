@@ -83,6 +83,7 @@ type ActionConfigType = {
   environment?: EnvironmentType;
   customObligationAddress?: PublicKey;
   hostAta?: PublicKey;
+  hostPublicKey?: PublicKey;
   customObligationSeed?: string;
   lookupTableAddress?: PublicKey;
   tipAmount?: number;
@@ -194,6 +195,8 @@ export class SolendActionCore {
 
   hostAta?: PublicKey;
 
+  hostPublicKey?: PublicKey;
+
   // TODO: potentially don't need to keep signers
   pullPriceTxns: Array<VersionedTransaction>;
 
@@ -258,6 +261,7 @@ export class SolendActionCore {
     config?: {
       environment?: EnvironmentType;
       hostAta?: PublicKey;
+      hostPublicKey?: PublicKey;
       lookupTableAccount?: AddressLookupTableAccount;
       tipAmount?: number;
       repayInfo?: {
@@ -281,6 +285,7 @@ export class SolendActionCore {
     this.amount = new BN(amount);
     this.positions = positions;
     this.hostAta = config?.hostAta;
+    this.hostPublicKey = config?.hostPublicKey;
     this.obligationAccountInfo = obligationAccountInfo;
     this.pool = pool;
     this.seed = seed;
@@ -422,6 +427,7 @@ export class SolendActionCore {
       {
         environment: config.environment,
         hostAta: config.hostAta,
+        hostPublicKey: config.hostPublicKey,
         lookupTableAccount: lookupTableAccount ?? undefined,
         tipAmount: config.tipAmount,
         repayInfo: config.repayReserve
@@ -972,6 +978,16 @@ export class SolendActionCore {
 
   addBorrowIx() {
     if (this.debug) console.log("adding borrow ix to lending txn");
+    if (this.hostAta && this.hostPublicKey) {
+      this.preTxnIxs.push(
+        createAssociatedTokenAccountIdempotentInstruction(
+          this.publicKey,
+          this.hostAta,
+          this.hostPublicKey,
+          new PublicKey(this.reserve.mintAddress)
+        )
+      );
+    }
     this.lendingIxs.push(
       borrowObligationLiquidityInstruction(
         this.amount,
