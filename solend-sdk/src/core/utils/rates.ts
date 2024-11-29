@@ -106,3 +106,10 @@ export const calculateSupplyInterest = (reserve: Reserve, showApy: boolean) =>
 
 export const calculateBorrowInterest = (reserve: Reserve, showApy: boolean) =>
   showApy ? calculateBorrowAPY(reserve) : calculateBorrowAPR(reserve);
+
+export const convertAprToApy = (apr: number) =>
+  new BigNumber(1)
+    .plus(new BigNumber(apr).dividedBy(SLOTS_PER_YEAR))
+    .toNumber() **
+    SLOTS_PER_YEAR -
+  1;
