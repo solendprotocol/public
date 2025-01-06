@@ -1403,6 +1403,16 @@ export class SolendActionCore {
       this.borrowReserves,
       this.programId
     );
+
+    this.depositReserves = this.depositReserves.filter((reserve) => {
+      const deposit = this.obligationAccountInfo?.deposits.find((d) => d.depositReserve.toBase58() === reserve.toBase58());
+      return deposit?.depositedAmount.gt(new BN(0));
+    });
+    this.borrowReserves = this.borrowReserves.filter((reserve) => {
+      const borrow = this.obligationAccountInfo?.borrows.find((b) => b.borrowReserve.toBase58() === reserve.toBase58());
+      return borrow?.borrowedAmountWads.gt(new BN(0));
+    });
+
     if (this.debug) console.log("adding refresh obligation ix to setup txn");
     this.setupIxs.push(refreshObligationIx);
   }
