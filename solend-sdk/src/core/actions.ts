@@ -1355,11 +1355,12 @@ export class SolendActionCore {
             // Get Versioned Transaction
             const vtx = new VersionedTransaction(message);
 
+            console.log(400_000 + sbPulledOracles.length * 100_000);
             if (this.debug) console.log("adding sbod ix to pullPriceTxns");
             this.oracleIxs.push({
               instruction: ix,
               lookupTableAccounts: lookupTables,
-              computeUnits: 300_000 + sbPulledOracles.length
+              computeUnits: 400_000 + sbPulledOracles.length * 100_000
             });
             this.pullPriceTxns.push(vtx);
           })
@@ -1512,7 +1513,7 @@ export class SolendActionCore {
       );
       this.setupIxs.push({
         instruction: refreshReserveIx,
-        computeUnits: 54690, // 54690 is max amount from a sample. TODO: can get more granular based on pyth/sb/extra oracle
+        computeUnits: 54_690, // 54690 is max amount from a sample. TODO: can get more granular based on pyth/sb/extra oracle
       });
     });
   }
