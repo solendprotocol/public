@@ -38,6 +38,7 @@ export function formatWalletAssets(
             ? `w${nativeTokenSymbol}`
             : mintAddress,
         logoUri: tokenMetadata?.logoUri,
+        underlyingToken: tokenMetadata?.underlyingToken,
       };
     })
     .filter(Boolean) as WalletType;

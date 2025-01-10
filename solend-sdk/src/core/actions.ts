@@ -98,6 +98,7 @@ type ActionConfigType = {
 type SupportType =
   | "wrap"
   | "unwrap"
+  | "refreshReserve"
   | "refreshReserves"
   | "refreshObligation"
   | "createObligation"
@@ -121,7 +122,7 @@ const ACTION_SUPPORT_REQUIREMENTS: {
   ],
   repay: ["wsol", "wrap"],
   mint: ["wsol", "wrap", "cAta"],
-  redeem: ["wsol", "ata", "refreshReserves", "unwrap"],
+  redeem: ["wsol", "ata", "refreshReserve", "unwrap"],
   depositCollateral: ["createObligation"],
   withdrawCollateral: ["cAta", "refreshReserves", "refreshObligation"],
   forgive: ["refreshReserves", "refreshObligation"],
@@ -1157,6 +1158,9 @@ export class SolendActionCore {
             await this.addUnwrapIx();
           }
           break;
+        case "refreshReserve":
+          await this.addRefreshReservesIxs(true);
+          break;
         case "refreshReserves":
           await this.addRefreshReservesIxs();
           break;
@@ -1468,7 +1472,7 @@ export class SolendActionCore {
     }
   }
 
-  private async addRefreshReservesIxs() {
+  private async addRefreshReservesIxs(singleReserve?: boolean) {
     // Union of addresses
     const reserveMap = this.pool.reserves.reduce((acc, reserve) => {
       acc[reserve.address] = reserve;
@@ -1476,7 +1480,7 @@ export class SolendActionCore {
     }, {} as Record<string, ReserveType>);
 
     const allReserveAddresses = Array.from(
-      new Set([
+      new Set(singleReserve ? [this.reserve.address] : [
         ...this.depositReserves.map((e) => e.toBase58()),
         ...this.borrowReserves.map((e) => e.toBase58()),
         this.reserve.address,

@@ -23,6 +23,7 @@ export type TokenMetadata = {
     symbol: string;
     logoUri: string | undefined;
     decimals: number;
+    underlyingToken?: string;
   };
 };
 
@@ -41,6 +42,7 @@ export type WalletAssetType = {
   decimals: number;
   address: string;
   logo?: string;
+  underlyingToken?: string;
 };
 
 export type WalletType = Array<WalletAssetType>;
