@@ -69,16 +69,20 @@ import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 
 export type SaveWallet = {
   publicKey: PublicKey;
-  name: string;
-  signTransaction<T extends Transaction | VersionedTransaction>(
-    tx: T
-  ): Promise<T>;
-  signAllTransactions<T extends Transaction | VersionedTransaction>(
-    txs: T[]
-  ): Promise<T[]>;
 };
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
+
+export type InputReserveType = {
+  address: string;
+  liquidityAddress: string;
+  cTokenMint: string;
+  cTokenLiquidityAddress: string;
+  pythOracle: string;
+  switchboardOracle: string;
+  mintAddress: string;
+  liquidityFeeReceiverAddress: string;
+};
 
 type ActionConfigType = {
   environment?: EnvironmentType;
@@ -158,12 +162,21 @@ export type ActionType =
   | "forgive"
   | "liquidate";
 
+type InputPoolReserveType = {
+  address: string;
+  pythOracle: string;
+  switchboardOracle: string;
+  mintAddress: string;
+  liquidityFeeReceiverAddress: string;
+  extraOracle?: string;
+};
+
 type InputPoolType = {
   address: string;
   owner: string;
   name: string | null;
   authorityAddress: string;
-  reserves: Array<ReserveType>;
+  reserves: Array<InputPoolReserveType>;
 };
 
 export type InstructionWithSigners = {
@@ -188,7 +201,7 @@ export class SolendActionCore {
 
   connection: Connection;
 
-  reserve: ReserveType;
+  reserve: InputReserveType;
 
   pool: InputPoolType;
 
@@ -263,7 +276,7 @@ export class SolendActionCore {
   private constructor(
     programId: PublicKey,
     connection: Connection,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     pool: InputPoolType,
     wallet: SaveWallet,
     obligationAddress: PublicKey,
@@ -333,7 +346,7 @@ export class SolendActionCore {
 
   static async initialize(
     pool: InputPoolType,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     action: ActionType,
     amount: BN,
     wallet: SaveWallet,
@@ -490,7 +503,7 @@ export class SolendActionCore {
 
   static async buildForgiveTxns(
     pool: InputPoolType,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     connection: Connection,
     amount: string,
     wallet: SaveWallet,
@@ -518,7 +531,7 @@ export class SolendActionCore {
 
   static async buildDepositTxns(
     pool: InputPoolType,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     connection: Connection,
     amount: string,
     wallet: SaveWallet,
@@ -542,7 +555,7 @@ export class SolendActionCore {
 
   static async buildBorrowTxns(
     pool: InputPoolType,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     connection: Connection,
     amount: string,
     wallet: SaveWallet,
@@ -565,7 +578,7 @@ export class SolendActionCore {
   }
   static async buildDepositReserveLiquidityTxns(
     pool: InputPoolType,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     connection: Connection,
     amount: string,
     wallet: SaveWallet,
@@ -587,7 +600,7 @@ export class SolendActionCore {
 
   static async buildRedeemReserveCollateralTxns(
     pool: InputPoolType,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     connection: Connection,
     amount: string,
     wallet: SaveWallet,
@@ -609,7 +622,7 @@ export class SolendActionCore {
 
   static async buildDepositObligationCollateralTxns(
     pool: InputPoolType,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     connection: Connection,
     amount: string,
     wallet: SaveWallet,
@@ -631,7 +644,7 @@ export class SolendActionCore {
 
   static async buildWithdrawCollateralTxns(
     pool: InputPoolType,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     connection: Connection,
     amount: string,
     wallet: SaveWallet,
@@ -655,7 +668,7 @@ export class SolendActionCore {
 
   static async buildWithdrawTxns(
     pool: InputPoolType,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     connection: Connection,
     amount: string,
     wallet: SaveWallet,
@@ -679,7 +692,7 @@ export class SolendActionCore {
 
   static async buildRepayTxns(
     pool: InputPoolType,
-    reserve: ReserveType,
+    reserve: InputReserveType,
     connection: Connection,
     amount: string,
     wallet: SaveWallet,
@@ -703,7 +716,7 @@ export class SolendActionCore {
 
   static async buildLiquidateTxns(
     pool: InputPoolType,
-    withdrawReserve: ReserveType,
+    withdrawReserve: InputReserveType,
     connection: Connection,
     amount: string,
     wallet: SaveWallet,
@@ -1106,7 +1119,7 @@ export class SolendActionCore {
     );
   }
 
-  async addLiquidateIx(repayReserve: ReserveType) {
+  async addLiquidateIx(repayReserve: InputReserveType) {
     if (this.debug) console.log("adding liquidate ix to lending txn");
     if (
       !this.repayInfo?.userRepayCollateralAccountAddress ||
@@ -1128,7 +1141,7 @@ export class SolendActionCore {
         new PublicKey(this.reserve.cTokenMint),
         new PublicKey(this.reserve.cTokenLiquidityAddress),
         new PublicKey(this.reserve.liquidityAddress),
-        new PublicKey(this.reserve.feeReceiverAddress),
+        new PublicKey(this.reserve.liquidityFeeReceiverAddress),
         this.obligationAddress,
         new PublicKey(this.pool.address),
         new PublicKey(this.pool.authorityAddress),
@@ -1286,7 +1299,11 @@ export class SolendActionCore {
       "processed"
     );
 
-    const provider = new AnchorProvider(this.connection, this.wallet, {});
+    const provider = new AnchorProvider(this.connection, {
+      publicKey: this.wallet.publicKey,
+      signTransaction: <T extends Transaction | VersionedTransaction>(tx: T) => Promise.resolve(tx),
+      signAllTransactions: <T extends Transaction | VersionedTransaction>(txs: T[]) => Promise.resolve(txs as T[]),
+    }, {});
     const idl = (await Program.fetchIdl(ON_DEMAND_MAINNET_PID, provider))!;
 
     if (this.environment === "production" || this.environment === "beta") {
@@ -1477,7 +1494,7 @@ export class SolendActionCore {
     const reserveMap = this.pool.reserves.reduce((acc, reserve) => {
       acc[reserve.address] = reserve;
       return acc;
-    }, {} as Record<string, ReserveType>);
+    }, {} as Record<string, InputPoolReserveType>);
 
     const allReserveAddresses = Array.from(
       new Set(singleReserve ? [this.reserve.address] : [
