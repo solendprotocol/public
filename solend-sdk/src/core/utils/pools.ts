@@ -13,6 +13,7 @@ export async function fetchPools(
   switchboardProgram: SwitchboardProgram,
   programId: string,
   currentSlot: number,
+  skipPrices?: boolean,
   debug?: boolean
 ) {
   const reserves = (
@@ -21,6 +22,7 @@ export async function fetchPools(
       switchboardProgram,
       programId,
       currentSlot,
+      skipPrices,
       debug
     )
   ).sort((a, b) => (a.totalSupply.isGreaterThan(b.totalSupply) ? -1 : 1));
@@ -276,6 +278,7 @@ export const getReservesFromChain = async (
   switchboardProgram: SwitchboardProgram,
   programId: string,
   currentSlot: number,
+  skipPrices?: boolean,
   debug?: boolean
 ) => {
   if (debug) console.log("getReservesFromChain");
@@ -297,15 +300,21 @@ export const getReservesFromChain = async (
     )
     .filter(Boolean) as Array<RawReserveType>;
 
-  const prices = await fetchPrices(
-    parsedReserves,
-    connection,
-    switchboardProgram,
-    debug
-  );
+    let prices: { [key: string]: {
+      spotPrice: number;
+      emaPrice: number;
+    } | undefined } = {};
+    if (!skipPrices) {
+      prices = await fetchPrices(
+        parsedReserves,
+        connection,
+        switchboardProgram,
+        debug
+      );
+    }
 
   return parsedReserves.map((r) =>
-    formatReserve(r, prices[r.pubkey.toBase58()], currentSlot)
+    formatReserve(r, prices?.[r.pubkey.toBase58()], currentSlot)
   );
 };
 

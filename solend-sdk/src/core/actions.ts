@@ -55,10 +55,10 @@ import { getProgramId, U64_MAX, WAD } from "./constants";
 import { PriceServiceConnection } from "@pythnetwork/price-service-client";
 import { AnchorProvider, Program } from "@coral-xyz/anchor-30";
 import {
-  CrossbarClient,
   loadLookupTables,
   PullFeed,
   ON_DEMAND_MAINNET_PID,
+  CrossbarClient,
 } from "@switchboard-xyz/on-demand";
 import {
   createDepositAndMintWrapperTokensInstruction,
@@ -94,6 +94,9 @@ type ActionConfigType = {
   repayReserve?: ReserveType;
   token2022Mint?: string;
   repayToken2022Mint?: string;
+  depositInfo?: {
+    userDepositTokenAccountAddress: PublicKey;
+  };
   debug?: boolean;
   computeUnitPriceMicroLamports?: number;
   computeUnitLimit?: number;
@@ -190,7 +193,7 @@ export const createDepositAndMintWrapperTokensInstructionComputeUnits = 55_154;
 export const createAssociatedTokenAccountIdempotentInstructionComputeUnits = 21_845;
 export const withdrawAndBurnWrapperTokensInstructionComputeUnits = 52_649;
 export const createAssociatedTokenAccountInstructionComputeUnits = 29_490;
-export const createAccountComputeUnits = 0; // actually 0
+export const createAccountComputeUnits = 10_000;
 export const transferComputeUnits = 500;
 
 export const CROSSBAR_URL1 = "https://crossbar.save.finance";
@@ -261,6 +264,10 @@ export class SolendActionCore {
     reserveAddress: PublicKey;
   };
 
+  depositInfo?: {
+    userDepositTokenAccountAddress: PublicKey;
+  };
+
   token2022Mint?: PublicKey;
 
   wrappedAta?: PublicKey;
@@ -301,6 +308,9 @@ export class SolendActionCore {
         repayMint: PublicKey;
         reserveAddress: PublicKey;
       };
+      depositInfo?: {
+        userDepositTokenAccountAddress: PublicKey;
+      };
       token2022Mint?: PublicKey;
       wrappedAta?: PublicKey;
       debug?: boolean;
@@ -333,6 +343,7 @@ export class SolendActionCore {
     this.depositReserves = depositReserves;
     this.borrowReserves = borrowReserves;
     this.lookupTableAccount = config?.lookupTableAccount;
+    this.depositInfo = config?.depositInfo;
     this.wallet = wallet;
     this.repayInfo = config?.repayInfo;
     this.token2022Mint = config?.token2022Mint;
@@ -790,6 +801,7 @@ export class SolendActionCore {
   async getInstructions() {
     return {
       oracleIxs: this.oracleIxs,
+      pythIxGroups: this.pythIxGroups,
       preLendingIxs: this.preTxnIxs,
       lendingIxs: this.setupIxs.concat(this.lendingIxs).concat(this.cleanupIxs),
       postLendingIxs: this.postTxnIxs,
@@ -885,7 +897,7 @@ export class SolendActionCore {
         lookupTableAccounts: this.lookupTableAccount ? [this.lookupTableAccount] : undefined,
         instruction: this.amount.toString() === U64_MAX
         ? depositMaxReserveLiquidityAndObligationCollateralInstruction(
-            this.userTokenAccountAddress,
+            this.depositInfo?.userDepositTokenAccountAddress ?? this.userTokenAccountAddress,
             this.userCollateralAccountAddress,
             new PublicKey(this.reserve.address),
             new PublicKey(this.reserve.liquidityAddress),
@@ -902,7 +914,7 @@ export class SolendActionCore {
           )
         : depositReserveLiquidityAndObligationCollateralInstruction(
             this.amount,
-            this.userTokenAccountAddress,
+            this.depositInfo?.userDepositTokenAccountAddress ?? this.userTokenAccountAddress,
             this.userCollateralAccountAddress,
             new PublicKey(this.reserve.address),
             new PublicKey(this.reserve.liquidityAddress),
@@ -1286,27 +1298,37 @@ export class SolendActionCore {
     );
   }
 
-  private async buildPullPriceTxns(oracleKeys: Array<string>) {
+  static async buildPullPriceIxsStatic(
+    oracleKeys: Array<string>,
+    connection: Connection,
+    wallet: SaveWallet,
+    computeUnitPriceMicroLamports?: number,
+    environment?: EnvironmentType,
+    debug?: boolean,
+  ) {
+    let oracleIxs: InstructionWithSigners[] = [];
+    let pullPriceTxns: VersionedTransaction[] = [];
+    let pythIxGroups: Array<Array<InstructionWithSigners>> = [];
     const priorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
-      microLamports: this.computeUnitPriceMicroLamports ?? 1_000_000,
+      microLamports: computeUnitPriceMicroLamports ?? 1_000_000,
     });
     const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({
       units: 1_000_000,
     });
 
-    const oracleAccounts = await this.connection.getMultipleAccountsInfo(
+    const oracleAccounts = await connection.getMultipleAccountsInfo(
       oracleKeys.map((o) => new PublicKey(o)),
       "processed"
     );
 
-    const provider = new AnchorProvider(this.connection, {
-      publicKey: this.wallet.publicKey,
+    const provider = new AnchorProvider(connection, {
+      publicKey: wallet.publicKey,
       signTransaction: <T extends Transaction | VersionedTransaction>(tx: T) => Promise.resolve(tx),
       signAllTransactions: <T extends Transaction | VersionedTransaction>(txs: T[]) => Promise.resolve(txs as T[]),
     }, {});
     const idl = (await Program.fetchIdl(ON_DEMAND_MAINNET_PID, provider))!;
 
-    if (this.environment === "production" || this.environment === "beta") {
+    if (environment === "production" || environment === "beta") {
       const sbod = new Program(idl, provider);
       console.log(oracleAccounts);
       const sbPulledOracles = oracleKeys.filter(
@@ -1320,7 +1342,7 @@ export class SolendActionCore {
             (oracleKey) => new PullFeed(sbod as any, oracleKey)
           )
         );
-        if (this.debug) console.log("Feed accounts", sbPulledOracles);
+        if (debug) console.log("Feed accounts", sbPulledOracles);
         const loadedFeedAccounts = await Promise.all(
           feedAccounts.map((acc) => acc.loadData())
         );
@@ -1332,8 +1354,6 @@ export class SolendActionCore {
           1
         );
 
-        const crossbar = new CrossbarClient(CROSSBAR_URL2);
-
         const res = sbPulledOracles.reduce((acc, _curr, i) => {
           if (!(i % 3)) {
             // if index is 0 or can be divided by the `size`...
@@ -1342,18 +1362,26 @@ export class SolendActionCore {
           return acc;
         }, [] as string[][]);
 
+        const crossbar = new CrossbarClient(CROSSBAR_URL2);
         await Promise.all(
           res.map(async (oracleGroup) => {
             const [ix, accountLookups, responses] =
-              await PullFeed.fetchUpdateManyIx(sbod, {
-                feeds: oracleGroup.map((p) => new PublicKey(p)),
+            await PullFeed.fetchUpdateManyIx(sbod as any, {
+              feeds: oracleGroup.map((p) => new PublicKey(p)),
+              crossbarClient: crossbar,
+
                 numSignatures,
-                crossbarClient: crossbar,
               });
 
-            if (responses.errors.length) {
-              console.error(responses.errors);
-            }
+          // responses?.oracle_responses.forEach((response) => {
+          //   response?.errors.forEach((error) => {
+          //     if (error) {
+          //       console.error(error);
+          //     }
+          //   });
+          // });
+
+          console.log('updated');
 
             const lookupTables = (await loadLookupTables(feedAccounts)).concat(
               accountLookups
@@ -1364,11 +1392,11 @@ export class SolendActionCore {
             // Get the latest context
             const {
               value: { blockhash },
-            } = await this.connection.getLatestBlockhashAndContext();
+            } = await connection.getLatestBlockhashAndContext();
 
             // Get Transaction Message
             const message = new TransactionMessage({
-              payerKey: this.publicKey,
+              payerKey: wallet.publicKey,
               recentBlockhash: blockhash,
               instructions,
             }).compileToV0Message(lookupTables);
@@ -1376,14 +1404,13 @@ export class SolendActionCore {
             // Get Versioned Transaction
             const vtx = new VersionedTransaction(message);
 
-            console.log(400_000 + sbPulledOracles.length * 100_000);
-            if (this.debug) console.log("adding sbod ix to pullPriceTxns");
-            this.oracleIxs.push({
+            if (debug) console.log("adding sbod ix to pullPriceTxns");
+            oracleIxs.push({
               instruction: ix,
               lookupTableAccounts: lookupTables,
-              computeUnits: 400_000 + sbPulledOracles.length * 100_000
+              computeUnits: 400_000 + sbPulledOracles.length * 100_000, 
             });
-            this.pullPriceTxns.push(vtx);
+            pullPriceTxns.push(vtx);
           })
         );
       }
@@ -1393,8 +1420,8 @@ export class SolendActionCore {
       "https://hermes.pyth.network"
     );
     const pythSolanaReceiver = new PythSolanaReceiver({
-      connection: this.connection,
-      wallet: this.wallet as any as NodeWallet,
+      connection: connection,
+      wallet: wallet as any as NodeWallet,
     });
     const transactionBuilder = pythSolanaReceiver.newTransactionBuilder({
       closeUpdateAccounts: true,
@@ -1438,7 +1465,7 @@ export class SolendActionCore {
       .map((x) => x.priceFeedId);
 
     if (shuffledPriceIds.length) {
-      if (this.debug) console.log("Feed accounts", shuffledPriceIds);
+      if (debug) console.log("Feed accounts", shuffledPriceIds);
       const priceFeedUpdateData = await priceServiceConnection.getLatestVaas(
         shuffledPriceIds
       );
@@ -1459,12 +1486,12 @@ export class SolendActionCore {
       for (const transaction of transactionsWithSigners) {
         const signers = transaction.signers;
         const tx = transaction.tx;
-        const lookupTables = await Promise.all(tx.message.addressTableLookups.map((lookup) => this.connection.getAddressLookupTable(lookup.accountKey)));  
+        const lookupTables = await Promise.all(tx.message.addressTableLookups.map((lookup) => connection.getAddressLookupTable(lookup.accountKey)));  
 
         if (signers) {
           tx.sign(signers);
         }
-        this.pythIxGroups.push(transactionBuilder.transactionInstructions.flatMap((ixs, index1) => ixs.instructions.map(
+        pythIxGroups.push(transactionBuilder.transactionInstructions.flatMap((ixs, index1) => ixs.instructions.map(
           (ix, index2) => {
             let computeUnits = 0;
             if (index1 === 0 && index2 === 0) {
@@ -1481,12 +1508,27 @@ export class SolendActionCore {
             computeUnits,
           })}
         )));
-        this.pullPriceTxns.push(tx);
+        pullPriceTxns.push(tx);
       }
       console.log(
         `adding ${transactionsWithSigners.length} txns to pullPriceTxns`
       );
     }
+
+    return {
+      oracleIxs,
+      pythIxGroups,
+      pullPriceTxns,
+    }
+  }
+
+  async buildPullPriceTxns(
+    oracleKeys: Array<string>
+  ) {
+    const { oracleIxs, pythIxGroups, pullPriceTxns } = await SolendActionCore.buildPullPriceIxsStatic(oracleKeys, this.connection, this.wallet, this.computeUnitPriceMicroLamports ?? 1_000_000, this.environment, this.debug);
+    this.oracleIxs.push(...oracleIxs);
+    this.pythIxGroups.push(...pythIxGroups);
+    this.pullPriceTxns.push(...pullPriceTxns);
   }
 
   private async addRefreshReservesIxs(singleReserve?: boolean) {

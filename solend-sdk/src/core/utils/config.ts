@@ -6,12 +6,12 @@ import {
   PoolMetadataCoreType,
 } from "../../index";
 import { SOLEND_ADDRESSES } from "../constants";
-import { titleCase } from "./utils";
 import axios from "axios";
 
 export async function fetchPoolMetadata(
   connection: Connection,
   environment: EnvironmentType = "production",
+  customApiHost?: string,
   useApi?: Boolean,
   debug?: Boolean
 ): Promise<Array<PoolMetadataCoreType>> {
@@ -22,38 +22,13 @@ export async function fetchPoolMetadata(
 
   try {
     const configResponse = await axios.get(
-      `https://api.solend.fi/v1/markets/configs?scope=all&deployment=${
+      `${customApiHost ?? "https://api.save.finance"}/v1/markets/configs?scope=all&deployment=${
         environment === "mainnet-beta" ? "production" : environment
       }`
     );
+
     const configData = configResponse.data;
-    return configData.map(
-      (c: {
-        name: string;
-        address: string;
-        owner: string;
-        authorityAddress: string;
-        reserves: Array<{
-          liquidityToken: {
-            name: string;
-            logo: string;
-            mint: string;
-          };
-          address: string;
-        }>;
-      }) => ({
-        name: titleCase(c.name),
-        owner: c.owner,
-        address: c.address,
-        authorityAddress: c.authorityAddress,
-        reserves: c.reserves.map((r) => ({
-          name: r.liquidityToken.name,
-          logo: r.liquidityToken.logo,
-          mintAddress: r.liquidityToken.mint,
-          address: r.address,
-        })),
-      })
-    );
+    return configData;
   } catch (e) {
     return fetchPoolMetadataFromChain(connection, programId, debug);
   }
@@ -86,7 +61,7 @@ export const fetchPoolMetadataFromChain = async (
       );
 
       return {
-        name: null,
+        name: pool.pubkey.toBase58(),
         owner: pool.account.owner.toBase58(),
         authorityAddress: authorityAddress.toBase58(),
         address: pool.pubkey.toBase58(),

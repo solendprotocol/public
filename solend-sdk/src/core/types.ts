@@ -3,6 +3,46 @@ import BigNumber from "bignumber.js";
 import { ReserveType } from "./utils";
 import BN from "bn.js";
 
+export type LiquidityToken = {
+  coingeckoID: string;
+  decimals: number;
+  logo: string;
+  mint: string;
+  name: string;
+  symbol: string;
+  volume24h: number;
+  token2022Mint?: string;
+};
+
+export type ReserveConfig = {
+  liquidityToken: LiquidityToken;
+  pythOracle: string;
+  extraOracle: string;
+  switchboardOracle: string;
+  address: string;
+  collateralMintAddress: string;
+  collateralSupplyAddress: string;
+  liquidityAddress: string;
+  liquidityFeeReceiverAddress: string;
+};
+
+export type MarketConfig = {
+  name: string;
+  isPrimary: boolean;
+  isPermissionless: boolean;
+  isCustom?: boolean;
+  description: string;
+  creator: string;
+  owner: string;
+  address: string;
+  hidden: boolean;
+  authorityAddress: string;
+  reserves: Array<ReserveConfig>;
+  lookupTableAddress?: string;
+};
+
+export type Config = Array<MarketConfig>;
+
 export type PoolMetadataCoreType = {
   name: string | null;
   address: string;
@@ -43,6 +83,8 @@ export type WalletAssetType = {
   address: string;
   logo?: string;
   underlyingToken?: string;
+  wrapped?: boolean;
+  wrapper?: boolean;
 };
 
 export type WalletType = Array<WalletAssetType>;

@@ -16,7 +16,7 @@ export interface Reserve {
   lendingMarket: PublicKey;
   liquidity: ReserveLiquidity;
   collateral: ReserveCollateral;
-  config: ReserveConfig;
+  config: ReserveOnchainConfig;
   rateLimiter: RateLimiter;
   pubkey: PublicKey;
 }
@@ -44,7 +44,7 @@ export interface ReserveCollateral {
   supplyPubkey: PublicKey;
 }
 
-export interface ReserveConfig {
+export interface ReserveOnchainConfig {
   optimalUtilizationRate: number;
   maxUtilizationRate: number;
   loanToValueRatio: number;
