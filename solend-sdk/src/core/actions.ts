@@ -387,15 +387,11 @@ export class SolendActionCore {
       )!.info;
 
       obligationDetails.deposits.forEach((deposit) => {
-        if (deposit.depositedAmount.gt(new BN(0))) {
           depositReserves.push(deposit.depositReserve);
-        }
       });
 
       obligationDetails.borrows.forEach((borrow) => {
-        if (borrow.borrowedAmountWads.gt(new BN(0))) {
           borrowReserves.push(borrow.borrowReserve);
-        }
       });
     }
 
@@ -505,6 +501,7 @@ export class SolendActionCore {
               TOKEN_2022_PROGRAM_ID
             )
           : undefined,
+        depositInfo: config.depositInfo,
         debug: config.debug,
         computeUnitPriceMicroLamports: config.computeUnitPriceMicroLamports,
         computeUnitLimit: config.computeUnitLimit,
@@ -891,7 +888,7 @@ export class SolendActionCore {
   }
 
   addDepositIx() {
-    if (this.debug) console.log("adding deposit ix to lending txn");
+    if (this.debug) console.log("adding deposit ix to lending txn", (this.depositInfo?.userDepositTokenAccountAddress ?? this.userTokenAccountAddress).toString());
     this.lendingIxs.push(
       {
         lookupTableAccounts: this.lookupTableAccount ? [this.lookupTableAccount] : undefined,
