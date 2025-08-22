@@ -67,12 +67,18 @@ import {
 import { ReserveType } from "./utils";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 
+/**
+ * @internal
+ */
 export type SaveWallet = {
   publicKey: PublicKey;
 };
 
 const SOL_PADDING_FOR_INTEREST = "1000000";
 
+/**
+ * @internal
+ */
 export type InputReserveType = {
   address: string;
   liquidityAddress: string;
@@ -84,6 +90,9 @@ export type InputReserveType = {
   liquidityFeeReceiverAddress: string;
 };
 
+/**
+ * @internal
+ */
 type ActionConfigType = {
   environment?: EnvironmentType;
   customObligationAddress?: PublicKey;
@@ -102,6 +111,9 @@ type ActionConfigType = {
   computeUnitLimit?: number;
 };
 
+/**
+ * @internal
+ */
 type SupportType =
   | "wrap"
   | "unwrap"
@@ -114,6 +126,9 @@ type SupportType =
   | "wrapRepay"
   | "wsol";
 
+/**
+ * @internal
+ */
 const ACTION_SUPPORT_REQUIREMENTS: {
   [Property in ActionType]: Array<SupportType>;
 } = {
@@ -144,6 +159,9 @@ const ACTION_SUPPORT_REQUIREMENTS: {
   ],
 };
 
+/**
+ * @internal
+ */
 export const toHexString = (byteArray: number[]) => {
   return (
     "0x" +
@@ -153,6 +171,9 @@ export const toHexString = (byteArray: number[]) => {
   );
 };
 
+/**
+ * The type of action to perform.
+ */
 export type ActionType =
   | "deposit"
   | "borrow"
@@ -165,6 +186,9 @@ export type ActionType =
   | "forgive"
   | "liquidate";
 
+/**
+ * @internal
+ */
 type InputPoolReserveType = {
   address: string;
   pythOracle: string;
@@ -174,6 +198,9 @@ type InputPoolReserveType = {
   extraOracle?: string;
 };
 
+/**
+ * @internal
+ */
 type InputPoolType = {
   address: string;
   owner: string;
@@ -182,6 +209,9 @@ type InputPoolType = {
   reserves: Array<InputPoolReserveType>;
 };
 
+/**
+ * Represents a transaction instruction with its associated signers and lookup table accounts.
+ */
 export type InstructionWithSigners = {
   instruction: TransactionInstruction;
   signers?: Array<Signer>;
@@ -189,16 +219,49 @@ export type InstructionWithSigners = {
   computeUnits: number;
 };
 
+/**
+ * @internal
+ */
 export const createDepositAndMintWrapperTokensInstructionComputeUnits = 55_154;
+/**
+ * @internal
+ */
 export const createAssociatedTokenAccountIdempotentInstructionComputeUnits = 21_845;
+/**
+ * @internal
+ */
 export const withdrawAndBurnWrapperTokensInstructionComputeUnits = 52_649;
+/**
+ * @internal
+ */
 export const createAssociatedTokenAccountInstructionComputeUnits = 29_490;
+/**
+ * @internal
+ */
 export const createAccountComputeUnits = 10_000;
+/**
+ * @internal
+ */
 export const transferComputeUnits = 500;
 
+/**
+ * @internal
+ */
 export const CROSSBAR_URL1 = "https://crossbar.save.finance";
+/**
+ * @internal
+ */
 export const CROSSBAR_URL2 = "https://crossbar.switchboard.xyz";
 
+/**
+ * The `SolendActionCore` class is responsible for building and managing transactions for the Solend protocol.
+ * It handles the creation of instructions for various actions like depositing, borrowing, withdrawing, and repaying assets.
+ * This class is not meant to be instantiated directly. Instead, use the static `build...` methods to create instances.
+ * @see {@link SolendActionCore.buildDepositTxns}
+ * @see {@link SolendActionCore.buildBorrowTxns}
+ * @see {@link SolendActionCore.buildWithdrawTxns}
+ * @see {@link SolendActionCore.buildRepayTxns}
+ */
 export class SolendActionCore {
   programId: PublicKey;
 
@@ -355,6 +418,9 @@ export class SolendActionCore {
     this.computeUnitLimit = config?.computeUnitLimit;
   }
 
+  /**
+   * @internal
+   */
   static async initialize(
     pool: InputPoolType,
     reserve: InputReserveType,
@@ -512,6 +578,17 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * Builds the transactions to forgive debt.
+   * @param pool - The pool to perform the action on.
+   * @param reserve - The reserve to perform the action on.
+   * @param connection - The connection to the Solana cluster.
+   * @param amount - The amount to forgive.
+   * @param wallet - The wallet to use for the transaction.
+   * @param obligationAddress - The address of the obligation to forgive debt for.
+   * @param config - The configuration for the action.
+   * @returns A `SolendActionCore` instance with the built transactions.
+   */
   static async buildForgiveTxns(
     pool: InputPoolType,
     reserve: InputReserveType,
@@ -540,6 +617,16 @@ export class SolendActionCore {
     return axn;
   }
 
+  /**
+   * Builds the transactions to deposit assets into a reserve.
+   * @param pool - The pool to perform the action on.
+   * @param reserve - The reserve to perform the action on.
+   * @param connection - The connection to the Solana cluster.
+   * @param amount - The amount to deposit.
+   * @param wallet - The wallet to use for the transaction.
+   * @param config - The configuration for the action.
+   * @returns A `SolendActionCore` instance with the built transactions.
+   */
   static async buildDepositTxns(
     pool: InputPoolType,
     reserve: InputReserveType,
@@ -564,6 +651,16 @@ export class SolendActionCore {
     return axn;
   }
 
+  /**
+   * Builds the transactions to borrow assets from a reserve.
+   * @param pool - The pool to perform the action on.
+   * @param reserve - The reserve to perform the action on.
+   * @param connection - The connection to the Solana cluster.
+   * @param amount - The amount to borrow.
+   * @param wallet - The wallet to use for the transaction.
+   * @param config - The configuration for the action.
+   * @returns A `SolendActionCore` instance with the built transactions.
+   */
   static async buildBorrowTxns(
     pool: InputPoolType,
     reserve: InputReserveType,
@@ -587,6 +684,17 @@ export class SolendActionCore {
 
     return axn;
   }
+
+  /**
+   * Builds the transactions to deposit reserve liquidity.
+   * @param pool - The pool to perform the action on.
+   * @param reserve - The reserve to perform the action on.
+   * @param connection - The connection to the Solana cluster.
+   * @param amount - The amount to deposit.
+   * @param wallet - The wallet to use for the transaction.
+   * @param config - The configuration for the action.
+   * @returns A `SolendActionCore` instance with the built transactions.
+   */
   static async buildDepositReserveLiquidityTxns(
     pool: InputPoolType,
     reserve: InputReserveType,
@@ -609,6 +717,16 @@ export class SolendActionCore {
     return axn;
   }
 
+  /**
+   * Builds the transactions to redeem reserve collateral.
+   * @param pool - The pool to perform the action on.
+   * @param reserve - The reserve to perform the action on.
+   * @param connection - The connection to the Solana cluster.
+   * @param amount - The amount to redeem.
+   * @param wallet - The wallet to use for the transaction.
+   * @param config - The configuration for the action.
+   * @returns A `SolendActionCore` instance with the built transactions.
+   */
   static async buildRedeemReserveCollateralTxns(
     pool: InputPoolType,
     reserve: InputReserveType,
@@ -631,6 +749,16 @@ export class SolendActionCore {
     return axn;
   }
 
+  /**
+   * Builds the transactions to deposit obligation collateral.
+   * @param pool - The pool to perform the action on.
+   * @param reserve - The reserve to perform the action on.
+   * @param connection - The connection to the Solana cluster.
+   * @param amount - The amount to deposit.
+   * @param wallet - The wallet to use for the transaction.
+   * @param config - The configuration for the action.
+   * @returns A `SolendActionCore` instance with the built transactions.
+   */
   static async buildDepositObligationCollateralTxns(
     pool: InputPoolType,
     reserve: InputReserveType,
@@ -653,6 +781,16 @@ export class SolendActionCore {
     return axn;
   }
 
+  /**
+   * Builds the transactions to withdraw collateral.
+   * @param pool - The pool to perform the action on.
+   * @param reserve - The reserve to perform the action on.
+   * @param connection - The connection to the Solana cluster.
+   * @param amount - The amount to withdraw.
+   * @param wallet - The wallet to use for the transaction.
+   * @param config - The configuration for the action.
+   * @returns A `SolendActionCore` instance with the built transactions.
+   */
   static async buildWithdrawCollateralTxns(
     pool: InputPoolType,
     reserve: InputReserveType,
@@ -677,6 +815,16 @@ export class SolendActionCore {
     return axn;
   }
 
+  /**
+   * Builds the transactions to withdraw assets from a reserve.
+   * @param pool - The pool to perform the action on.
+   * @param reserve - The reserve to perform the action on.
+   * @param connection - The connection to the Solana cluster.
+   * @param amount - The amount to withdraw.
+   * @param wallet - The wallet to use for the transaction.
+   * @param config - The configuration for the action.
+   * @returns A `SolendActionCore` instance with the built transactions.
+   */
   static async buildWithdrawTxns(
     pool: InputPoolType,
     reserve: InputReserveType,
@@ -701,6 +849,16 @@ export class SolendActionCore {
     return axn;
   }
 
+  /**
+   * Builds the transactions to repay a loan.
+   * @param pool - The pool to perform the action on.
+   * @param reserve - The reserve to perform the action on.
+   * @param connection - The connection to the Solana cluster.
+   * @param amount - The amount to repay.
+   * @param wallet - The wallet to use for the transaction.
+   * @param config - The configuration for the action.
+   * @returns A `SolendActionCore` instance with the built transactions.
+   */
   static async buildRepayTxns(
     pool: InputPoolType,
     reserve: InputReserveType,
@@ -725,6 +883,16 @@ export class SolendActionCore {
     return axn;
   }
 
+  /**
+   * Builds the transactions to liquidate an obligation.
+   * @param pool - The pool to perform the action on.
+   * @param withdrawReserve - The reserve to withdraw from.
+   * @param connection - The connection to the Solana cluster.
+   * @param amount - The amount to liquidate.
+   * @param wallet - The wallet to use for the transaction.
+   * @param config - The configuration for the action.
+   * @returns A `SolendActionCore` instance with the built transactions.
+   */
   static async buildLiquidateTxns(
     pool: InputPoolType,
     withdrawReserve: InputReserveType,
@@ -750,7 +918,10 @@ export class SolendActionCore {
     return axn;
   }
 
-  // Could fail for obligations with 6 positions and no lookup table
+  /**
+   * Returns a versioned transaction with all the instructions.
+   * @returns A `VersionedTransaction` instance.
+   */
   async getVersionedTransaction() {
     return new VersionedTransaction(
       new TransactionMessage({
@@ -769,6 +940,10 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * Returns legacy transactions.
+   * @returns An object with the pre-lending, lending, and post-lending transactions.
+   */
   async getLegacyTransactions() {
     const txns: {
       preLendingTxn: Transaction | null;
@@ -798,6 +973,10 @@ export class SolendActionCore {
     return txns;
   }
 
+  /**
+   * Returns the instructions for the action.
+   * @returns An object with the oracle, pre-lending, lending, and post-lending instructions.
+   */
   async getInstructions() {
     return {
       oracleIxs: this.oracleIxs,
@@ -808,6 +987,11 @@ export class SolendActionCore {
     }
   }
 
+  /**
+   * Returns the transactions for the action.
+   * @param blockhash - The blockhash to use for the transactions.
+   * @returns An object with the pre-lending, lending, and post-lending transactions, as well as any pull price transactions.
+   */
   async getTransactions(blockhash: BlockhashWithExpiryBlockHeight) {
     const txns: {
       preLendingTxn: VersionedTransaction | null;
@@ -872,6 +1056,9 @@ export class SolendActionCore {
     return txns;
   }
 
+  /**
+   * @internal
+   */
   addForgiveIx() {
     if (this.debug) console.log("adding forgive ix to lending txn");
     this.lendingIxs.push(
@@ -890,6 +1077,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   addDepositIx() {
     if (this.debug) console.log("adding deposit ix to lending txn");
     this.lendingIxs.push(
@@ -934,6 +1124,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   addDepositReserveLiquidityIx() {
     if (this.debug) console.log("adding mint ix to lending txn");
     this.lendingIxs.push(
@@ -956,6 +1149,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   addRedeemReserveCollateralIx() {
     if (this.debug) console.log("adding redeem ix to lending txn");
     this.lendingIxs.push(
@@ -978,6 +1174,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   async addWithdrawObligationCollateralIx() {
     if (this.debug) console.log("adding withdrawCollateral ix to lending txn");
     this.lendingIxs.push(
@@ -1000,6 +1199,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   addDepositObligationCollateralIx() {
     if (this.debug) console.log("adding depositCollateral ix to lending txn");
     this.lendingIxs.push(
@@ -1021,6 +1223,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   addBorrowIx() {
     if (this.debug) console.log("adding borrow ix to lending txn");
     if (this.hostAta && this.hostPublicKey) {
@@ -1058,6 +1263,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   async addWithdrawIx() {
     if (this.debug) console.log("adding withdraw ix to lending txn");
     this.lendingIxs.push(
@@ -1101,6 +1309,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   async addRepayIx() {
     if (this.debug) console.log("adding repay ix to lending txn");
     this.lendingIxs.push(
@@ -1131,6 +1342,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   async addLiquidateIx(repayReserve: InputReserveType) {
     if (this.debug) console.log("adding liquidate ix to lending txn");
     if (
@@ -1165,6 +1379,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   async addSupportIxs(action: ActionType) {
     const supports = ACTION_SUPPORT_REQUIREMENTS[action];
 
@@ -1298,6 +1515,9 @@ export class SolendActionCore {
     );
   }
 
+  /**
+   * @internal
+   */
   static async buildPullPriceIxsStatic(
     oracleKeys: Array<string>,
     connection: Connection,
@@ -1522,6 +1742,9 @@ export class SolendActionCore {
     }
   }
 
+  /**
+   * @internal
+   */
   async buildPullPriceTxns(
     oracleKeys: Array<string>
   ) {

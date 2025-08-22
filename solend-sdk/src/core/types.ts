@@ -3,6 +3,9 @@ import BigNumber from "bignumber.js";
 import { ReserveType } from "./utils";
 import BN from "bn.js";
 
+/**
+ * Represents a liquidity token in a reserve.
+ */
 export type LiquidityToken = {
   coingeckoID: string;
   decimals: number;
@@ -14,6 +17,9 @@ export type LiquidityToken = {
   token2022Mint?: string;
 };
 
+/**
+ * Represents the configuration of a reserve.
+ */
 export type ReserveConfig = {
   liquidityToken: LiquidityToken;
   pythOracle: string;
@@ -26,6 +32,9 @@ export type ReserveConfig = {
   liquidityFeeReceiverAddress: string;
 };
 
+/**
+ * Represents the configuration of a lending market.
+ */
 export type MarketConfig = {
   name: string;
   isPrimary: boolean;
@@ -41,8 +50,14 @@ export type MarketConfig = {
   lookupTableAddress?: string;
 };
 
+/**
+ * Represents the configuration of all lending markets.
+ */
 export type Config = Array<MarketConfig>;
 
+/**
+ * Represents the core metadata of a pool.
+ */
 export type PoolMetadataCoreType = {
   name: string | null;
   address: string;
@@ -56,8 +71,14 @@ export type PoolMetadataCoreType = {
   }>;
 };
 
+/**
+ * The environment to use for the SDK.
+ */
 export type EnvironmentType = Cluster | "production" | "beta" | "eclipse";
 
+/**
+ * Represents the metadata of a token.
+ */
 export type TokenMetadata = {
   [mintAddress: string]: {
     symbol: string;
@@ -67,6 +88,9 @@ export type TokenMetadata = {
   };
 };
 
+/**
+ * Represents a lending pool.
+ */
 export type PoolType = {
   name: string | null;
   address: string;
@@ -75,6 +99,9 @@ export type PoolType = {
   reserves: Array<ReserveType>;
 };
 
+/**
+ * Represents a wallet asset.
+ */
 export type WalletAssetType = {
   amount: BigNumber;
   mintAddress: string;
@@ -87,8 +114,14 @@ export type WalletAssetType = {
   wrapper?: boolean;
 };
 
+/**
+ * Represents a user's wallet.
+ */
 export type WalletType = Array<WalletAssetType>;
 
+/**
+ * Represents the parameters for configuring a reserve.
+ */
 export type InputReserveConfigParams = {
   optimalUtilizationRate: number;
   maxUtilizationRate: number;

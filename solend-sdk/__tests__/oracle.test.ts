@@ -18,7 +18,7 @@ import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
   jest.setTimeout(50_000);
   
   const connection = new Connection("https://api.mainnet-beta.solana.com");
-  const testKey = [];
+  const testKey: number[] = [];
   
   describe("pulls sb oracles", function () {
     it("pulls switchboard oracle", async function () {
