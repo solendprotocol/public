@@ -239,8 +239,9 @@ export const getReservesOfPool = async (
   connection: Connection,
   programId: string,
   currentSlot: number,
+  skipPrices?: boolean,
   switchboardProgram?: SwitchboardProgram,
-  debug?: boolean
+  debug?: boolean,
 ) => {
   if (debug) console.log("getReservesOfPool");
 
@@ -266,7 +267,7 @@ export const getReservesOfPool = async (
     )
     .filter(Boolean) as Array<RawReserveType>;
 
-  const prices = await fetchPrices(parsedReserves, connection, sb, debug);
+  const prices = skipPrices ? {} : await fetchPrices(parsedReserves, connection, sb, debug);
 
   return parsedReserves.map((r) =>
     formatReserve(r, prices[r.pubkey.toBase58()], currentSlot)

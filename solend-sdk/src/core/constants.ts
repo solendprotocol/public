@@ -13,6 +13,9 @@ export const WRAPPER_PROGRAM_ID =
     ? new PublicKey("55ttmJsE9v5PtScfnA2q6S9VXgSPopV6WziiwH94SYws")
     : new PublicKey("3JmCcXAjmBpFzHHuUpgJFfTQEQnAR7K1erNLtWV1g7d9");
 export const SAVE_CREATOR = '5pHk2TmnqQzRF9L6egy5FfiyBgS7G9cMZ5RFaJAvghzw';
+export const FEE_RECEIVER_AUTHORITY = new PublicKey(
+  "9RuqAN42PTUi9ya59k9suGATrkqzvb9gk2QABJtQzGP5"
+);
 export const SOLEND_ADDRESSES = [
   SAVE_CREATOR,
   "yaDPAockQPna7Srx5LB2TugJSKHUduHghyZdQcn7zYz",

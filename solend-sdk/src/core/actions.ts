@@ -49,7 +49,7 @@ import {
   withdrawExact,
   liquidateObligationAndRedeemReserveCollateral,
 } from "../instructions";
-import { NULL_ORACLE, POSITION_LIMIT } from "./constants";
+import { FEE_RECEIVER_AUTHORITY, NULL_ORACLE, POSITION_LIMIT } from "./constants";
 import { EnvironmentType } from "./types";
 import { getProgramId, U64_MAX, WAD } from "./constants";
 import { PriceServiceConnection } from "@pythnetwork/price-service-client";
@@ -58,7 +58,6 @@ import {
   loadLookupTables,
   PullFeed,
   ON_DEMAND_MAINNET_PID,
-  CrossbarClient,
 } from "@switchboard-xyz/on-demand";
 import {
   createDepositAndMintWrapperTokensInstruction,
@@ -114,35 +113,37 @@ type SupportType =
   | "wrapRepay"
   | "wsol";
 
-const ACTION_SUPPORT_REQUIREMENTS: {
-  [Property in ActionType]: Array<SupportType>;
-} = {
-  deposit: ["wsol", "wrap", "createObligation", "cAta"],
-  borrow: ["wsol", "ata", "refreshReserves", "refreshObligation", "unwrap"],
-  withdraw: [
-    "wsol",
-    "ata",
-    "cAta",
-    "refreshReserves",
-    "refreshObligation",
-    "unwrap",
-  ],
-  repay: ["wsol", "wrap"],
-  mint: ["wsol", "wrap", "cAta"],
-  redeem: ["wsol", "ata", "refreshReserve", "unwrap"],
-  depositCollateral: ["createObligation"],
-  withdrawCollateral: ["cAta", "refreshReserves", "refreshObligation"],
-  forgive: ["refreshReserves", "refreshObligation"],
-  liquidate: [
-    "wsol",
-    "ata",
-    "cAta",
-    "wrapRepay",
-    "unwrap",
-    "refreshReserves",
-    "refreshObligation",
-  ],
-};
+function getSupportRequirementsForAction(action: ActionType, hasBorrows: boolean): Array<SupportType> {
+  const actionSupportRequirements: { [Property in ActionType]: Array<SupportType> } = {
+    deposit: ["wsol", "wrap", "createObligation", "cAta"],
+    borrow: ["wsol", "ata", "refreshReserves", "refreshObligation", "unwrap"],
+    withdraw: [
+      "wsol",
+      "ata",
+      "cAta",
+      hasBorrows ? "refreshReserves" : undefined,
+      hasBorrows ? "refreshObligation" : undefined,
+      "unwrap",
+    ].filter((support) => support !== undefined) as Array<SupportType>,
+    repay: ["wsol", "wrap"],
+    mint: ["wsol", "wrap", "cAta"],
+    redeem: ["wsol", "ata", hasBorrows ? "refreshReserve" : undefined, "unwrap"].filter((support) => support !== undefined) as Array<SupportType>,
+    depositCollateral: ["createObligation"],
+    withdrawCollateral: ["cAta", hasBorrows ? "refreshReserves" : undefined, hasBorrows ? "refreshObligation" : undefined].filter((support) => support !== undefined) as Array<SupportType>,
+    forgive: ["refreshReserves", "refreshObligation"],
+    liquidate: [
+      "wsol",
+      "ata",
+      "cAta",
+      "wrapRepay",
+      "unwrap",
+      "refreshReserves",
+      "refreshObligation",
+    ],
+  };
+
+  return actionSupportRequirements[action];
+}
 
 export const toHexString = (byteArray: number[]) => {
   return (
@@ -187,6 +188,8 @@ export type InstructionWithSigners = {
   signers?: Array<Signer>;
   lookupTableAccounts?: AddressLookupTableAccount[];
   computeUnits: number;
+  groupIndex?: number;
+  index0?: boolean;
 };
 
 export const createDepositAndMintWrapperTokensInstructionComputeUnits = 55_154;
@@ -669,7 +672,7 @@ export class SolendActionCore {
     );
 
     await axn.addSupportIxs("withdrawCollateral");
-    await axn.addWithdrawIx();
+    await axn.addWithdrawObligationCollateralIx();
 
     return axn;
   }
@@ -970,7 +973,7 @@ export class SolendActionCore {
         this.publicKey, // transferAuthority
           this.programId
         ),
-        computeUnits: 44_207
+        computeUnits: 100_000
       }
     );
   }
@@ -1018,9 +1021,9 @@ export class SolendActionCore {
     );
   }
 
-  addBorrowIx() {
+  async addBorrowIx() {
     if (this.debug) console.log("adding borrow ix to lending txn");
-    if (this.hostAta && this.hostPublicKey) {
+    if (this.hostAta && this.hostPublicKey && (this.hostPublicKey.toBase58() !== this.publicKey.toBase58())) {
       this.preTxnIxs.push(
         {
           instruction: createAssociatedTokenAccountIdempotentInstruction(
@@ -1032,6 +1035,20 @@ export class SolendActionCore {
         computeUnits: 21_845
       }
     );
+    }
+    const liquidityFeeReceiverAccount = await this.connection.getAccountInfo(new PublicKey(this.reserve.liquidityFeeReceiverAddress));
+    if (!liquidityFeeReceiverAccount) {
+      this.preTxnIxs.push(
+        {
+          instruction: createAssociatedTokenAccountIdempotentInstruction(
+            this.publicKey,
+            new PublicKey(this.reserve.liquidityFeeReceiverAddress),
+            FEE_RECEIVER_AUTHORITY,
+            new PublicKey(this.reserve.mintAddress)
+          ),
+          computeUnits: 21_845
+        }
+      );
     }
     this.lendingIxs.push(
       {
@@ -1163,7 +1180,7 @@ export class SolendActionCore {
   }
 
   async addSupportIxs(action: ActionType) {
-    const supports = ACTION_SUPPORT_REQUIREMENTS[action];
+    const supports = getSupportRequirementsForAction(action, this.borrowReserves.length > 0);
 
     for (const support of supports) {
       switch (support) {
@@ -1244,9 +1261,9 @@ export class SolendActionCore {
       {
         instruction: createAssociatedTokenAccountIdempotentInstruction(
           this.publicKey,
-        this.wrappedAta,
-        this.publicKey,
-        this.token2022Mint,
+          this.wrappedAta,
+          this.publicKey,
+          this.token2022Mint,
           TOKEN_2022_PROGRAM_ID
         ),
         computeUnits: createAssociatedTokenAccountIdempotentInstructionComputeUnits
@@ -1296,13 +1313,14 @@ export class SolendActionCore {
   }
 
   static async buildPullPriceIxsStatic(
-    oracleKeys: Array<string>,
+    unfilteredOracleKeys: Array<string>,
     connection: Connection,
     wallet: SaveWallet,
     computeUnitPriceMicroLamports?: number,
     environment?: EnvironmentType,
     debug?: boolean,
   ) {
+    const oracleKeys = unfilteredOracleKeys.filter(k => k !== 'nu11111111111111111111111111111111111111111' && k !== '11111111111111111111111111111111');
     let oracleIxs: InstructionWithSigners[] = [];
     let pullPriceTxns: VersionedTransaction[] = [];
     let pythIxGroups: Array<Array<InstructionWithSigners>> = [];
@@ -1313,10 +1331,10 @@ export class SolendActionCore {
       units: 1_000_000,
     });
 
-    const oracleAccounts = await connection.getMultipleAccountsInfo(
+    const oracleAccounts = (await connection.getMultipleAccountsInfo(
       oracleKeys.map((o) => new PublicKey(o)),
       "processed"
-    );
+    ));
 
     const provider = new AnchorProvider(connection, {
       publicKey: wallet.publicKey,
@@ -1327,7 +1345,6 @@ export class SolendActionCore {
 
     if (environment === "production" || environment === "beta") {
       const sbod = new Program(idl, provider);
-      console.log(oracleAccounts);
       const sbPulledOracles = oracleKeys.filter(
         (_o, index) =>
           oracleAccounts[index]?.owner.toBase58() === sbod.programId.toBase58()
@@ -1351,61 +1368,63 @@ export class SolendActionCore {
           1
         );
 
-        const res = sbPulledOracles.reduce((acc, _curr, i) => {
+        const res = feedAccounts.reduce((acc, _curr, i) => {
           if (!(i % 3)) {
             // if index is 0 or can be divided by the `size`...
-            acc.push(sbPulledOracles.slice(i, i + 3)); // ..push a chunk of the original array to the accumulator
+            acc.push(feedAccounts.slice(i, i + 3)); // ..push a chunk of the original array to the accumulator
           }
           return acc;
-        }, [] as string[][]);
+        }, [] as PullFeed[][]);
+        
+        const signatureInstructionIdxRaw =
+          typeof localStorage !== "undefined"
+            ? localStorage.getItem("signatureInstructionIdx")
+            : null;
+        const signatureInstructionIdx = signatureInstructionIdxRaw
+          ? parseInt(signatureInstructionIdxRaw)
+          : undefined;
 
-        const crossbar = new CrossbarClient(CROSSBAR_URL2);
         await Promise.all(
-          res.map(async (oracleGroup) => {
-            const [ix, accountLookups, responses] =
+          res.map(async (feedAccountGroup, groupIndex) => {
+            const gateway = await feedAccountGroup[0].fetchGatewayUrl();
+            const [ix, accountLookups] =
             await PullFeed.fetchUpdateManyIx(sbod as any, {
-              feeds: oracleGroup.map((p) => new PublicKey(p)),
-              crossbarClient: crossbar,
-
-                numSignatures,
-              });
-
-          // responses?.oracle_responses.forEach((response) => {
-          //   response?.errors.forEach((error) => {
-          //     if (error) {
-          //       console.error(error);
-          //     }
-          //   });
-          // });
-
-          console.log('updated');
+              chain: "solana",
+              network: "mainnet-beta",
+              feeds: feedAccountGroup,
+              numSignatures,
+              gateway,
+              signatureInstructionIdx,
+              },
+            );
 
             const lookupTables = (await loadLookupTables(feedAccounts)).concat(
               accountLookups
             );
 
-            const instructions = [priorityFeeIx, modifyComputeUnits, ix];
+            const instructions = [priorityFeeIx, modifyComputeUnits, ...ix];
 
-            // Get the latest context
             const {
               value: { blockhash },
             } = await connection.getLatestBlockhashAndContext();
 
-            // Get Transaction Message
             const message = new TransactionMessage({
               payerKey: wallet.publicKey,
               recentBlockhash: blockhash,
               instructions,
             }).compileToV0Message(lookupTables);
 
-            // Get Versioned Transaction
             const vtx = new VersionedTransaction(message);
 
             if (debug) console.log("adding sbod ix to pullPriceTxns");
-            oracleIxs.push({
-              instruction: ix,
-              lookupTableAccounts: lookupTables,
-              computeUnits: 400_000 + sbPulledOracles.length * 100_000, 
+            ix.forEach((ixn, index) => {
+              oracleIxs.push({
+                instruction: ixn,
+                lookupTableAccounts: lookupTables,
+                computeUnits: index === 0 ? 400_000 + sbPulledOracles.length * 100_000 : 10_000,
+                groupIndex,
+                index0: true
+              });
             });
             pullPriceTxns.push(vtx);
           })
@@ -1458,8 +1477,8 @@ export class SolendActionCore {
         priceFeedId: string;
       }>
     )
-      .sort((a, b) => a.key - b.key)
-      .map((x) => x.priceFeedId);
+    .sort((a, b) => a.key - b.key)
+    .map((x) => x.priceFeedId);
 
     if (shuffledPriceIds.length) {
       if (debug) console.log("Feed accounts", shuffledPriceIds);
@@ -1472,15 +1491,10 @@ export class SolendActionCore {
         0 // shardId of 0
       );
 
-      transactionBuilder.addInstructions([
-        { instruction: priorityFeeIx, signers: [] },
-        { instruction: modifyComputeUnits, signers: [] },
-      ]);
-
       const transactionsWithSigners =
         await transactionBuilder.buildVersionedTransactions({});
 
-      for (const transaction of transactionsWithSigners) {
+      for (const [index, transaction] of transactionsWithSigners.entries()) {
         const signers = transaction.signers;
         const tx = transaction.tx;
         const lookupTables = await Promise.all(tx.message.addressTableLookups.map((lookup) => connection.getAddressLookupTable(lookup.accountKey)));  
@@ -1488,23 +1502,22 @@ export class SolendActionCore {
         if (signers) {
           tx.sign(signers);
         }
-        pythIxGroups.push(transactionBuilder.transactionInstructions.flatMap((ixs, index1) => ixs.instructions.map(
+        pythIxGroups.push(transactionBuilder.transactionInstructions[index].instructions.map(
           (ix, index2) => {
             let computeUnits = 0;
-            if (index1 === 0 && index2 === 0) {
+            if (index2 === 0) {
               computeUnits = 355_787;
             }
             if (ix.programId.toBase58() === 'pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT') {
               computeUnits = 43825;
             }
-
             return ({
             instruction: ix,
-            signers: ixs.signers,
+            signers: transactionBuilder.transactionInstructions[index].signers,
             lookupTables: lookupTables,
             computeUnits,
           })}
-        )));
+        ));
         pullPriceTxns.push(tx);
       }
       console.log(

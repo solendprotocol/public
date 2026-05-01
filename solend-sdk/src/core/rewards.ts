@@ -11,6 +11,7 @@ import {
 } from "./utils/merkle_distributor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import axios from "axios";
+import { NULL_ORACLE } from "./constants";
 
 const toBytes32Array = (b: Buffer): number[] => {
   const buf = Buffer.alloc(32);
@@ -96,31 +97,34 @@ export async function fetchClaimData(
   return await Promise.all(
     claims.map(async (d, index) => {
       const [distributorATAPublicKey, _bump] =
-        await PublicKey.findProgramAddress(
+      merkleDistributors[index] ? await PublicKey.findProgramAddress(
           [
             new PublicKey(d.distributorPublicKey).toBuffer(),
             TOKEN_PROGRAM_ID.toBuffer(),
             merkleDistributors[index].mint.toBuffer(),
           ],
           ASSOCIATED_TOKEN_PROGRAM_ID
-        );
+        ) : [null, null]  ;
 
-      const accountFunded =
-        (
-          await anchorProgram.provider.connection.getTokenAccountBalance(
-            distributorATAPublicKey
-          )
-        ).value.amount !== "0";
+      const accountFunded = distributorATAPublicKey
+        ? (
+            await anchorProgram.provider.connection.getTokenAccountBalance(
+              distributorATAPublicKey
+            )
+          ).value.amount !== "0"
+        : true;
 
       return {
         ...d,
         accountFunded,
         claimId: claimAndBumps[index][0],
         claimStatusBump: claimAndBumps[index][1],
-        claimed: Boolean(claimStatuses[index]?.isClaimed),
+        claimed: merkleDistributors[index]
+          ? Boolean(claimStatuses[index]?.isClaimed)
+          : true,
         claimedAt: claimStatuses[index]?.claimedAt,
-        distributor: merkleDistributors[index],
-        distributorATAPublicKey,
+        distributor: merkleDistributors[index] ?? null,
+        distributorATAPublicKey: distributorATAPublicKey ?? NULL_ORACLE,
       };
     })
   );
