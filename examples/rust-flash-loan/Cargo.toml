@@ -1,0 +1,16 @@
+[package]
+name = "save-flash-loan-example"
+version = "0.1.0"
+edition = "2021"
+description = "Minimal composable Rust flash loan example for Save Finance (Solend)"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+anyhow = "1.0"
+solana-commitment-config = "2.1"
+solana-message = "2.1"
+solana-rpc-client = "2.1"
+solana-sdk = "2.1"
+spl-associated-token-account = "6.0"
+spl-token = "7.0"
+tokio = { version = "1.42", features = ["macros", "rt-multi-thread"] }
